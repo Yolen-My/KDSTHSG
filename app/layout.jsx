@@ -1,7 +1,7 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "HSG offsite games",
+  title: "Offsite Games",
   description: "Interactive HSG game flow built with Next.js and React"
 };
 

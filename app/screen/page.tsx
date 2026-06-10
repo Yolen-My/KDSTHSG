@@ -29,7 +29,7 @@ export default function ScreenPage() {
           <div className="screenHeaderMain">
             <span className="screenEyebrow">LIVE SCREEN </span>
             <div className="screenTitleRow">
-              <h1 className="screenTitle">活动实时数据大屏</h1>
+              <h1 className="screenTitle">互动游戏大厅</h1>
               <Image
                 className="screenLogo"
                 src="/image/source/screen/logo-icon.png"
@@ -46,19 +46,31 @@ export default function ScreenPage() {
           </div>
 
           <div className="screenQrBlock">
-            <div className="screenQrFrame">
+            <div className="screenQrRow">
               <Image
-                className="screenQrImage"
-                src="/image/source/screen/qr-code.png?v=202606090035"
-                alt="微信扫码参加游戏"
-                width={136}
-                height={136}
+                className="screenDefineLogo"
+                src="/image/source/screen/screen-define-the-game.png"
+                alt="Define The Game"
+                width={218}
+                height={132}
                 priority
-                unoptimized
               />
+              <div className="screenQrWithText">
+                <div className="screenQrFrame">
+                  <Image
+                    className="screenQrImage"
+                    src="/image/source/screen/qr-code.png"
+                    alt="微信扫码参加游戏"
+                    width={136}
+                    height={136}
+                    priority
+                  />
+                </div>
+                <p>微信扫一扫参加游戏</p>
+              </div>
             </div>
-            <p>微信扫一扫参加游戏</p>
           </div>
+          
         </header>
 
         {loading || !ranking ? (

@@ -1,8 +1,8 @@
 {
   "repo": "Yolen-My/KDSTHSG",
-  "commit": "361b3bc0b0af183d5d4f70a9f3ad8ce49efe7fb1",
-  "short": "361b3bc",
-  "method": "restored from backup QHduan_backup_before_deploy_20260610_183128.tar.gz",
-  "deployed_at": "2026-06-10T18:51:12+08:00",
-  "note": "备份恢复部署，跳过 GitHub 拉取（网络连接问题）"
+  "commit": "b730b9d071d499aaac69fb5106213ba38d389e4f",
+  "short": "b730b9d",
+  "method": "GitHub API partial download + manual image fix",
+  "deployed_at": "2026-06-10T22:16:00+08:00",
+  "note": "从 GitHub API 下载最新前端代码，手动补充缺失的 screen-define-the-game.png 图片"
 }

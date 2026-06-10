@@ -33,7 +33,7 @@ export default function WaitingModal({ open, gameName }: WaitingModalProps) {
           </div>
 
           <div className="resultModalMain">
-            <p className="resultModalWaiting">等待Boss发言，判分即将开始...</p>
+            <p className="resultModalWaiting">感谢提交，认真听讲时刻到了，演讲结束后，会揭幕您的猜词结果</p>
           </div>
         </div>
       </section>

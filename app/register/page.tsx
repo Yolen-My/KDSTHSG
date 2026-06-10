@@ -18,6 +18,7 @@ export default function RegisterPage() {
   const [officeOpen, setOfficeOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checking, setChecking] = useState(true);
+  const [isComposing, setIsComposing] = useState(false);
   const officeDropdownRef = useRef<HTMLDivElement>(null);
 
   const filteredOffices = useMemo(() => {
@@ -50,9 +51,14 @@ export default function RegisterPage() {
   }, [router]);
 
   function updateField(field: keyof typeof form, value: string) {
+    if (field === "name" && isComposing) {
+      setForm((current) => ({ ...current, [field]: value }));
+      return;
+    }
+    
     let processedValue = value;
     if (field === "name") {
-      processedValue = value.replace(/[^\p{L}]/gu, "");
+      processedValue = value.replace(/[^\p{L}\s]/gu, "");
     }
     if (field === "phone") {
       processedValue = value.replace(/[^0-9]/g, "").slice(0, 11);
@@ -145,6 +151,8 @@ export default function RegisterPage() {
                 maxLength={16}
                 placeholder="请输入姓名"
                 onChange={(event) => updateField("name", event.target.value)}
+                onCompositionStart={() => setIsComposing(true)}
+                onCompositionEnd={() => setIsComposing(false)}
               />
             </label>
 

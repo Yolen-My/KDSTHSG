@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState } from "react";
 import Layout from "@/components/Layout";
 import { GAME_ORDER } from "@/lib/constants";
 import { loadState, resetDemoData } from "@/lib/storage";
@@ -30,11 +30,6 @@ export default function AdminControlPage() {
     closeQuizGroup
   } = useAdminActions();
   const [exportText, setExportText] = useState("");
-  const [adminUsername, setAdminUsername] = useState("admin");
-  const [adminPassword, setAdminPassword] = useState("");
-  const [adminError, setAdminError] = useState("");
-  const [isAdminAuthed, setIsAdminAuthed] = useState(false);
-  const [checkingAdminAuth, setCheckingAdminAuth] = useState(true);
 
   const completion = useMemo(() => {
     return GAME_ORDER.map((key) => ({
@@ -81,47 +76,6 @@ export default function AdminControlPage() {
       };
     });
   }, [quizOpenGroups, state.gameResults, state.questions]);
-
-  useEffect(() => {
-    const saved = window.sessionStorage.getItem("adminAuthed");
-    setIsAdminAuthed(saved === "true");
-    setCheckingAdminAuth(false);
-  }, []);
-
-  async function handleAdminLogin(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setAdminError("");
-
-    try {
-      const response = await fetch("/api/admin-login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ username: adminUsername, password: adminPassword })
-      });
-      const data = await response.json();
-
-      if (!response.ok || !data.ok) {
-        setAdminError(data.message || "用户名或密码错误");
-        return;
-      }
-
-      window.sessionStorage.setItem("adminAuthed", "true");
-      setIsAdminAuthed(true);
-      setAdminPassword("");
-    } catch {
-      setAdminError("登录失败，请稍后重试");
-    }
-  }
-
-  function handleAdminLogout() {
-    window.sessionStorage.removeItem("adminAuthed");
-    setIsAdminAuthed(false);
-    setAdminUsername("admin");
-    setAdminPassword("");
-    setAdminError("");
-  }
 
   async function refreshOnce() {
     await refresh();
@@ -185,82 +139,8 @@ export default function AdminControlPage() {
     await refreshOnce();
   }
 
-  if (checkingAdminAuth) {
-    return (
-      <Layout title="现场控制台" eyebrow="ADMIN CONTROL">
-        <section className="sectionBlock">
-          <p>正在检查管理员登录状态...</p>
-        </section>
-      </Layout>
-    );
-  }
-
-  if (!isAdminAuthed) {
-    return (
-      <Layout title="现场控制台" eyebrow="ADMIN CONTROL">
-        <section className="sectionBlock">
-          <h2>管理员登录</h2>
-          <form onSubmit={handleAdminLogin} className="pageActions" style={{ flexDirection: "column", alignItems: "flex-start" }}>
-            <input
-              type="text"
-              value={adminUsername}
-              onChange={(event) => setAdminUsername(event.target.value)}
-              placeholder="请输入管理员用户名"
-              autoComplete="username"
-              style={{
-                width: "100%",
-                maxWidth: 360,
-                padding: "12px 14px",
-                borderRadius: 8,
-                border: "1px solid rgba(255,255,255,0.2)",
-                background: "rgba(255,255,255,0.08)",
-                color: "white"
-              }}
-            />
-            <input
-              type="password"
-              value={adminPassword}
-              onChange={(event) => setAdminPassword(event.target.value)}
-              placeholder="请输入管理员密码"
-              autoComplete="current-password"
-              style={{
-                width: "100%",
-                maxWidth: 360,
-                padding: "12px 14px",
-                borderRadius: 8,
-                border: "1px solid rgba(255,255,255,0.2)",
-                background: "rgba(255,255,255,0.08)",
-                color: "white"
-              }}
-            />
-
-            {adminError && (
-              <p style={{ color: "#ff7b7b", margin: 0 }}>{adminError}</p>
-            )}
-
-            <button className="primaryButton" type="submit">
-              进入控制台
-            </button>
-          </form>
-        </section>
-      </Layout>
-    );
-  }
-
   return (
     <Layout title="现场控制台" eyebrow="ADMIN CONTROL">
-      <section className="sectionBlock">
-        <div className="adminRow" style={{ justifyContent: "space-between", alignItems: "center" }}>
-          <div>
-            <b>管理员模式</b>
-            <span>当前已登录后台控制台</span>
-          </div>
-          <button className="secondaryButton smallButton" type="button" onClick={handleAdminLogout}>
-            退出管理员
-          </button>
-        </div>
-      </section>
-
       <section className="scoreGrid">
         <div>
           <span>参与人数</span>
