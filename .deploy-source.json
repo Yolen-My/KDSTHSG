@@ -1,0 +1,8 @@
+{
+  "repo": "Yolen-My/KDSTHSG",
+  "commit": "361b3bc0b0af183d5d4f70a9f3ad8ce49efe7fb1",
+  "short": "361b3bc",
+  "method": "restored from backup QHduan_backup_before_deploy_20260610_183128.tar.gz",
+  "deployed_at": "2026-06-10T18:51:12+08:00",
+  "note": "备份恢复部署，跳过 GitHub 拉取（网络连接问题）"
+}
