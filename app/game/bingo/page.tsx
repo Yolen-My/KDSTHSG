@@ -56,7 +56,7 @@ function BingoShell({ children, hideNavActions = false }: { children: ReactNode;
                 width={116}
                 height={20}
               />
-              <p>Guess the right words and get Bingo</p>
+              <p>猜对词语，完成 Bingo</p>
             </div>
             <GameBannerIcon
               className="bingoBannerLogo"
@@ -168,7 +168,7 @@ export default function BingoPage() {
   }, [playerId, isWaitingForScore]);
 
   const targetWords = useMemo(
-    () => questions.filter((question) => question.correctAnswer).map((question) => question.title),
+    () => questions.filter((question) => question.correctAnswer === question.title).map((question) => question.title),
     [questions]
   );
   const correctCount =

@@ -97,7 +97,7 @@ export default function ResultModal({
           <div className="resultModalHeader">
             {isElimination ? (
               <>
-                <span className="resultModalEyebrow">GAME COMPLETED</span>
+                <span className="resultModalEyebrow">游戏完成</span>
                 {showEliminationStatus ? (
                   <h2 className="resultModalEliminationTitle">
                     {resolvedEliminationStyle === "wrong" ? "很遗憾被淘汰" : "恭喜答对"}
@@ -121,7 +121,7 @@ export default function ResultModal({
               </>
             ) : (
               <>
-                <span className="resultModalEyebrow">GAME COMPLETED</span>
+                <span className="resultModalEyebrow">游戏完成</span>
                 {titleImage ? (
                   <Image
                     alt={gameName}

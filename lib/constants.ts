@@ -18,12 +18,14 @@ export const GAMES: Game[] = [
 ];
 
 const bingoWords = [
-  "Innovation", "AI", "Growth", "Customer", "Team", "Trust", "Value", "Speed", "Quality", "Future",
-  "Alpha", "Matrix", "IRR", "MOIC", "AUM", "DPI", "Fund", "Strategy", "Market", "Partner",
-  "Culture", "Delivery", "Product", "Design", "Risk", "Compliance", "Data", "Insight", "Revenue", "Impact"
+  "创新突破", "团队协作", "客户第一", "专业服务", "高效执行", "携手同行",
+  "年度目标", "卓越交付", "积极进取", "责任担当", "数字化", "流程优化",
+  "品牌力量", "服务升级", "同心聚力", "奋勇争先", "荣耀时刻", "年度关键词",
+  "幸福职场", "成长进步", "沟通协同", "数据驱动", "质量保障", "市场开拓",
+  "用户体验", "智慧运营", "使命必达", "活力团队", "共创未来", "再创佳绩"
 ];
 
-const bingoTargets = ["Innovation", "AI", "Growth", "Team", "Trust", "Alpha", "Matrix", "Data", "Impact", "Future"];
+const bingoTargets = ["创新突破", "团队协作", "客户第一", "专业服务", "高效执行", "携手同行", "年度目标", "卓越交付", "积极进取", "责任担当", "数字化", "流程优化", "品牌力量", "服务升级", "同心聚力", "奋勇争先", "荣耀时刻", "年度关键词", "幸福职场", "成长进步", "沟通协同", "数据驱动", "质量保障", "市场开拓", "用户体验", "智慧运营", "使命必达", "活力团队", "共创未来", "再创佳绩"];
 
 export const QUESTIONS: Question[] = [
   ...bingoWords.map((word, index) => ({

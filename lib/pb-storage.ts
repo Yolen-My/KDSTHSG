@@ -185,9 +185,15 @@ function mapQuestionRecord(record: any): Question {
 async function loadQuestionsFromPB(): Promise<Question[]> {
   try {
     const records = await pb.collection("questions").getFullList({ sort: "order" });
-    if (records.length === 0) return QUESTIONS.map(normalizeQuestion);
+    if (records.length === 0) {
+      console.warn("⚠️ PocketBase 返回空数据，使用本地 QUESTIONS 兜底");
+      return QUESTIONS.map(normalizeQuestion);
+    }
+    console.log(`✅ 从 PocketBase 加载 ${records.length} 个题目`);
     return records.map(mapQuestionRecord);
-  } catch {
+  } catch (error) {
+    console.error("❌ loadQuestionsFromPB 失败:", error);
+    console.warn("⚠️ 使用本地 QUESTIONS 兜底");
     return QUESTIONS.map(normalizeQuestion);
   }
 }
@@ -349,11 +355,14 @@ export async function loadStateFromPB(): Promise<AppState> {
     })).map(normalizeGameResult);
     const mappedGames: Game[] = games.map(mapGameRecord);
 
+    const mappedQuestions = questions.map(normalizeQuestion);
+    console.log(`✅ loadStateFromPB: 加载 ${mappedQuestions.length} 个题目`);
+
     return {
       players: mappedPlayers,
       gameResults: mappedResults,
       games: mappedGames.length > 0 ? mappedGames : GAMES,
-      questions
+      questions: mappedQuestions
     };
   } catch (error) {
     console.error("❌ loadStateFromPB 失败:", error);

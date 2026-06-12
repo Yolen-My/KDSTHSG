@@ -156,6 +156,17 @@ function loadStateLocal(): AppState {
   }
   try {
     const parsed = JSON.parse(raw) as AppState;
+    // 检测 localStorage 中的 questions 是否是英文兜底数据
+    const hasEnglishFallback = parsed.questions?.some(q =>
+      q.gameKey === "bingo" && (q.title === "Innovation" || q.title === "AI" || q.title === "Growth")
+    );
+    if (hasEnglishFallback) {
+      console.warn("⚠️ 检测到 localStorage 中有英文兜底数据，清除并重新加载");
+      window.localStorage.removeItem(STATE_KEY);
+      const initialState = getInitialState();
+      window.localStorage.setItem(STATE_KEY, JSON.stringify(initialState));
+      return initialState;
+    }
     return {
       ...getInitialState(),
       ...parsed,

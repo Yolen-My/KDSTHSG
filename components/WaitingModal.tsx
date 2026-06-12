@@ -18,7 +18,7 @@ export default function WaitingModal({ open, gameName }: WaitingModalProps) {
         <div className="resultModalGlow" aria-hidden="true" />
         <div className="resultModalBody">
           <div className="resultModalHeader">
-            <span className="resultModalEyebrow">BINGO SUBMITTED</span>
+            <span className="resultModalEyebrow">已提交</span>
             {showTitleImage ? (
               <Image
                 alt={gameName}
