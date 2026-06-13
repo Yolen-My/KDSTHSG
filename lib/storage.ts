@@ -152,7 +152,7 @@ export function getInitialState(): AppState {
     players: SEED_PLAYERS,
     gameResults: [],
     games: GAMES,
-    questions: []
+    questions: QUESTIONS
   };
 }
 
@@ -203,9 +203,6 @@ export async function loadState(): Promise<AppState> {
   const available = await checkBackend();
   if (available) {
     return await pbStorage.loadStateFromPB();
-  }
-  if (hasPocketBaseConfig()) {
-    return getEmptyRuntimeState();
   }
   return loadStateLocal();
 }
@@ -402,8 +399,8 @@ export async function triggerBingoScore(): Promise<AppState> {
   }
   const state = settlePendingBingoResults(loadStateLocal());
   state.games = state.games.map((game) => (
-    game.key === "bingo" 
-      ? { ...game, isOpen: false, bingoScored: true, bingoPhase: "auto_score" as const } 
+    game.key === "bingo"
+      ? { ...game, isOpen: false, bingoScored: true, bingoPhase: "closed" as const }
       : game
   ));
   saveStateLocal(state);

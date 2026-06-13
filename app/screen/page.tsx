@@ -66,7 +66,7 @@ export default function ScreenPage() {
                     priority
                   />
                 </div>
-                <p>微信扫一扫参加游戏</p>
+                <p className="screenQrText">微信扫一扫参加游戏</p>
               </div>
             </div>
           </div>

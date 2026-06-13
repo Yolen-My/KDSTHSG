@@ -100,7 +100,7 @@ export default function ResultModal({
                 <span className="resultModalEyebrow">游戏完成</span>
                 {showEliminationStatus ? (
                   <h2 className="resultModalEliminationTitle">
-                    {resolvedEliminationStyle === "wrong" ? "很遗憾被淘汰" : "恭喜答对"}
+                    {resolvedEliminationStyle === "wrong" ? "遗憾淘汰，请坐下" : "恭喜答对，保持站立"}
                   </h2>
                 ) : eliminationTitleImage ? (
                   <Image
@@ -117,7 +117,7 @@ export default function ResultModal({
             ) : isEliminated ? (
               <>
                 <span className="resultModalEyebrow">游戏结束</span>
-                <h2 className="resultModalTitle">很遗憾被淘汰！</h2>
+                <h2 className="resultModalTitle">遗憾淘汰，请坐下</h2>
               </>
             ) : (
               <>

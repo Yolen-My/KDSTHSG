@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import GameBannerIcon from "@/components/GameBannerIcon";
 import Layout from "@/components/Layout";
 import PageBackground from "@/components/PageBackground";
@@ -15,6 +15,8 @@ import { getGameResult } from "@/lib/storage";
 import { useCurrentPlayer, useQuestions, useSubmitGameResult, useAppState } from "@/hooks/use-game-data";
 import type { Question } from "@/types";
 import type { ReactNode } from "react";
+
+const BINGO_SECONDS = 10;
 
 function BingoShell({ children, hideNavActions = false }: { children: ReactNode; hideNavActions?: boolean }) {
   return (
@@ -97,6 +99,9 @@ export default function BingoPage() {
   const [pendingResult, setPendingResult] = useState<Awaited<ReturnType<typeof submitGameResult>> | null>(null);
   const [isLeaving, setIsLeaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [seconds, setSeconds] = useState(BINGO_SECONDS);
+  const [timeUp, setTimeUp] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   // Bingo 阶段
   const bingoGame = useMemo(() => state.games.find((g) => g.key === "bingo"), [state.games]);
@@ -166,6 +171,24 @@ export default function BingoPage() {
       window.clearInterval(timer);
     };
   }, [playerId, isWaitingForScore]);
+
+  // 倒计时：时间到后禁止选词，自动提交（必须在 early return 之前）
+  const handleSubmitRef = useRef<() => Promise<void>>(() => {});
+  useEffect(() => {
+    const bingoGame = state.games.find((g) => g.key === "bingo");
+    const phase = bingoGame?.bingoPhase || "open";
+    const completed = currentPlayer?.completedGames?.includes("bingo");
+    const waiting = Boolean(myBingoResult?.pendingBingoScore) && !completed;
+    if (!playerId || timeUp || waiting || completed || phase === "closed") return;
+    if (seconds <= 0) {
+      setTimeUp(true);
+      // 自动提交已选答案
+      handleSubmitRef.current(true);
+      return;
+    }
+    const timer = window.setInterval(() => setSeconds((v) => Math.max(0, v - 1)), 1000);
+    return () => window.clearInterval(timer);
+  }, [playerId, timeUp, seconds, state.games, currentPlayer, myBingoResult]);
 
   const targetWords = useMemo(() => getBingoTargetWords(questions), [questions]);
   const selectedQuestionIdsForScore = useMemo(() => selectedQuestionIds, [selectedQuestionIds]);
@@ -244,7 +267,7 @@ export default function BingoPage() {
   const canInteract = !hasCompletedBingo && !isWaitingForScore && bingoPhase !== "closed";
 
   function toggleQuestion(question: Question) {
-    if (!canInteract) return;
+    if (!canInteract || timeUp) return;
     setSelectedQuestionIds((current) => {
       if (current.includes(question.id)) {
         return current.filter((id) => id !== question.id);
@@ -259,12 +282,13 @@ export default function BingoPage() {
     });
   }
 
-  async function handleSubmit() {
-    if (!playerId) return;
-    if (selectedWords.length !== 9) {
+  async function handleSubmit(autoSubmit = false) {
+    if (!playerId || submitting) return;
+    if (!autoSubmit && !timeUp && selectedWords.length !== 9) {
       setMessage("请从 30 个词中选择 9 个组成 Bingo 宫格");
       return;
     }
+    setSubmitting(true);
     try {
       const outcome = await submitGameResult({
         playerId,
@@ -281,10 +305,15 @@ export default function BingoPage() {
       }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "提交失败");
+    } finally {
+      setSubmitting(false);
     }
   }
 
-  const statusHint = message || "请从词库中选择9个词组成 Bingo 宫格";
+  // 保持 ref 指向最新 handleSubmit，供倒计时 useEffect 调用
+  handleSubmitRef.current = handleSubmit;
+
+  const statusHint = message || (timeUp && !submitting ? "正在自动提交..." : "请从词库中选择9个词组成 Bingo 宫格");
 
   return (
     <BingoShell hideNavActions={canInteract}>
@@ -295,14 +324,34 @@ export default function BingoPage() {
       <section className="bingoMainCard">
         <div className="bingoStatus">
           <b>已选 {selectedWords.length}/9</b>
-          <span>{statusHint}</span>
+          {canInteract && !timeUp && (
+            <span className="bingoTimer">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <circle cx="8" cy="8.5" r="6.5" stroke="currentColor" strokeWidth="1.2" />
+                <path d="M8 5.5V8.5L10 10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+              </svg>
+              {seconds}s
+            </span>
+          )}
+          {timeUp && (
+            <span className="bingoTimer bingoTimer--up">时间到</span>
+          )}
         </div>
+        {canInteract && !timeUp && (
+          <div className="bingoProgressTrack">
+            <span
+              className="bingoProgressBar"
+              style={{ width: `${(seconds / BINGO_SECONDS) * 100}%` }}
+            />
+          </div>
+        )}
+        <p className="bingoHint">{statusHint}</p>
 
         <div className="bingoWordBank">
           {questions.map((question) => (
             <button
               className={selectedQuestionIds.includes(question.id) ? "selected" : ""}
-              disabled={!canInteract}
+              disabled={!canInteract || timeUp}
               key={question.id}
               type="button"
               onClick={() => toggleQuestion(question)}

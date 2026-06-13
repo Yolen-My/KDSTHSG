@@ -1074,13 +1074,18 @@ button:disabled {
 .lobbyNavLink {
   display: inline-flex;
   align-items: center;
-  justify-self: end;
   gap: 7px;
   color: rgba(255, 255, 255, 0.9);
   font-size: 12px;
   font-weight: 400;
   line-height: normal;
   text-decoration: none;
+}
+.lobbyNavLink:first-of-type {
+  justify-self: start;
+}
+.lobbyNavLink:last-of-type {
+  justify-self: end;
 }
 
 .lobbyHeader h1 {
@@ -1150,7 +1155,7 @@ button:disabled {
 
 .lobbyScoreGrid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
   margin-top: 24px;
 }
@@ -2089,8 +2094,8 @@ button:disabled {
 .screenQrWithText {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
+  align-items: center;
+  gap: 8px;
 }
 
 .screenQrFrame {
@@ -2119,7 +2124,7 @@ button:disabled {
   font-size: 14px;
   font-weight: 500;
   line-height: 20px;
-  text-align: right;
+  text-align: center;
   white-space: nowrap;
 }
 
@@ -2419,8 +2424,13 @@ button:disabled {
   text-align: center;
 }
 
+.bingoStatus {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .bingoStatus b {
-  display: block;
   color: #ffffff;
   font-size: 16px;
   font-weight: 500;
@@ -2428,11 +2438,47 @@ button:disabled {
 }
 
 .bingoStatus span {
-  display: block;
   margin-top: 2px;
   color: rgba(255, 255, 255, 0.8);
   font-size: 12px;
   line-height: normal;
+}
+
+.bingoTimer {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--green);
+  letter-spacing: 0.05em;
+}
+
+.bingoTimer--up {
+  color: #e74c3c;
+}
+
+.bingoHint {
+  margin: 6px 0 12px;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 12px;
+  text-align: center;
+}
+
+.bingoProgressTrack {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.15);
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.bingoProgressBar {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--green), #4ade80);
+  transition: width 1s linear;
 }
 
 .bingoWordBank {
@@ -3337,6 +3383,12 @@ button:disabled {
   line-height: normal;
   text-decoration: none;
 }
+.rankingNavLink:first-of-type {
+  justify-self: start;
+}
+.rankingNavLink:last-of-type {
+  justify-self: end;
+}
 
 .rankingProfile {
   position: relative;
@@ -3609,4 +3661,271 @@ button:disabled {
   .screenPageContent {
     margin: 0;
   }
+}
+
+/* ─── Review (温故知新) ─── */
+
+.reviewPage {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+  background: linear-gradient(180deg, #00523e 0%, #00b88b 100%);
+}
+
+.reviewPageContent {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 375px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 44px 24px 34px;
+  display: flex;
+  flex-direction: column;
+}
+
+.reviewNav {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  min-height: 43px;
+  padding: 8px 0;
+}
+
+.reviewNavLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: normal;
+  text-decoration: none;
+}
+.reviewNavLink:first-of-type {
+  justify-self: start;
+}
+.reviewNavLink:last-of-type {
+  justify-self: end;
+}
+
+.reviewNav h1 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: normal;
+}
+
+.reviewLoading,
+.reviewEmpty {
+  margin-top: 40px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+}
+
+.reviewBlock {
+  margin-top: 16px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.reviewBlockHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.reviewBlockTitle {
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.reviewBlockContent {
+  padding: 12px 16px 16px;
+}
+
+.reviewScoreLine {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+}
+.reviewScoreLine b {
+  color: #4ade80;
+  font-size: 16px;
+}
+
+/* ─── Bingo review ─── */
+
+.reviewBingoGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.reviewBingoCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+}
+.reviewBingoCell--correct {
+  background: rgba(74, 222, 128, 0.15);
+  border-color: #4ade80;
+  color: #4ade80;
+}
+.reviewBingoCell--wrong {
+  background: rgba(248, 113, 113, 0.1);
+  border-color: #f87171;
+  color: #f87171;
+}
+
+.reviewBingoTargets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.reviewBingoTargetsLabel {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+}
+
+.reviewBingoTargetWord {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.reviewBingoTargetWord--hit {
+  background: rgba(74, 222, 128, 0.2);
+  color: #4ade80;
+}
+.reviewBingoTargetWord--miss {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* ─── Quiz sector ─── */
+
+.reviewSector {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.reviewSector:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.reviewSectorHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* ─── Question ─── */
+
+.reviewQuestion {
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border-left: 3px solid rgba(255, 255, 255, 0.15);
+}
+.reviewQuestion--correct {
+  border-left-color: #4ade80;
+}
+.reviewQuestion--wrong {
+  border-left-color: #f87171;
+}
+
+.reviewQuestionTitle {
+  margin-bottom: 8px;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.reviewOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.reviewOption {
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.04);
+}
+.reviewOption--correct {
+  background: rgba(74, 222, 128, 0.15);
+  color: #4ade80;
+  font-weight: 600;
+}
+.reviewOption--wrong {
+  background: rgba(248, 113, 113, 0.12);
+  color: #f87171;
+  text-decoration: line-through;
+}
+.reviewOption--rightAnswer {
+  background: rgba(74, 222, 128, 0.08);
+  color: #4ade80;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ─── Text answer (non-choice) ─── */
+
+.reviewTextAnswers {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.reviewTextAnswer {
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.7);
+}
+.reviewTextAnswer--correct {
+  color: #4ade80;
+  font-weight: 500;
+}
+.reviewTextAnswer--wrong {
+  color: #f87171;
+}
+.reviewTextAnswer--right {
+  color: #4ade80;
 }

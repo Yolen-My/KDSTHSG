@@ -685,11 +685,10 @@ export async function triggerBingoScore(): Promise<AppState> {
     };
   });
 
-  // 3. 更新 Bingo 状态：bingoPhase=auto_score, isOpen=false
-  // 注意：isOpen=false 不阻止未完成用户进入，由 bingoPhase 决定
+  // 3. 更新 Bingo 状态：bingoPhase=closed, isOpen=false（判分后直接完全关闭）
   const newGames = state.games.map((game) => (
-    game.key === "bingo" 
-      ? { ...game, isOpen: false, bingoScored: true, bingoPhase: "auto_score" as const } 
+    game.key === "bingo"
+      ? { ...game, isOpen: false, bingoScored: true, bingoPhase: "closed" as const }
       : game
   ));
   const newState = { ...state, players, gameResults, games: newGames };
@@ -721,10 +720,10 @@ export async function triggerBingoScore(): Promise<AppState> {
       const list = await pb.collection("games").getFullList();
       const bingo = list.find(g => g.key === "bingo");
       if (bingo) {
-        await pb.collection("games").update(bingo.id, { 
-          isOpen: false, 
+        await pb.collection("games").update(bingo.id, {
+          isOpen: false,
           bingoScored: true,
-          bingoPhase: "auto_score"
+          bingoPhase: "closed"
         });
       }
 

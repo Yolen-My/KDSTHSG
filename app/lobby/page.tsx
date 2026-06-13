@@ -41,10 +41,6 @@ export default function LobbyPage() {
   }
 
   const completedCount = player.completedGames.length;
-  const lastResult = snapshot.results
-    .slice()
-    .sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime())[0];
-  const roundScore = lastResult?.score || 0;
   const quizProgress = snapshot.quizProgress;
 
   return (
@@ -56,7 +52,14 @@ export default function LobbyPage() {
 
         <div className="lobbyPageContent">
           <header className="lobbyHeader">
-            <span />
+            <Link className="lobbyNavLink" href="/game/review">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="11" viewBox="0 0 12 11" fill="none" aria-hidden="true">
+                <path opacity="0.9" d="M1.5 1C0.67 1 0 1.67 0 2.5V10L6 8L12 10V2.5C12 1.67 11.33 1 10.5 1C9.67 1 9 1.67 9 2.5V7.25L3 5.25V2.5C3 1.67 2.33 1 1.5 1Z" stroke="white" strokeWidth="1" strokeLinejoin="round" />
+                <path opacity="0.9" d="M3 5.25V8.75" stroke="white" strokeWidth="1" strokeLinecap="round" />
+                <path opacity="0.9" d="M9 7.25V8.75" stroke="white" strokeWidth="1" strokeLinecap="round" />
+              </svg>
+              温故知新
+            </Link>
             <h1>活动大厅</h1>
             <Link className="lobbyNavLink" href="/ranking">
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="11" viewBox="0 0 12 11" fill="none" aria-hidden="true">
@@ -78,7 +81,7 @@ export default function LobbyPage() {
             <span className="lobbyOfficeBadge">{player.office}</span>
           </section>
 
-          <ScorePanel roundScore={roundScore} totalScore={player.totalScore} rank={snapshot.rank} />
+          <ScorePanel totalScore={player.totalScore} rank={snapshot.rank} />
 
           <section className="lobbyGameList">
             {snapshot.state.games.sort((a, b) => a.order - b.order).map((game) => {

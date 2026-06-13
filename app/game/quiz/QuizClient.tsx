@@ -11,7 +11,6 @@ import ResultModal from "@/components/ResultModal";
 import { useAppState, useCurrentPlayer, useQuestions, useSubmitGameResult } from "@/hooks/use-game-data";
 import type { Question } from "@/types";
 
-const GROUP_SECONDS = 60;
 const TOTAL_GROUPS = 5;
 
 type QuizModalState = {
@@ -39,12 +38,6 @@ function isCorrectAnswer(question: Question, answer: string | undefined): boolea
   return Array.isArray(question.correctAnswer)
     ? question.correctAnswer.includes(answer)
     : question.correctAnswer === answer;
-}
-
-function formatTimer(seconds: number): string {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 }
 
 function QuizNav({ hideActions = false }: { hideActions?: boolean }) {
@@ -89,35 +82,6 @@ function QuizShell({ children, hideNavActions = false }: { children: ReactNode; 
   );
 }
 
-type QuizTimerProps = {
-  seconds: number;
-  total: number;
-  answeredCount: number;
-  totalQuestions: number;
-};
-
-function QuizTimer({ seconds, total, answeredCount, totalQuestions }: QuizTimerProps) {
-  const percent = total > 0 ? Math.max(0, Math.min(100, (seconds / total) * 100)) : 0;
-
-  return (
-    <div className="quizTimer">
-      <div className="quizTimerMeta">
-        <span>{answeredCount}/{totalQuestions}</span>
-        <span className="quizTimerClock">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <circle cx="8" cy="8.5" r="6.5" stroke="white" strokeWidth="1.2" />
-            <path d="M8 5.5V8.5L10 10" stroke="white" strokeWidth="1.2" strokeLinecap="round" />
-          </svg>
-          {formatTimer(seconds)}
-        </span>
-      </div>
-      <div className="quizTimerTrack">
-        <span style={{ width: `${percent}%` }} />
-      </div>
-    </div>
-  );
-}
-
 export default function QuizClient({ initialSectorIndex = null }: { initialSectorIndex?: number | null }) {
   const router = useRouter();
   const { playerId, refresh: refreshPlayer } = useCurrentPlayer();
@@ -128,7 +92,6 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
   const [activeSectorIndex, setActiveSectorIndex] = useState<number | null>(initialSectorIndex);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [seconds, setSeconds] = useState(GROUP_SECONDS);
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
@@ -188,17 +151,6 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
     if (playerId === null) router.push("/register");
   }, [playerId, router]);
 
-  useEffect(() => {
-    if (activeSectorIndex === null || modal.open || submitting) return;
-    const timer = window.setInterval(() => setSeconds((value) => Math.max(0, value - 1)), 1000);
-    return () => window.clearInterval(timer);
-  }, [activeSectorIndex, modal.open, submitting]);
-
-  useEffect(() => {
-    if (seconds > 0 || activeSectorIndex === null || modal.open || submittingRef.current) return;
-    submitSector();
-  }, [seconds, activeSectorIndex, modal.open]);
-
   function goLobby() {
     setIsLeaving(true);
     router.push("/lobby");
@@ -214,7 +166,11 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
       completedAll: false
     });
     submittingRef.current = false;
-    setIsLeaving(true);
+    setActiveSectorIndex(null);
+    setCurrentQuestionIndex(0);
+    setAnswers({});
+    refreshState();
+    refreshPlayer();
     router.replace("/game/quiz");
   }
 
@@ -345,7 +301,7 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
     );
   }
 
-  if (!modal.open && initialSectorIndex !== null && (!activeSector || !currentQuestion || activeSector.result || !activeSector.isOpen)) {
+  if (!modal.open && initialSectorIndex !== null && !stateLoading && !questions.loading && (!activeSector || !currentQuestion || activeSector.result || !activeSector.isOpen)) {
     return (
       <QuizShell>
         <section className="quizStatusCard">
@@ -377,13 +333,6 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
           <p>题目{currentQuestionIndex + 1}/{activeSector.questions.length}</p>
         </div>
 
-        <QuizTimer
-          answeredCount={answeredCount}
-          seconds={seconds}
-          total={GROUP_SECONDS}
-          totalQuestions={activeSector.questions.length}
-        />
-
         <section className="quizQuestionCard">
           <h3>{currentQuestion.title}</h3>
           <div className="quizOptions">
@@ -403,7 +352,7 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
 
         <section className="quizHintCard">
           <b>本组已选择 {answeredCount}/{activeSector.questions.length}</b>
-          <span>{message || "选择答案后继续，倒计时结束会自动提交本组答案"}</span>
+          <span>{message || "选择答案后继续"}</span>
         </section>
 
         <button
@@ -421,7 +370,7 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
           roundScore={modal.completedAll ? modal.quizTotalScore : modal.roundScore}
           totalScore={modal.totalScore}
           rank={modal.rank}
-          buttonText={modal.completedAll ? "返回大厅" : "返回板块选择"}
+          buttonText={modal.completedAll ? "返回大厅" : "返回上一页"}
           onBackLobby={goLobby}
           onClose={modal.completedAll ? undefined : closeModalAndRefresh}
         />
@@ -440,7 +389,7 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
             src="/image/source/quiz/quiz-title.png"
             width={147}
           />
-          <p>Quiz总进度已完成{completedCount}/{TOTAL_GROUPS}  当前Quiz得分{quizTotalScore}/100</p>
+          <p>Quiz总进度已完成{completedCount}/{TOTAL_GROUPS}</p>
         </div>
         <GameBannerIcon
           className="quizBannerLogo"

@@ -58,7 +58,7 @@ export default function RegisterPage() {
     
     let processedValue = value;
     if (field === "name") {
-      processedValue = value.replace(/[^\p{L}\s]/gu, "");
+      processedValue = value.replace(/[^\p{L}\s]/gu, "").replace(/\s+/g, " ");
     }
     if (field === "phone") {
       processedValue = value.replace(/[^0-9]/g, "").slice(0, 11);
@@ -90,10 +90,21 @@ export default function RegisterPage() {
     if (isSubmitting) return;
 
     setMessage("");
+    const name = form.name.trim();
+    if (!name || name.length < 2 || name.length > 50 || !/[\p{L}]/u.test(name)) {
+      setMessage("请输入有效姓名");
+      setIsSubmitting(false);
+      return;
+    }
+    if (!form.phone) {
+      setMessage("手机号不能为空");
+      setIsSubmitting(false);
+      return;
+    }
     setIsSubmitting(true);
 
     try {
-      const result = await registerPlayer({ ...form, team: DEFAULT_TEAM });
+      const result = await registerPlayer({ ...form, name, team: DEFAULT_TEAM });
       setMessage(result.reused ? "欢迎回来，正在恢复您的参赛信息..." : "注册成功，正在进入活动大厅...");
       router.replace("/lobby");
       window.setTimeout(() => {

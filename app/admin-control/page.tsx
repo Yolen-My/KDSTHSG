@@ -91,7 +91,7 @@ export default function AdminControlPage() {
   async function handleBingoScore() {
     try {
       await triggerBingoScore();
-      setExportText(`已完成 Boss 发言，开启自动判分模式。本次结算 ${pendingBingoCount} 名等待用户。`);
+      setExportText(`判分完成，Bingo 已完全关闭。本次结算 ${pendingBingoCount} 名等待用户。`);
       await refreshOnce();
     } catch (error) {
       setExportText(error instanceof Error ? `操作失败：${error.message}` : "操作失败");
@@ -186,8 +186,7 @@ export default function AdminControlPage() {
           <div>
             <b>当前阶段</b>
             <span>
-              {bingoPhase === "open" && "正常开放，提交后等待 Boss 判分"}
-              {bingoPhase === "auto_score" && "自动判分，未完成用户提交后立即得分"}
+              {bingoPhase === "open" && "正常开放，提交后等待判分"}
               {bingoPhase === "closed" && "已完全关闭，未完成用户不可进入"}
               {" / 完成 "}{bingoCompletionCount}{" 人 / 等待判分 "}{pendingBingoCount}{" 人"}
             </span>
@@ -195,8 +194,8 @@ export default function AdminControlPage() {
         </div>
         <div className="adminRow" style={{ justifyContent: "space-between", alignItems: "center" }}>
           <div>
-            <b>完成 Boss 发言并开启自动判分</b>
-            <span>结算所有等待用户，后续未完成用户可继续提交并立即判分</span>
+            <b>判分并关闭 Bingo</b>
+            <span>结算所有等待用户并完全关闭游戏，未完成用户不可再进入</span>
           </div>
           <button
             className="primaryButton smallButton"
@@ -204,21 +203,7 @@ export default function AdminControlPage() {
             disabled={bingoPhase !== "open"}
             onClick={handleBingoScore}
           >
-            {bingoPhase === "open" ? "触发判分" : bingoPhase === "auto_score" ? "已开启自动判分" : "已关闭"}
-          </button>
-        </div>
-        <div className="adminRow" style={{ justifyContent: "space-between", alignItems: "center" }}>
-          <div>
-            <b>完全关闭 Bingo</b>
-            <span>关闭后未完成用户不能再进入或提交</span>
-          </div>
-          <button
-            className="secondaryButton smallButton"
-            type="button"
-            disabled={bingoPhase === "closed"}
-            onClick={handleCloseBingo}
-          >
-            {bingoPhase === "closed" ? "已关闭" : "完全关闭"}
+            {bingoPhase === "open" ? "判分并关闭" : "已关闭"}
           </button>
         </div>
       </section>
