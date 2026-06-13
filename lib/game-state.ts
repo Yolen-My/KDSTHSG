@@ -1,12 +1,21 @@
+import { calculateBingoSelection } from "@/lib/bingo-scoring";
 import { GAME_ORDER } from "@/lib/constants";
 import type { AppState, GameKey } from "@/types";
 
 export function settlePendingBingoResults(state: AppState, settledAt = new Date().toISOString()): AppState {
   const gameResults = state.gameResults.map((result) => {
     if (result.gameKey !== "bingo" || !result.pendingBingoScore) return result;
+    const settled = calculateBingoSelection(state.questions, result.answers, result.score);
     return {
       ...result,
-      answers: { ...result.answers, pendingBingoScore: false },
+      answers: {
+        ...result.answers,
+        selectedWords: settled.selectedWords,
+        targetWords: settled.targetWords,
+        correctCount: settled.correctCount,
+        pendingBingoScore: false
+      },
+      score: settled.score,
       pendingBingoScore: false
     };
   });

@@ -94,7 +94,7 @@
     "type": "word",
     "title": "责任担当",
     "options": [],
-    "correctAnswer": "责任担当",
+    "correctAnswer": "INCORRECT",
     "score": 10,
     "order": 10,
     "isActive": true
@@ -104,7 +104,7 @@
     "type": "word",
     "title": "数字化",
     "options": [],
-    "correctAnswer": "数字化",
+    "correctAnswer": "INCORRECT",
     "score": 10,
     "order": 11,
     "isActive": true
@@ -114,7 +114,7 @@
     "type": "word",
     "title": "流程优化",
     "options": [],
-    "correctAnswer": "流程优化",
+    "correctAnswer": "INCORRECT",
     "score": 10,
     "order": 12,
     "isActive": true
@@ -124,7 +124,7 @@
     "type": "word",
     "title": "品牌力量",
     "options": [],
-    "correctAnswer": "品牌力量",
+    "correctAnswer": "INCORRECT",
     "score": 10,
     "order": 13,
     "isActive": true
@@ -134,7 +134,7 @@
     "type": "word",
     "title": "服务升级",
     "options": [],
-    "correctAnswer": "服务升级",
+    "correctAnswer": "INCORRECT",
     "score": 10,
     "order": 14,
     "isActive": true
@@ -144,7 +144,7 @@
     "type": "word",
     "title": "同心聚力",
     "options": [],
-    "correctAnswer": "同心聚力",
+    "correctAnswer": "INCORRECT",
     "score": 10,
     "order": 15,
     "isActive": true
@@ -154,7 +154,7 @@
     "type": "word",
     "title": "奋勇争先",
     "options": [],
-    "correctAnswer": "奋勇争先",
+    "correctAnswer": "INCORRECT",
     "score": 10,
     "order": 16,
     "isActive": true
@@ -164,7 +164,7 @@
     "type": "word",
     "title": "荣耀时刻",
     "options": [],
-    "correctAnswer": "荣耀时刻",
+    "correctAnswer": "INCORRECT",
     "score": 10,
     "order": 17,
     "isActive": true
@@ -174,7 +174,7 @@
     "type": "word",
     "title": "年度关键词",
     "options": [],
-    "correctAnswer": "年度关键词",
+    "correctAnswer": "INCORRECT",
     "score": 10,
     "order": 18,
     "isActive": true
@@ -184,7 +184,7 @@
     "type": "word",
     "title": "幸福职场",
     "options": [],
-    "correctAnswer": "幸福职场",
+    "correctAnswer": "INCORRECT",
     "score": 10,
     "order": 19,
     "isActive": true
@@ -194,7 +194,7 @@
     "type": "word",
     "title": "成长进步",
     "options": [],
-    "correctAnswer": "成长进步",
+    "correctAnswer": "INCORRECT",
     "score": 10,
     "order": 20,
     "isActive": true
@@ -204,7 +204,7 @@
     "type": "word",
     "title": "沟通协同",
     "options": [],
-    "correctAnswer": "沟通协同",
+    "correctAnswer": "INCORRECT",
     "score": 10,
     "order": 21,
     "isActive": true
@@ -214,7 +214,7 @@
     "type": "word",
     "title": "数据驱动",
     "options": [],
-    "correctAnswer": "数据驱动",
+    "correctAnswer": "INCORRECT",
     "score": 10,
     "order": 22,
     "isActive": true
@@ -224,7 +224,7 @@
     "type": "word",
     "title": "质量保障",
     "options": [],
-    "correctAnswer": "质量保障",
+    "correctAnswer": "INCORRECT",
     "score": 10,
     "order": 23,
     "isActive": true
@@ -234,7 +234,7 @@
     "type": "word",
     "title": "市场开拓",
     "options": [],
-    "correctAnswer": "市场开拓",
+    "correctAnswer": "INCORRECT",
     "score": 10,
     "order": 24,
     "isActive": true
@@ -244,7 +244,7 @@
     "type": "word",
     "title": "用户体验",
     "options": [],
-    "correctAnswer": "用户体验",
+    "correctAnswer": "INCORRECT",
     "score": 10,
     "order": 25,
     "isActive": true
@@ -254,7 +254,7 @@
     "type": "word",
     "title": "智慧运营",
     "options": [],
-    "correctAnswer": "智慧运营",
+    "correctAnswer": "INCORRECT",
     "score": 10,
     "order": 26,
     "isActive": true
@@ -264,7 +264,7 @@
     "type": "word",
     "title": "使命必达",
     "options": [],
-    "correctAnswer": "使命必达",
+    "correctAnswer": "INCORRECT",
     "score": 10,
     "order": 27,
     "isActive": true
@@ -274,7 +274,7 @@
     "type": "word",
     "title": "活力团队",
     "options": [],
-    "correctAnswer": "活力团队",
+    "correctAnswer": "INCORRECT",
     "score": 10,
     "order": 28,
     "isActive": true
@@ -284,7 +284,7 @@
     "type": "word",
     "title": "共创未来",
     "options": [],
-    "correctAnswer": "共创未来",
+    "correctAnswer": "INCORRECT",
     "score": 10,
     "order": 29,
     "isActive": true
@@ -294,7 +294,7 @@
     "type": "word",
     "title": "再创佳绩",
     "options": [],
-    "correctAnswer": "再创佳绩",
+    "correctAnswer": "INCORRECT",
     "score": 10,
     "order": 30,
     "isActive": true

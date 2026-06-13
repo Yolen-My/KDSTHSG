@@ -1,6 +1,7 @@
 "use client";
 
 import * as pbStorage from "@/lib/pb-storage";
+import { calculateBingoSelection } from "@/lib/bingo-scoring";
 import { GAME_ORDER, GAMES, PLAYER_CACHE_KEY, PLAYER_ID_KEY, PLAYER_PHONE_KEY, QUESTIONS, SEED_PLAYERS, STATE_KEY } from "@/lib/constants";
 import { settlePendingBingoResults } from "@/lib/game-state";
 import { getOfficeAverageRanking, getOfficeTop3, getPlayerRank, getPlayerRankingContext, getTop10Ranking } from "@/lib/ranking";
@@ -131,6 +132,15 @@ function hasPocketBaseConfig(): boolean {
   return Boolean(process.env.NEXT_PUBLIC_POCKETBASE_URL);
 }
 
+function getEmptyRuntimeState(): AppState {
+  return {
+    players: [],
+    gameResults: [],
+    games: GAMES,
+    questions: []
+  };
+}
+
 export async function checkBackend(): Promise<boolean> {
   const available = await pbStorage.checkPocketBase();
   usePocketBase = available;
@@ -142,7 +152,7 @@ export function getInitialState(): AppState {
     players: SEED_PLAYERS,
     gameResults: [],
     games: GAMES,
-    questions: QUESTIONS.map(normalizeQuestion)
+    questions: []
   };
 }
 
@@ -174,7 +184,7 @@ function loadStateLocal(): AppState {
         game.key === "quiz" ? { ...game, quizOpenGroups: normalizeQuizOpenGroups(game.quizOpenGroups || []) } : game
       )),
       gameResults: (parsed.gameResults || []).map(normalizeGameResult),
-      questions: (parsed.questions?.length ? parsed.questions : QUESTIONS).map(normalizeQuestion)
+      questions: (parsed.questions?.length ? parsed.questions : []).map(normalizeQuestion)
     };
   } catch {
     const initialState = getInitialState();
@@ -193,6 +203,9 @@ export async function loadState(): Promise<AppState> {
   const available = await checkBackend();
   if (available) {
     return await pbStorage.loadStateFromPB();
+  }
+  if (hasPocketBaseConfig()) {
+    return getEmptyRuntimeState();
   }
   return loadStateLocal();
 }
@@ -546,12 +559,23 @@ export async function submitGameResult(input: {
     }
   }
 
+  const bingoScore = input.gameKey === "bingo"
+    ? calculateBingoSelection(state.questions, input.answers, input.score)
+    : null;
+
   const result: GameResult = {
     id: createId("result"),
     player: input.playerId,
     gameKey: input.gameKey,
-    answers: input.answers,
-    score: Math.max(0, Math.min(100, Math.round(input.score))),
+    answers: bingoScore
+      ? {
+          ...input.answers,
+          selectedWords: bingoScore.selectedWords,
+          targetWords: bingoScore.targetWords,
+          correctCount: bingoScore.correctCount
+        }
+      : input.answers,
+    score: Math.max(0, Math.min(100, Math.round(bingoScore?.score ?? input.score))),
     maxScore: 100,
     completedAt: nowIso(),
     pendingBingoScore: isPending,
@@ -589,6 +613,11 @@ export async function submitGameResult(input: {
 }
 
 export async function getQuestions(gameKey: GameKey) {
+  const available = await checkBackend();
+  if (available) {
+    return await pbStorage.getQuestions(gameKey);
+  }
+
   const state = await loadState();
   return state.questions
     .map(normalizeQuestion)

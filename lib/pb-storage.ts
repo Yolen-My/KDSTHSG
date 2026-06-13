@@ -1,6 +1,7 @@
 "use client";
 
 import { pb } from "@/lib/pocketbase";
+import { calculateBingoSelection } from "@/lib/bingo-scoring";
 import { GAME_ORDER, GAMES, PLAYER_CACHE_KEY, PLAYER_ID_KEY, PLAYER_PHONE_KEY, QUESTIONS, SEED_PLAYERS } from "@/lib/constants";
 import { settlePendingBingoResults } from "@/lib/game-state";
 import { getOfficeAverageRanking, getOfficeTop3, getPlayerRank, getPlayerRankingContext, getTop10Ranking } from "@/lib/ranking";
@@ -111,6 +112,15 @@ function isBrowser(): boolean {
   return typeof window !== "undefined";
 }
 
+function getEmptyRuntimeState(): AppState {
+  return {
+    players: [],
+    gameResults: [],
+    games: GAMES,
+    questions: []
+  };
+}
+
 function setCachedPlayer(player: Player): void {
   if (!isBrowser()) return;
   window.localStorage.setItem(PLAYER_CACHE_KEY, JSON.stringify(player));
@@ -186,15 +196,15 @@ async function loadQuestionsFromPB(): Promise<Question[]> {
   try {
     const records = await pb.collection("questions").getFullList({ sort: "order" });
     if (records.length === 0) {
-      console.warn("⚠️ PocketBase 返回空数据，使用本地 QUESTIONS 兜底");
-      return QUESTIONS.map(normalizeQuestion);
+      console.warn("⚠️ PocketBase 返回空题库，运行时不使用本地题库兜底");
+      return [];
     }
     console.log(`✅ 从 PocketBase 加载 ${records.length} 个题目`);
     return records.map(mapQuestionRecord);
   } catch (error) {
     console.error("❌ loadQuestionsFromPB 失败:", error);
-    console.warn("⚠️ 使用本地 QUESTIONS 兜底");
-    return QUESTIONS.map(normalizeQuestion);
+    console.warn("⚠️ 运行时不使用本地题库兜底");
+    return [];
   }
 }
 
@@ -327,7 +337,7 @@ export async function ensureCollections(): Promise<void> {
 export async function loadStateFromPB(): Promise<AppState> {
   const available = await checkPocketBase();
   if (!available) {
-    return getInitialState();
+    return getEmptyRuntimeState();
   }
 
   try {
@@ -366,7 +376,7 @@ export async function loadStateFromPB(): Promise<AppState> {
     };
   } catch (error) {
     console.error("❌ loadStateFromPB 失败:", error);
-    return getInitialState();
+    return getEmptyRuntimeState();
   }
 }
 
@@ -375,7 +385,7 @@ export function getInitialState(): AppState {
     players: SEED_PLAYERS,
     gameResults: [],
     games: GAMES,
-    questions: QUESTIONS.map(normalizeQuestion)
+    questions: []
   };
 }
 
@@ -384,7 +394,7 @@ export async function loadState(): Promise<AppState> {
   if (available) {
     return await loadStateFromPB();
   }
-  return getInitialState();
+  return getEmptyRuntimeState();
 }
 
 export async function saveStateToPB(state: AppState): Promise<void> {
@@ -643,9 +653,17 @@ export async function triggerBingoScore(): Promise<AppState> {
   // 1. 找到所有 pendingBingoScore=true 的 Bingo 记录并判分
   const gameResults = state.gameResults.map((result) => {
     if (result.gameKey !== "bingo" || !result.pendingBingoScore) return result;
+    const settled = calculateBingoSelection(state.questions, result.answers, result.score);
     return {
       ...result,
-      answers: { ...result.answers, pendingBingoScore: false },
+      answers: {
+        ...result.answers,
+        selectedWords: settled.selectedWords,
+        targetWords: settled.targetWords,
+        correctCount: settled.correctCount,
+        pendingBingoScore: false
+      },
+      score: settled.score,
       pendingBingoScore: false
     };
   });
@@ -687,9 +705,11 @@ export async function triggerBingoScore(): Promise<AppState> {
       
       for (const result of pendingResults) {
         if (mapPendingBingoScore(result)) {
+          const settled = gameResults.find((item) => item.id === result.id);
           await pb.collection("game_results").update(result.id, {
             pendingBingoScore: false,
-            answers: { ...result.answers, pendingBingoScore: false }
+            score: settled?.score ?? result.score,
+            answers: settled?.answers ?? { ...result.answers, pendingBingoScore: false }
           });
         }
       }
@@ -942,12 +962,23 @@ async function persistGameResult(
   const playerIndex = state.players.findIndex((player) => player.id === input.playerId);
   if (playerIndex < 0) throw new Error("未找到当前用户，请重新注册");
 
+  const bingoScore = input.gameKey === "bingo"
+    ? calculateBingoSelection(state.questions, input.answers, input.score)
+    : null;
+
   const result: GameResult = {
     id: createId("result"),
     player: input.playerId,
     gameKey: input.gameKey,
-    answers: input.answers,
-    score: Math.max(0, Math.min(100, Math.round(input.score))),
+    answers: bingoScore
+      ? {
+          ...input.answers,
+          selectedWords: bingoScore.selectedWords,
+          targetWords: bingoScore.targetWords,
+          correctCount: bingoScore.correctCount
+        }
+      : input.answers,
+    score: Math.max(0, Math.min(100, Math.round(bingoScore?.score ?? input.score))),
     maxScore: 100,
     completedAt: nowIso(),
     pendingBingoScore: isPending,
@@ -1015,6 +1046,20 @@ async function persistGameResult(
 }
 
 export async function getQuestions(gameKey: GameKey) {
+  const available = await checkPocketBase();
+  if (available) {
+    try {
+      const records = await pb.collection("questions").getFullList({
+        filter: pb.filter("gameKey = {:gameKey} && isActive = true", { gameKey }),
+        sort: "order"
+      });
+      return records.map(mapQuestionRecord).map(normalizeQuestion);
+    } catch (error) {
+      console.error("❌ getQuestions 直接加载 PocketBase 题库失败:", error);
+      return [];
+    }
+  }
+
   const state = await loadState();
   return state.questions
     .map(normalizeQuestion)
@@ -1067,7 +1112,7 @@ export async function getLobbySnapshot(playerId: string) {
         players: mappedPlayers,
         gameResults: results,
         games: games.map(mapGameRecord),
-        questions: QUESTIONS.map(normalizeQuestion)
+        questions: []
       };
       const player = mappedPlayers.find((item) => item.id === playerId) || getCachedPlayer(playerId);
       return {

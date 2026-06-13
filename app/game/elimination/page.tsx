@@ -208,6 +208,16 @@ export default function EliminationPage() {
     );
   }
 
+  if (!questions.length) {
+    return (
+      <EliminationShell>
+        <section className="eliminationStatusCard">
+          <p className="eliminationStatusMessage">{questions.loading ? "题库加载中，请稍候" : `题库正在重新加载：${questions.error || "暂无题目"}`}</p>
+        </section>
+      </EliminationShell>
+    );
+  }
+
   return (
     <EliminationShell hideNavActions={!existing && isOpen === true}>
       {!existingLoading && existing && (

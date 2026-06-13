@@ -177,6 +177,16 @@ export default function StoryPage() {
     );
   }
 
+  if (!questions.length) {
+    return (
+      <StoryShell>
+        <section className="storyStatusCard">
+          <p className="storyStatusMessage">{questions.loading ? "题库加载中，请稍候" : `题库正在重新加载：${questions.error || "暂无题目"}`}</p>
+        </section>
+      </StoryShell>
+    );
+  }
+
   return (
     <StoryShell>
       {!existingLoading && existing && (

@@ -10,7 +10,7 @@ import PageBackground from "@/components/PageBackground";
 import ResultModal from "@/components/ResultModal";
 import WaitingModal from "@/components/WaitingModal";
 import { getPlayerRank } from "@/lib/ranking";
-import { calculateBingoScore } from "@/lib/scoring";
+import { calculateBingoSelection, getBingoTargetWords } from "@/lib/bingo-scoring";
 import { getGameResult } from "@/lib/storage";
 import { useCurrentPlayer, useQuestions, useSubmitGameResult, useAppState } from "@/hooks/use-game-data";
 import type { Question } from "@/types";
@@ -167,14 +167,14 @@ export default function BingoPage() {
     };
   }, [playerId, isWaitingForScore]);
 
-  const targetWords = useMemo(
-    () => questions.filter((question) => question.correctAnswer === question.title).map((question) => question.title),
-    [questions]
+  const targetWords = useMemo(() => getBingoTargetWords(questions), [questions]);
+  const selectedQuestionIdsForScore = useMemo(() => selectedQuestionIds, [selectedQuestionIds]);
+  const bingoSelection = useMemo(
+    () => calculateBingoSelection(questions, { selectedQuestionIds: selectedQuestionIdsForScore, selectedWords }),
+    [questions, selectedQuestionIdsForScore, selectedWords]
   );
-  const correctCount =
-    selectedWords.filter((word) => targetWords.includes(word)).length +
-    (selectedWords.length === 9 && selectedWords.every((word) => targetWords.includes(word)) ? 1 : 0);
-  const previewScore = calculateBingoScore(correctCount);
+  const correctCount = bingoSelection.correctCount;
+  const previewScore = bingoSelection.score;
 
   // 当用户完成 Bingo 时显示结果弹窗
   useEffect(() => {
@@ -230,6 +230,16 @@ export default function BingoPage() {
     );
   }
 
+  if (!questions.length) {
+    return (
+      <BingoShell>
+        <section className="bingoMainCard bingoMainCard--status">
+          <p className="bingoStatusMessage">{questions.loading ? "题库加载中，请稍候" : `题库正在重新加载：${questions.error || "暂无题目"}`}</p>
+        </section>
+      </BingoShell>
+    );
+  }
+
   // 用户能否操作（选词与提交）
   const canInteract = !hasCompletedBingo && !isWaitingForScore && bingoPhase !== "closed";
 
@@ -259,7 +269,7 @@ export default function BingoPage() {
       const outcome = await submitGameResult({
         playerId,
         gameKey: "bingo",
-        answers: { selectedWords, targetWords, correctCount },
+        answers: { selectedQuestionIds, selectedWords, targetWords, correctCount },
         score: previewScore
         // 不再传 pendingBingoScore；由后端根据 bingoPhase 决定
       });

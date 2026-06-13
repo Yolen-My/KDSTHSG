@@ -90,13 +90,43 @@ export function useRegisterPlayer() {
   return registerPlayer;
 }
 
-export function useQuestions(gameKey: GameKey) {
+export type QuestionsState = Question[] & {
+  loading: boolean;
+  error: string | null;
+  refresh: () => Promise<void>;
+};
+
+export function useQuestions(gameKey: GameKey): QuestionsState {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    const q = await getQuestions(gameKey);
-    setQuestions(q);
+    setLoading(true);
+    let lastError: unknown = null;
+
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      try {
+        const q = await getQuestions(gameKey);
+        if (q.length > 0) {
+          setQuestions(q);
+          setError(null);
+          setLoading(false);
+          return;
+        }
+        lastError = new Error(`${gameKey} 题库为空`);
+      } catch (err) {
+        lastError = err;
+        console.error(`❌ useQuestions 加载 ${gameKey} 题库失败，第 ${attempt} 次:`, err);
+      }
+
+      if (attempt < 3) {
+        await new Promise((resolve) => window.setTimeout(resolve, 600));
+      }
+    }
+
+    setQuestions([]);
+    setError(lastError instanceof Error ? lastError.message : "题库加载失败");
     setLoading(false);
   }, [gameKey]);
 
@@ -104,7 +134,15 @@ export function useQuestions(gameKey: GameKey) {
     refresh();
   }, [refresh]);
 
-  return questions;
+  useEffect(() => {
+    if (loading || questions.length > 0) return;
+    const timer = window.setTimeout(() => {
+      refresh();
+    }, 1200);
+    return () => window.clearTimeout(timer);
+  }, [error, loading, questions.length, refresh]);
+
+  return Object.assign([...questions], { loading, error, refresh });
 }
 
 export function useGameStatus(gameKey: GameKey) {
