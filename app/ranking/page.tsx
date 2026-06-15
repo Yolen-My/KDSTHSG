@@ -10,7 +10,7 @@ import { useCurrentPlayer, useRanking } from "@/hooks/use-game-data";
 
 export default function RankingPage() {
   const { playerId } = useCurrentPlayer();
-  const { ranking } = useRanking(playerId, 3000);
+  const { ranking } = useRanking(playerId, 4000);
 
   const context = ranking.context;
   const player = context?.player;

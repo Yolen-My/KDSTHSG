@@ -190,7 +190,7 @@ function ReviewStandardBlock({ result, questions }: { result: GameResult; questi
 export default function ReviewPage() {
   const router = useRouter();
   const { playerId, player } = useCurrentPlayer();
-  const { state } = useAppState();
+  const { state } = useAppState(4000);
 
   useEffect(() => {
     if (playerId === null) router.push("/register");
@@ -218,11 +218,11 @@ export default function ReviewPage() {
 
     for (const key of gamesWithResults) {
       const results = state.gameResults.filter(
-        (r) => r.player === playerId && r.gameKey === key
-      );
-      if (results.length > 0) {
-        rMap.set(key, results);
-      }
+      (r) => r.player === playerId && r.gameKey === key && !r.pendingBingoScore
+    );
+    if (results.length > 0) {
+      rMap.set(key, results);
+    }
       const qs = state.questions.filter((q) => q.gameKey === key && q.isActive);
       if (qs.length > 0) {
         qMap.set(key, qs);

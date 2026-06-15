@@ -23,9 +23,9 @@ import {
   subscribeToState
 } from "@/lib/storage";
 
-const STATE_REFRESH_INTERVAL_MS = 2000;
+const STATE_REFRESH_INTERVAL_MS = 3000;
 
-export function useAppState() {
+export function useAppState(intervalMs?: number) {
   const [state, setState] = useState<AppState>(getInitialState());
   const [loading, setLoading] = useState(true);
 
@@ -39,12 +39,12 @@ export function useAppState() {
     refresh();
     const unsubscribe = subscribeToState(refresh);
 
-    const timer = window.setInterval(refresh, STATE_REFRESH_INTERVAL_MS);
+    const timer = window.setInterval(refresh, intervalMs || STATE_REFRESH_INTERVAL_MS);
     return () => {
       unsubscribe();
       window.clearInterval(timer);
     };
-  }, [refresh]);
+  }, [refresh, intervalMs]);
 
   return { state, refresh, loading };
 }

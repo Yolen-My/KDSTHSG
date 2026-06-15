@@ -21,7 +21,7 @@ function getSectorName(index: number, questions: any[]): string {
 }
 
 export default function AdminControlPage() {
-  const { state, refresh } = useAppState();
+  const { state, refresh } = useAppState(2000);
   const {
     toggleGameOpen,
     triggerBingoScore,

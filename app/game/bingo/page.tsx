@@ -99,8 +99,19 @@ export default function BingoPage() {
   const [pendingResult, setPendingResult] = useState<Awaited<ReturnType<typeof submitGameResult>> | null>(null);
   const [isLeaving, setIsLeaving] = useState(false);
   const [message, setMessage] = useState("");
-  const [seconds, setSeconds] = useState(BINGO_SECONDS);
-  const [timeUp, setTimeUp] = useState(false);
+  const [seconds, setSeconds] = useState(() => {
+    if (typeof window === "undefined") return BINGO_SECONDS;
+    const start = localStorage.getItem("bingo_timer_start");
+    if (!start) return BINGO_SECONDS;
+    const elapsed = (Date.now() - Number(start)) / 1000;
+    return Math.max(0, Math.ceil(BINGO_SECONDS - elapsed));
+  });
+  const [timeUp, setTimeUp] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const start = localStorage.getItem("bingo_timer_start");
+    if (!start) return false;
+    return (Date.now() - Number(start)) / 1000 >= BINGO_SECONDS;
+  });
   const [submitting, setSubmitting] = useState(false);
 
   // Bingo 阶段
@@ -179,9 +190,20 @@ export default function BingoPage() {
     const phase = bingoGame?.bingoPhase || "open";
     const completed = currentPlayer?.completedGames?.includes("bingo");
     const waiting = Boolean(myBingoResult?.pendingBingoScore) && !completed;
-    if (!playerId || timeUp || waiting || completed || phase === "closed") return;
+    if (!playerId || timeUp || waiting || completed || phase === "closed") {
+      // 已完成/已关闭时清除时间戳
+      if (completed || phase === "closed") {
+        localStorage.removeItem("bingo_timer_start");
+      }
+      return;
+    }
+    // 首次进入：存入开始时间戳
+    if (!localStorage.getItem("bingo_timer_start")) {
+      localStorage.setItem("bingo_timer_start", String(Date.now()));
+    }
     if (seconds <= 0) {
       setTimeUp(true);
+      localStorage.removeItem("bingo_timer_start");
       // 自动提交已选答案
       handleSubmitRef.current(true);
       return;
@@ -289,6 +311,7 @@ export default function BingoPage() {
       return;
     }
     setSubmitting(true);
+    localStorage.removeItem("bingo_timer_start");
     try {
       const outcome = await submitGameResult({
         playerId,
