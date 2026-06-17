@@ -86,7 +86,7 @@ export default function EliminationPage() {
   const [existing, setExisting] = useState<Awaited<ReturnType<typeof getGameResult>>>(null);
   const [existingLoading, setExistingLoading] = useState(true);
   const [modal, setModal] = useState({ open: false, score: 0, total: 0, rank: 0, isEliminated: false });
-  const [eliminationModal, setEliminationModal] = useState({ open: false, score: 0 });
+  const [eliminationModal, setEliminationModal] = useState({ open: false, score: 0, hideScore: false });
   const [message, setMessage] = useState("");
   const [isLeaving, setIsLeaving] = useState(false);
 
@@ -154,7 +154,7 @@ export default function EliminationPage() {
           setMessage(error instanceof Error ? error.message : "提交失败");
         }
       } else {
-        setEliminationModal({ open: true, score: newScore });
+        setEliminationModal({ open: true, score: newScore, hideScore: currentIndex < 4 });
       }
     } else {
       if (!playerId) return;
@@ -277,6 +277,7 @@ export default function EliminationPage() {
         totalScore={(player?.totalScore ?? 0) + eliminationModal.score}
         rank={ranking.context?.rank ?? 0}
         onNext={goNext}
+        hideScore={eliminationModal.hideScore}
       />
     </EliminationShell>
   );

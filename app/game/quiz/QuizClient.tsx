@@ -373,6 +373,7 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
           buttonText={modal.completedAll ? "返回大厅" : "返回上一页"}
           onBackLobby={goLobby}
           onClose={modal.completedAll ? undefined : closeModalAndRefresh}
+          hideScore={!modal.completedAll}
         />
       </QuizShell>
     );

@@ -18,6 +18,7 @@ Thumbs.db
 # PocketBase
 pocketbase.exe
 pocketbase_*.exe
+pocketbase_*.zip
 pb_data/
 *.db
 *.db-shm

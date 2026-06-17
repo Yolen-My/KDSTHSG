@@ -8,6 +8,7 @@ type EliminationModalProps = {
   totalScore: number;
   rank: number;
   onNext?: () => void;
+  hideScore?: boolean;
 };
 
 export default function EliminationModal({
@@ -15,7 +16,8 @@ export default function EliminationModal({
   roundScore,
   totalScore,
   rank,
-  onNext
+  onNext,
+  hideScore = false
 }: EliminationModalProps) {
   return (
     <ResultModal
@@ -28,6 +30,7 @@ export default function EliminationModal({
       buttonText="下一题"
       onClose={onNext}
       onBackLobby={() => onNext?.()}
+      hideScore={hideScore}
     />
   );
 }

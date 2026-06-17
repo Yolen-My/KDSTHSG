@@ -5,6 +5,16 @@ type OfficeTop3PanelProps = {
   variant?: "default" | "ranking";
 };
 
+function formatCompletedTime(completedAt?: string) {
+  if (!completedAt) return "未完成";
+  return new Date(completedAt).toLocaleTimeString("zh-CN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false
+  });
+}
+
 export default function OfficeTop3Panel({ data, variant = "default" }: OfficeTop3PanelProps) {
   if (variant === "ranking") {
     return (
@@ -15,7 +25,10 @@ export default function OfficeTop3Panel({ data, variant = "default" }: OfficeTop
             {group.players.map((player) => (
               <div className="rankingRow compact" key={player.playerId}>
                 <span className="rankingRankCircle">{player.rank}</span>
-                <b className="rankingRowName">{player.name}</b>
+                <div className="rankingRowInfo">
+                  <b>{player.name}</b>
+                  <small>完成时间：{formatCompletedTime(player.completedAt)}</small>
+                </div>
                 <strong>{player.totalScore}</strong>
               </div>
             ))}

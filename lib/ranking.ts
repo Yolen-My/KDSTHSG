@@ -15,7 +15,8 @@ export function buildRanking(players: Player[]): RankingItem[] {
     name: player.name,
     office: player.office,
     team: player.team,
-    totalScore: player.totalScore
+    totalScore: player.totalScore,
+    completedAt: player.finalCompletedAt
   }));
 }
 

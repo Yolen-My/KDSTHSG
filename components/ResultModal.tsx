@@ -34,6 +34,7 @@ type ResultModalProps = {
   isEliminated?: boolean;
   onClose?: () => void;
   eliminationModalStyle?: EliminationModalStyle;
+  hideScore?: boolean;
 };
 
 const ELIMINATION_CORNER_BADGES = {
@@ -51,7 +52,8 @@ export default function ResultModal({
   buttonText,
   isEliminated = false,
   onClose,
-  eliminationModalStyle = "auto"
+  eliminationModalStyle = "auto",
+  hideScore = false
 }: ResultModalProps) {
   if (!open) return null;
 
@@ -139,7 +141,7 @@ export default function ResultModal({
 
           <div className="resultModalMain">
             <div className="resultModalScore">{roundScore}</div>
-            {(!isEliminated || isElimination) && (
+            {!hideScore && (!isEliminated || isElimination) && (
               <p className="resultModalStats">
                 累计积分 {totalScore} 当前排名 <span className="resultModalRank">{rank || "-"}</span>
               </p>

@@ -81,6 +81,7 @@ export type RankingItem = {
   office: string;
   team: string;
   totalScore: number;
+  completedAt?: string;
 };
 
 export type OfficeAverageItem = {
