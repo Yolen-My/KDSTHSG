@@ -250,6 +250,20 @@ export default function BingoPage() {
     );
   }
 
+  // bingoPhase === auto_score 且用户从未参与过 Bingo：禁止新进入
+  if (bingoPhase === "auto_score" && !hasCompletedBingo && !isWaitingForScore && !myBingoResult) {
+    return (
+      <BingoShell>
+        <section className="bingoMainCard bingoMainCard--status">
+          <p className="bingoStatusMessage">Bingo 已结束</p>
+          <button className="bingoSubmitButton" type="button" onClick={goLobby}>
+            回到大厅
+          </button>
+        </section>
+      </BingoShell>
+    );
+  }
+
   // bingoPhase === closed 且用户未完成：禁止进入
   if (bingoPhase === "closed" && !hasCompletedBingo && !isWaitingForScore) {
     return (

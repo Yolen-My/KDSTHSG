@@ -69,8 +69,13 @@ export default function GameCard({
       status = "未开始";
       canEnter = true;
     } else if (phase === "auto_score") {
-      status = "未开始";
-      canEnter = true;
+      if (bingoPending) {
+        status = "等待 Boss 发言";
+        canEnter = true;
+      } else {
+        status = "已结束";
+        canEnter = false;
+      }
     } else if (phase === "closed") {
       status = "已结束";
       canEnter = false;
