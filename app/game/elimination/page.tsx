@@ -171,7 +171,7 @@ export default function EliminationPage() {
 
   function goNext() {
     setCurrentIndex((index) => Math.min(index + 1, questions.length - 1));
-    setEliminationModal({ open: false, score: 0 });
+    setEliminationModal({ open: false, score: 0, hideScore: false });
     setMessage("");
   }
 

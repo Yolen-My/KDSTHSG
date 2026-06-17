@@ -17,6 +17,11 @@ import type { Question } from "@/types";
 import type { ReactNode } from "react";
 
 const BINGO_SECONDS = 10;
+const LEGACY_BINGO_TIMER_KEY = "bingo_timer_start";
+
+function getBingoTimerKey(playerId?: string | null): string {
+  return playerId ? `bingo_timer_start_${playerId}` : LEGACY_BINGO_TIMER_KEY;
+}
 
 function BingoShell({ children, hideNavActions = false }: { children: ReactNode; hideNavActions?: boolean }) {
   return (
@@ -99,20 +104,10 @@ export default function BingoPage() {
   const [pendingResult, setPendingResult] = useState<Awaited<ReturnType<typeof submitGameResult>> | null>(null);
   const [isLeaving, setIsLeaving] = useState(false);
   const [message, setMessage] = useState("");
-  const [seconds, setSeconds] = useState(() => {
-    if (typeof window === "undefined") return BINGO_SECONDS;
-    const start = localStorage.getItem("bingo_timer_start");
-    if (!start) return BINGO_SECONDS;
-    const elapsed = (Date.now() - Number(start)) / 1000;
-    return Math.max(0, Math.ceil(BINGO_SECONDS - elapsed));
-  });
-  const [timeUp, setTimeUp] = useState(() => {
-    if (typeof window === "undefined") return false;
-    const start = localStorage.getItem("bingo_timer_start");
-    if (!start) return false;
-    return (Date.now() - Number(start)) / 1000 >= BINGO_SECONDS;
-  });
+  const [seconds, setSeconds] = useState(BINGO_SECONDS);
+  const [timeUp, setTimeUp] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const timerKey = getBingoTimerKey(playerId);
 
   // Bingo 阶段
   const bingoGame = useMemo(() => state.games.find((g) => g.key === "bingo"), [state.games]);
@@ -183,8 +178,24 @@ export default function BingoPage() {
     };
   }, [playerId, isWaitingForScore]);
 
+  // 按玩家隔离倒计时，避免微信内旧缓存 bingo_timer_start 污染当前玩家
+  useEffect(() => {
+    if (!playerId) return;
+    localStorage.removeItem(LEGACY_BINGO_TIMER_KEY);
+    const start = localStorage.getItem(timerKey);
+    if (!start) {
+      setSeconds(BINGO_SECONDS);
+      setTimeUp(false);
+      return;
+    }
+    const elapsed = (Date.now() - Number(start)) / 1000;
+    const nextSeconds = Math.max(0, Math.ceil(BINGO_SECONDS - elapsed));
+    setSeconds(nextSeconds);
+    setTimeUp(elapsed >= BINGO_SECONDS);
+  }, [playerId, timerKey]);
+
   // 倒计时：时间到后禁止选词，自动提交（必须在 early return 之前）
-  const handleSubmitRef = useRef<() => Promise<void>>(() => {});
+  const handleSubmitRef = useRef<(autoSubmit?: boolean) => Promise<void>>(async () => {});
   useEffect(() => {
     const bingoGame = state.games.find((g) => g.key === "bingo");
     const phase = bingoGame?.bingoPhase || "open";
@@ -193,24 +204,24 @@ export default function BingoPage() {
     if (!playerId || timeUp || waiting || completed || phase === "closed") {
       // 已完成/已关闭时清除时间戳
       if (completed || phase === "closed") {
-        localStorage.removeItem("bingo_timer_start");
+        localStorage.removeItem(timerKey);
       }
       return;
     }
     // 首次进入：存入开始时间戳
-    if (!localStorage.getItem("bingo_timer_start")) {
-      localStorage.setItem("bingo_timer_start", String(Date.now()));
+    if (!localStorage.getItem(timerKey)) {
+      localStorage.setItem(timerKey, String(Date.now()));
     }
     if (seconds <= 0) {
       setTimeUp(true);
-      localStorage.removeItem("bingo_timer_start");
+      localStorage.removeItem(timerKey);
       // 自动提交已选答案
       handleSubmitRef.current(true);
       return;
     }
     const timer = window.setInterval(() => setSeconds((v) => Math.max(0, v - 1)), 1000);
     return () => window.clearInterval(timer);
-  }, [playerId, timeUp, seconds, state.games, currentPlayer, myBingoResult]);
+  }, [playerId, timeUp, seconds, state.games, currentPlayer, myBingoResult, timerKey]);
 
   const targetWords = useMemo(() => getBingoTargetWords(questions), [questions]);
   const selectedQuestionIdsForScore = useMemo(() => selectedQuestionIds, [selectedQuestionIds]);
@@ -325,7 +336,7 @@ export default function BingoPage() {
       return;
     }
     setSubmitting(true);
-    localStorage.removeItem("bingo_timer_start");
+    localStorage.removeItem(timerKey);
     try {
       const outcome = await submitGameResult({
         playerId,
@@ -413,7 +424,7 @@ export default function BingoPage() {
         className="bingoSubmitButton"
         type="button"
         disabled={!canInteract || selectedWords.length !== 9}
-        onClick={handleSubmit}
+        onClick={() => handleSubmit()}
       >
         提交
       </button>

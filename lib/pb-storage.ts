@@ -2,7 +2,7 @@
 
 import { pb } from "@/lib/pocketbase";
 import { calculateBingoSelection } from "@/lib/bingo-scoring";
-import { GAME_ORDER, GAMES, PLAYER_CACHE_KEY, PLAYER_ID_KEY, PLAYER_PHONE_KEY, QUESTIONS, SEED_PLAYERS } from "@/lib/constants";
+import { GAME_ORDER, GAMES, PLAYER_CACHE_KEY, PLAYER_ID_KEY, PLAYER_PHONE_KEY } from "@/lib/constants";
 import { settlePendingBingoResults } from "@/lib/game-state";
 import { getOfficeAverageRanking, getOfficeTop3, getPlayerRank, getPlayerRankingContext, getTop10Ranking } from "@/lib/ranking";
 import type { AppState, Game, GameKey, GameResult, Player, Question, QuizProgress, QuizSessionSnapshot } from "@/types";
@@ -328,7 +328,7 @@ export async function ensureCollections(): Promise<void> {
   try {
     await pb.collection("game_results").getFullList(1);
   } catch {
-    console.warn("game_results collection not found, using localStorage fallback");
+    throw new Error("game_results collection not found");
   }
 
   await ensureGameState();
@@ -381,12 +381,7 @@ export async function loadStateFromPB(): Promise<AppState> {
 }
 
 export function getInitialState(): AppState {
-  return {
-    players: SEED_PLAYERS,
-    gameResults: [],
-    games: GAMES,
-    questions: []
-  };
+  return getEmptyRuntimeState();
 }
 
 export async function loadState(): Promise<AppState> {
@@ -420,17 +415,16 @@ export async function getCurrentPlayer(): Promise<Player | null> {
   const playerId = await getCurrentPlayerId();
   if (!playerId) return null;
   const available = await checkPocketBase();
-  if (available) {
-    try {
-      const record = await pb.collection("players").getOne(playerId);
-      const player = mapPlayerRecord(record);
-      setCachedPlayer(player);
-      return player;
-    } catch {
-      return getCachedPlayer(playerId);
-    }
+  if (!available) return null;
+  try {
+    const record = await pb.collection("players").getOne(playerId);
+    const player = mapPlayerRecord(record);
+    setCachedPlayer(player);
+    return player;
+  } catch {
+    clearCurrentPlayer();
+    return null;
   }
-  return getCachedPlayer(playerId);
 }
 
 export function saveCurrentPlayer(player: Player): void {
@@ -498,9 +492,7 @@ export async function restoreCurrentPlayerFromLocal(): Promise<Player | null> {
     return null;
   }
 
-  // PocketBase 不可用：使用本地缓存兜底
-  const cached = getCachedPlayer(playerId || undefined);
-  if (cached) return cached;
+  // PocketBase 不可用时不使用本地缓存兜底
   return null;
 }
 
@@ -555,39 +547,7 @@ export async function registerPlayer(input: { name: string; phone: string; offic
     return { player, reused: false };
   }
 
-  const state = await loadState();
-  const existing = state.players.find((player) => player.phone === phone);
-
-  if (existing) {
-    if (existing.name !== name) {
-      throw new Error("该手机号已注册");
-    }
-    window.localStorage.setItem(PLAYER_ID_KEY, existing.id);
-    window.localStorage.setItem(PLAYER_PHONE_KEY, phone);
-    setCachedPlayer(existing);
-    return { player: existing, reused: true };
-  }
-
-  const player: Player = {
-    id: createId("player"),
-    name,
-    phone,
-    office,
-    team,
-    totalScore: 0,
-    completedGames: [],
-    finalSubmitted: false,
-    created: nowIso(),
-    updated: nowIso()
-  };
-
-  if (isBrowser()) {
-    window.localStorage.setItem(PLAYER_ID_KEY, player.id);
-    window.localStorage.setItem(PLAYER_PHONE_KEY, phone);
-    setCachedPlayer(player);
-  }
-  await saveState({ ...state, players: [...state.players, player] });
-  return { player, reused: false };
+  throw new Error("PocketBase 不可用，已禁用本地兜底数据，请稍后重试");
 }
 
 export async function getGameResult(playerId: string, gameKey: GameKey): Promise<GameResult | null> {
@@ -636,8 +596,9 @@ export async function toggleGameOpen(gameKey: GameKey): Promise<AppState> {
     await pb.collection("games").update(existing.id, data);
   }
 
+  if (!available) throw new Error("PocketBase 不可用，已禁用本地兜底数据");
   await saveState(newState);
-  return available ? await loadState() : newState;
+  return await loadState();
 }
 
 export async function triggerBingoScore(): Promise<AppState> {
@@ -734,8 +695,9 @@ export async function triggerBingoScore(): Promise<AppState> {
     }
   }
 
+  if (!available) throw new Error("PocketBase 不可用，已禁用本地兜底数据");
   await saveState(newState);
-  const finalState = available ? await loadStateFromPB() : newState;
+  const finalState = await loadStateFromPB();
   console.log("🎯 completeBossAndEnableAutoScore: 执行完成");
   return finalState;
 }
@@ -765,8 +727,9 @@ export async function closeBingoGame(): Promise<AppState> {
     }
   }
 
+  if (!available) throw new Error("PocketBase 不可用，已禁用本地兜底数据");
   await saveState(newState);
-  return available ? await loadStateFromPB() : newState;
+  return await loadStateFromPB();
 }
 
 export async function advanceQuizGroup(): Promise<AppState> {
@@ -792,8 +755,9 @@ export async function advanceQuizGroup(): Promise<AppState> {
     }
   }
 
+  if (!available) throw new Error("PocketBase 不可用，已禁用本地兜底数据");
   await saveState(newState);
-  return available ? await loadState() : newState;
+  return await loadState();
 }
 
 export async function openQuizGroup(groupIndex: number): Promise<AppState> {
@@ -823,8 +787,9 @@ export async function openQuizGroup(groupIndex: number): Promise<AppState> {
     }
   }
 
+  if (!available) throw new Error("PocketBase 不可用，已禁用本地兜底数据");
   await saveState(newState);
-  return available ? await loadState() : newState;
+  return await loadState();
 }
 
 export async function closeQuizGroup(groupIndex: number): Promise<AppState> {
@@ -856,8 +821,9 @@ export async function closeQuizGroup(groupIndex: number): Promise<AppState> {
     }
   }
 
+  if (!available) throw new Error("PocketBase 不可用，已禁用本地兜底数据");
   await saveState(newState);
-  return available ? await loadState() : newState;
+  return await loadState();
 }
 
 export async function submitGameResult(input: {
@@ -987,8 +953,9 @@ async function persistGameResult(
   };
 
   const available = await checkPocketBase();
-  if (available) {
-    const created = await pb.collection("game_results").create({
+  if (!available) throw new Error("PocketBase 不可用，已禁用本地兜底数据");
+
+  const created = await pb.collection("game_results").create({
       player: result.player,
       gameKey: result.gameKey,
       answers: result.answers,
@@ -1000,8 +967,7 @@ async function persistGameResult(
       sectorKey: result.sectorKey,
       sectorName: result.sectorName
     });
-    result.id = created.id;
-  }
+  result.id = created.id;
 
   // pending 情况下不更新 player.completedGames
   if (isPending) {
@@ -1030,9 +996,7 @@ async function persistGameResult(
     updated: nowIso()
   };
 
-  if (available) {
-    await pb.collection("players").update(player.id, buildPlayerUpdate(player));
-  }
+  await pb.collection("players").update(player.id, buildPlayerUpdate(player));
 
   const newState: AppState = {
     ...state,
@@ -1059,11 +1023,7 @@ export async function getQuestions(gameKey: GameKey) {
     }
   }
 
-  const state = await loadState();
-  return state.questions
-    .map(normalizeQuestion)
-    .filter((question) => question.gameKey === gameKey && question.isActive)
-    .sort((a, b) => a.order - b.order);
+  return [];
 }
 
 export async function getQuizSessionSnapshot(playerId: string): Promise<QuizSessionSnapshot> {
@@ -1113,7 +1073,7 @@ export async function getLobbySnapshot(playerId: string) {
         games: games.map(mapGameRecord),
         questions: []
       };
-      const player = mappedPlayers.find((item) => item.id === playerId) || getCachedPlayer(playerId);
+      const player = mappedPlayers.find((item) => item.id === playerId) || null;
       return {
         state,
         player,
@@ -1122,12 +1082,12 @@ export async function getLobbySnapshot(playerId: string) {
         quizProgress: buildQuizProgress(state, playerId)
       };
     } catch {
-      // Fall back to the generic full-state path below.
+      // PocketBase 查询失败时不使用本地缓存兜底，走空状态。
     }
   }
 
   const state = await loadState();
-  const player = state.players.find((item) => item.id === playerId) || getCachedPlayer(playerId);
+  const player = state.players.find((item) => item.id === playerId) || null;
   return {
     state,
     player,
