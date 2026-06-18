@@ -26,3 +26,5 @@ pb_data/
 
 # Windows
 desktop.ini
+.env.production
+/pocketbase

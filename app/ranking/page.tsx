@@ -13,7 +13,7 @@ export default function RankingPage() {
   const { ranking } = useRanking(playerId, 4000);
 
   const context = ranking.context;
-  const player = context?.player;
+  const player = context?.player && ranking.players.some((item) => item.id === context.player?.playerId) ? context.player : null;
   const rank = context?.rank || 0;
   const isInTop10 = rank > 0 && rank <= 10;
 

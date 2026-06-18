@@ -43,6 +43,20 @@ export default function LobbyPage() {
   const completedCount = player.completedGames.length;
   const quizProgress = snapshot.quizProgress;
   const hasBeenControlled = (game: { created?: string; updated?: string }) => Boolean(game.created && game.updated && game.created !== game.updated);
+  const getClosedStatus = (game: { created?: string; updated?: string }) => hasBeenControlled(game) ? "已结束" : "未开放";
+  const getLobbyGameStatus = (game: typeof snapshot.state.games[number], completed: boolean, bingoPending = false) => {
+    if (completed) return "已完成";
+    if (game.key === "bingo") {
+      const phase = game.bingoPhase || "open";
+      if (bingoPending) return "等待 Boss 发言";
+      if (phase === "open" && game.isOpen) return "已开启";
+      if (phase === "auto_score") return bingoPending ? "等待 Boss 发言" : "已结束";
+      if (phase === "closed") return "已结束";
+      return getClosedStatus(game);
+    }
+    if (game.isOpen) return "已开启";
+    return getClosedStatus(game);
+  };
 
   return (
     <Layout title="活动大厅" hideHeader>
@@ -98,7 +112,7 @@ export default function LobbyPage() {
                 const quizStatus = quizCompleted
                   ? "已完成"
                   : !game.isOpen
-                    ? hasBeenControlled(game) ? "已结束" : "未开放"
+                    ? getClosedStatus(game)
                     : hasAvailableGroup
                       ? "继续答题"
                       : "等待开启";
@@ -115,12 +129,17 @@ export default function LobbyPage() {
                 );
               }
 
+              const completed = player.completedGames.includes(game.key);
+              const status = getLobbyGameStatus(game, completed, bingoPending);
+
               return (
                 <GameCard
                   game={game}
-                  completed={player.completedGames.includes(game.key)}
+                  completed={completed}
                   bingoPending={bingoPending}
                   key={game.key}
+                  statusOverride={status}
+                  allowEnterOverride={!completed && (game.isOpen || bingoPending)}
                 />
               );
             })}

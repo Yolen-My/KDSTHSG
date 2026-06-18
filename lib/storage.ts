@@ -2,7 +2,7 @@
 
 import * as pbStorage from "@/lib/pb-storage";
 import { calculateBingoSelection } from "@/lib/bingo-scoring";
-import { GAME_ORDER, GAMES, PLAYER_CACHE_KEY, PLAYER_ID_KEY, PLAYER_PHONE_KEY, QUESTIONS, SEED_PLAYERS, STATE_KEY } from "@/lib/constants";
+import { GAME_ORDER, GAMES, PLAYER_CACHE_KEY, PLAYER_ID_KEY, PLAYER_PHONE_KEY, STATE_KEY } from "@/lib/constants";
 import { settlePendingBingoResults } from "@/lib/game-state";
 import { getOfficeAverageRanking, getOfficeTop3, getPlayerRank, getPlayerRankingContext, getTop10Ranking } from "@/lib/ranking";
 import type { AppState, GameKey, GameResult, Player, Question, QuizProgress, QuizSessionSnapshot } from "@/types";
@@ -148,12 +148,7 @@ export async function checkBackend(): Promise<boolean> {
 }
 
 export function getInitialState(): AppState {
-  return {
-    players: SEED_PLAYERS,
-    gameResults: [],
-    games: GAMES,
-    questions: QUESTIONS
-  };
+  return getEmptyRuntimeState();
 }
 
 function loadStateLocal(): AppState {
@@ -204,7 +199,8 @@ export async function loadState(): Promise<AppState> {
   if (available) {
     return await pbStorage.loadStateFromPB();
   }
-  return loadStateLocal();
+  console.warn("⚠️ PocketBase 不可用，运行时不使用本地玩家/题库兜底");
+  return getEmptyRuntimeState();
 }
 
 export async function saveState(state: AppState): Promise<void> {

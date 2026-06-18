@@ -1,8 +1,6 @@
 {
-  "repo": "Yolen-My/KDSTHSG",
-  "commit": "b730b9d071d499aaac69fb5106213ba38d389e4f",
-  "short": "b730b9d",
-  "method": "GitHub API partial download + manual image fix",
-  "deployed_at": "2026-06-10T22:16:00+08:00",
-  "note": "从 GitHub API 下载最新前端代码，手动补充缺失的 screen-define-the-game.png 图片"
+  "repo": "Yolen-My/QHduan",
+  "branch": "main",
+  "method": "GitHub API partial frontend download + preserve local env/public + local no-fallback ranking patch",
+  "deployed_at": "2026-06-18T21:50:00+08:00"
 }

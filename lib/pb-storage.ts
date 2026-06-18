@@ -962,6 +962,7 @@ async function persistGameResult(
     quizSessionIndex?: number;
     sectorKey?: string;
     sectorName?: string;
+    eliminated?: boolean;
   },
   isPending: boolean
 ): Promise<{ result: GameResult; player: Player; rank: number }> {

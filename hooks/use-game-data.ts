@@ -231,25 +231,29 @@ export function useLobbySnapshot(playerId: string | null | undefined) {
   return { snapshot, refresh, loading };
 }
 
+function getEmptyRankingSnapshot(): Awaited<ReturnType<typeof getRankingSnapshot>> {
+  return {
+    players: [],
+    games: [],
+    results: [],
+    top10: [],
+    officeAverage: [],
+    officeTop3: [],
+    context: null
+  };
+}
+
 export function useRanking(playerId?: string | null, intervalMs?: number) {
-  const [ranking, setRanking] = useState<Awaited<ReturnType<typeof getRankingSnapshot>>>(() => {
-    const state = getInitialState();
-    return {
-      players: state.players,
-      games: state.games,
-      results: state.gameResults,
-      top10: [],
-      officeAverage: [],
-      officeTop3: [],
-      context: null
-    };
-  });
+  const [ranking, setRanking] = useState<Awaited<ReturnType<typeof getRankingSnapshot>>>(() => getEmptyRankingSnapshot());
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     try {
       const r = await getRankingSnapshot(playerId);
       setRanking(r);
+    } catch (error) {
+      console.error("❌ useRanking 加载数据库排行榜失败:", error);
+      setRanking(getEmptyRankingSnapshot());
     } finally {
       setLoading(false);
     }

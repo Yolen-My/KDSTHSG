@@ -196,17 +196,36 @@ export default function StoryPage() {
       return;
     }
 
+    const answerForCurrentQuestion = currentQuestion ? (answers[currentQuestion.id] ?? "") : "";
+    const nextAnswers = autoTrigger && currentQuestion && answers[currentQuestion.id] == null
+      ? { ...answers, [currentQuestion.id]: "" }
+      : answers;
+
+    if (nextAnswers !== answers) {
+      setAnswers(nextAnswers);
+    }
+
+    const resetQuestionTimer = () => {
+      setMessage("");
+      localStorage.removeItem(timerKey);
+      setSeconds(STORY_SECONDS);
+      setTimeUp(false);
+    };
+
     // 第一题答完后显示分数弹窗
     if (currentIndex === 0) {
       const currentQuestionScore = questions[currentIndex]?.score || 0;
-      const userAnswer = answers[questions[currentIndex].id];
-      const isCorrect = userAnswer === questions[currentIndex].correctAnswer;
+      const isCorrect = answerForCurrentQuestion === questions[currentIndex].correctAnswer;
       const roundScore = isCorrect ? currentQuestionScore : 0;
+
+      setTimeUp(false);
+      setMessage("");
+      localStorage.removeItem(timerKey);
 
       setModal({
         open: true,
         score: roundScore,
-        total: score,
+        total: calculateStoryScore(questions.map((question) => nextAnswers[question.id] === question.correctAnswer)),
         rank: 0,
         buttonText: "继续答题",
         hideScore: true,
@@ -214,19 +233,13 @@ export default function StoryPage() {
         onClose: () => {
           setModal((prev) => ({ ...prev, open: false }));
           setCurrentIndex((index) => Math.min(index + 1, questions.length - 1));
-          setMessage("");
           // 切换到下一题：重置倒计时（清除旧时间戳，effect 会重新写入新的）
-          localStorage.removeItem(timerKey);
-          setSeconds(STORY_SECONDS);
-          setTimeUp(false);
+          resetQuestionTimer();
         }
       });
     } else {
       setCurrentIndex((index) => Math.min(index + 1, questions.length - 1));
-      setMessage("");
-      localStorage.removeItem(timerKey);
-      setSeconds(STORY_SECONDS);
-      setTimeUp(false);
+      resetQuestionTimer();
     }
   }
 
@@ -464,7 +477,7 @@ export default function StoryPage() {
         rank={modal.rank}
         onBackLobby={goLobby}
         buttonText={modal.buttonText}
-        onClose={modal.onClose}
+        onClose={modal.onClose || undefined}
         hideScore={modal.hideScore}
       />
     </StoryShell>
