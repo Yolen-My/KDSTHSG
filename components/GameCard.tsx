@@ -40,6 +40,10 @@ function getStatusBadgeClass(status: string, canEnter: boolean): string {
   return "lobbyGameBadge";
 }
 
+function hasBeenControlled(game: Game): boolean {
+  return Boolean(game.created && game.updated && game.created !== game.updated);
+}
+
 export default function GameCard({
   game,
   completed,
@@ -59,6 +63,7 @@ export default function GameCard({
     canEnter = Boolean(allowEnterOverride);
   } else if (game.key === "bingo") {
     const phase = game.bingoPhase || "open";
+    const controlled = hasBeenControlled(game);
     if (completed) {
       status = "已完成";
       canEnter = false;
@@ -66,7 +71,7 @@ export default function GameCard({
       status = "等待 Boss 发言";
       canEnter = true;
     } else if (phase === "open" && game.isOpen) {
-      status = "未开始";
+      status = "已开启";
       canEnter = true;
     } else if (phase === "auto_score") {
       if (bingoPending) {
@@ -80,18 +85,19 @@ export default function GameCard({
       status = "已结束";
       canEnter = false;
     } else {
-      status = "未开始";
+      status = controlled ? "已结束" : "未开放";
       canEnter = false;
     }
   } else {
+    const controlled = hasBeenControlled(game);
     if (completed) {
       status = "已完成";
       canEnter = false;
     } else if (game.isOpen) {
-      status = "未开始";
+      status = "已开启";
       canEnter = true;
     } else {
-      status = "未开始";
+      status = controlled ? "已结束" : "未开放";
       canEnter = false;
     }
   }

@@ -492,6 +492,7 @@ export async function submitGameResult(input: {
   quizSessionIndex?: number;
   sectorKey?: string;
   sectorName?: string;
+  eliminated?: boolean;
 }): Promise<{ result: GameResult; player: Player; rank: number }> {
   const available = await checkBackend();
   if (available) {
@@ -593,13 +594,15 @@ export async function submitGameResult(input: {
     .reduce((sum, item) => sum + item.score, 0);
   const playerResults = gameResults.filter((item) => item.player === input.playerId && !item.pendingBingoScore);
   const completedGames = getCompletedGamesForPlayer(playerObj, playerResults);
-  const finalSubmitted = GAME_ORDER.every((key) => completedGames.includes(key));
+  // 站立淘汰被淘汰：视为整场比赛结束，标记最终完成
+  const isEliminatedFinal = input.gameKey === "elimination" && Boolean(input.eliminated);
+  const finalSubmitted = isEliminatedFinal || GAME_ORDER.every((key) => completedGames.includes(key));
   const player: Player = {
     ...playerObj,
     totalScore,
     completedGames,
     finalSubmitted,
-    finalCompletedAt: finalSubmitted ? nowIso() : playerObj.finalCompletedAt,
+    finalCompletedAt: finalSubmitted ? (playerObj.finalCompletedAt || nowIso()) : playerObj.finalCompletedAt,
     updated: nowIso()
   };
 

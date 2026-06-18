@@ -107,6 +107,7 @@ export default function BingoPage() {
   const [seconds, setSeconds] = useState(BINGO_SECONDS);
   const [timeUp, setTimeUp] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [shouldAutoSubmitOnReentry, setShouldAutoSubmitOnReentry] = useState(false);
   const timerKey = getBingoTimerKey(playerId);
 
   // Bingo 阶段
@@ -191,7 +192,12 @@ export default function BingoPage() {
     const elapsed = (Date.now() - Number(start)) / 1000;
     const nextSeconds = Math.max(0, Math.ceil(BINGO_SECONDS - elapsed));
     setSeconds(nextSeconds);
-    setTimeUp(elapsed >= BINGO_SECONDS);
+    const expired = elapsed >= BINGO_SECONDS;
+    setTimeUp(expired);
+    if (expired) {
+      // 重新进入时倒计时已结束，标记需要自动提交
+      setShouldAutoSubmitOnReentry(true);
+    }
   }, [playerId, timerKey]);
 
   // 倒计时：时间到后禁止选词，自动提交（必须在 early return 之前）
@@ -245,6 +251,24 @@ export default function BingoPage() {
       rank: getPlayerRank(state.players, currentPlayer.id)
     });
   }, [hasCompletedBingo, myBingoResult, pendingResult, currentPlayer, modal.open, state.players]);
+
+  // 重新进入页面：若倒计时已结束且未完成/未等待判分，自动提交并弹出等待弹窗
+  useEffect(() => {
+    if (!shouldAutoSubmitOnReentry) return;
+    if (existingLoading) return;
+    if (!playerId) return;
+    if (hasCompletedBingo || isWaitingForScore) {
+      setShouldAutoSubmitOnReentry(false);
+      return;
+    }
+    if (bingoPhase === "closed") {
+      setShouldAutoSubmitOnReentry(false);
+      return;
+    }
+    if (submitting) return;
+    setShouldAutoSubmitOnReentry(false);
+    handleSubmitRef.current(true);
+  }, [shouldAutoSubmitOnReentry, existingLoading, playerId, hasCompletedBingo, isWaitingForScore, bingoPhase, submitting]);
 
   function goLobby() {
     setIsLeaving(true);

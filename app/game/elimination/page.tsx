@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import GameBannerIcon from "@/components/GameBannerIcon";
 import Layout from "@/components/Layout";
 import PageBackground from "@/components/PageBackground";
@@ -39,6 +39,13 @@ function EliminationNav({ hideActions = false }: { hideActions?: boolean }) {
       </Link>
     </header>
   );
+}
+
+const ELIMINATION_SECONDS = 10;
+const ELIMINATION_TIMER_KEY_PREFIX = "elimination_timer_start";
+
+function getEliminationTimerKey(playerId: string | null | undefined, index: number): string {
+  return playerId ? `${ELIMINATION_TIMER_KEY_PREFIX}_${playerId}_${index}` : `${ELIMINATION_TIMER_KEY_PREFIX}_guest_${index}`;
 }
 
 function EliminationShell({ children, hideNavActions = false }: { children: ReactNode; hideNavActions?: boolean }) {
@@ -89,6 +96,9 @@ export default function EliminationPage() {
   const [eliminationModal, setEliminationModal] = useState({ open: false, score: 0, hideScore: false });
   const [message, setMessage] = useState("");
   const [isLeaving, setIsLeaving] = useState(false);
+  const [seconds, setSeconds] = useState(ELIMINATION_SECONDS);
+  const [timeUp, setTimeUp] = useState(false);
+  const timerKey = getEliminationTimerKey(playerId, currentIndex);
 
   useEffect(() => {
     if (playerId === null) router.push("/register");
@@ -123,6 +133,61 @@ export default function EliminationPage() {
   const selectedAnswer = currentQuestion ? answers[currentQuestion.id] : "";
   const isLastQuestion = currentIndex === questions.length - 1;
 
+  const handleTimeUpRef = useRef<() => Promise<void>>(async () => {});
+  const timeUpSubmittingRef = useRef(false);
+
+  // 时间到自动提交（淘汰）
+  handleTimeUpRef.current = async () => {
+    if (!playerId || !currentQuestion || existing || modal.open || timeUpSubmittingRef.current) return;
+    timeUpSubmittingRef.current = true;
+    // 时间到：将当前题标记为未作答（空字符串），便于 review 页展示题目与正确答案
+    const newAnswers = { ...answers, [currentQuestion.id]: answers[currentQuestion.id] ?? "" };
+    const newCorrectCount = questions.filter((q) => {
+      const answer = newAnswers[q.id];
+      return answer === q.correctAnswer;
+    }).length;
+    const newScore = calculateEliminationScore(newCorrectCount);
+
+    setModal({ open: true, score: newScore, total: (player?.totalScore ?? 0) + newScore, rank: ranking.context?.rank ?? 0, isEliminated: true });
+
+    try {
+      const outcome = await submitGameResult({ playerId, gameKey: "elimination", answers: newAnswers, score: newScore, eliminated: true });
+      refresh();
+      setExisting(outcome.result);
+      setModal({ open: true, score: outcome.result.score, total: outcome.player.totalScore, rank: outcome.rank, isEliminated: true });
+    } catch (error) {
+      timeUpSubmittingRef.current = false;
+      setMessage(error instanceof Error ? error.message : "提交失败");
+    }
+  };
+
+  // 倒计时：每题 10 秒，到点直接淘汰
+  useEffect(() => {
+    if (!playerId || !currentQuestion || existing || eliminationModal.open || modal.open) return;
+
+    let start = Number(localStorage.getItem(timerKey));
+    if (!start) {
+      start = Date.now();
+      localStorage.setItem(timerKey, String(start));
+    }
+
+    setTimeUp(false);
+    const tick = () => {
+      const elapsed = (Date.now() - start) / 1000;
+      const nextSeconds = Math.max(0, Math.ceil(ELIMINATION_SECONDS - elapsed));
+      setSeconds(nextSeconds);
+      if (nextSeconds <= 0) {
+        setTimeUp(true);
+        localStorage.removeItem(timerKey);
+        handleTimeUpRef.current();
+      }
+    };
+
+    tick();
+    const t = window.setInterval(tick, 250);
+    return () => window.clearInterval(t);
+  }, [playerId, currentIndex, currentQuestion, timerKey, existing, eliminationModal.open, modal.open]);
+
   function goLobby() {
     setIsLeaving(true);
     router.push("/lobby");
@@ -131,6 +196,7 @@ export default function EliminationPage() {
   async function chooseAnswer(option: string) {
     if (!currentQuestion || isOpen !== true || existing) return;
 
+    localStorage.removeItem(timerKey);
     const newAnswers = { ...answers, [currentQuestion.id]: option };
     setAnswers(newAnswers);
     setMessage("");
@@ -159,7 +225,7 @@ export default function EliminationPage() {
     } else {
       if (!playerId) return;
       try {
-        const outcome = await submitGameResult({ playerId, gameKey: "elimination", answers: newAnswers, score: newScore });
+        const outcome = await submitGameResult({ playerId, gameKey: "elimination", answers: newAnswers, score: newScore, eliminated: true });
         refresh();
         setExisting(outcome.result);
         setModal({ open: true, score: outcome.result.score, total: outcome.player.totalScore, rank: outcome.rank, isEliminated: true });
@@ -173,6 +239,11 @@ export default function EliminationPage() {
     setCurrentIndex((index) => Math.min(index + 1, questions.length - 1));
     setEliminationModal({ open: false, score: 0, hideScore: false });
     setMessage("");
+    setSeconds(ELIMINATION_SECONDS);
+    setTimeUp(false);
+    if (playerId !== undefined) {
+      localStorage.removeItem(getEliminationTimerKey(playerId, currentIndex + 1));
+    }
   }
 
   if (isLeaving) {
@@ -231,11 +302,17 @@ export default function EliminationPage() {
           <h3>
             Round{currentIndex + 1}：{currentQuestion.title}
           </h3>
+          {!existing && isOpen === true && (
+            <div className={`eliminationTimer${timeUp ? " eliminationTimer--danger" : seconds <= 5 ? " eliminationTimer--warning" : ""}`}>
+              <span className="eliminationTimerLabel">倒计时</span>
+              <span className="eliminationTimerValue">{seconds}s</span>
+            </div>
+          )}
           <div className="eliminationOptions">
             {currentQuestion.options?.map((option) => (
               <button
                 className={selectedAnswer === option ? "selected" : ""}
-                disabled={Boolean(existing) || isOpen !== true}
+                disabled={Boolean(existing) || isOpen !== true || timeUp}
                 key={option}
                 type="button"
                 onClick={() => chooseAnswer(option)}

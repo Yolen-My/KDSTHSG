@@ -171,7 +171,9 @@ function mapGameRecord(record: any): Game {
     bingoScored: Boolean(record.bingoScored),
     bingoPhase,
     quizCurrentGroup: record.quizCurrentGroup || 0,
-    quizOpenGroups: normalizeQuizOpenGroups(record.quizOpenGroups)
+    quizOpenGroups: normalizeQuizOpenGroups(record.quizOpenGroups),
+    created: record.created || undefined,
+    updated: record.updated || undefined
   };
 }
 
@@ -629,6 +631,30 @@ export async function triggerBingoScore(): Promise<AppState> {
     };
   });
 
+  // 1.5 为没有提交过 Bingo 记录的玩家自动创建一条空 Bingo 记录（review 页面可显示正确答案）
+  const playersWithoutBingo = state.players.filter(
+    (p) => !gameResults.some((r) => r.player === p.id && r.gameKey === "bingo")
+  );
+  const autoCreatedBingoResults: GameResult[] = [];
+  for (const player of playersWithoutBingo) {
+    const settled = calculateBingoSelection(state.questions, {}, 0);
+    autoCreatedBingoResults.push({
+      id: createId("result"),
+      player: player.id,
+      gameKey: "bingo",
+      answers: {
+        selectedWords: settled.selectedWords,
+        targetWords: settled.targetWords,
+        correctCount: settled.correctCount
+      },
+      score: 0,
+      maxScore: 100,
+      completedAt: nowIso(),
+      pendingBingoScore: false
+    });
+  }
+  gameResults.push(...autoCreatedBingoResults);
+
   // 2. 重新计算所有玩家的 completedGames 和 totalScore
   const players = state.players.map((player) => {
     const playerResults = gameResults.filter((result) => result.player === player.id && !result.pendingBingoScore);
@@ -672,6 +698,20 @@ export async function triggerBingoScore(): Promise<AppState> {
             answers: settled?.answers ?? { ...result.answers, pendingBingoScore: false }
           });
         }
+      }
+
+      // 为没提交 Bingo 的玩家自动创建空 Bingo 记录到 PocketBase
+      for (const autoResult of autoCreatedBingoResults) {
+        const created = await pb.collection("game_results").create({
+          player: autoResult.player,
+          gameKey: autoResult.gameKey,
+          answers: autoResult.answers,
+          score: autoResult.score,
+          maxScore: autoResult.maxScore,
+          completedAt: autoResult.completedAt,
+          pendingBingoScore: false
+        });
+        autoResult.id = created.id;
       }
 
       for (const player of newState.players) {
@@ -835,6 +875,7 @@ export async function submitGameResult(input: {
   quizSessionIndex?: number;
   sectorKey?: string;
   sectorName?: string;
+  eliminated?: boolean;
 }): Promise<{ result: GameResult; player: Player; rank: number }> {
   const state = await loadState();
   const game = state.games.find((g) => g.key === input.gameKey);
@@ -986,13 +1027,15 @@ async function persistGameResult(
     .reduce((sum, item) => sum + item.score, 0);
   const playerResults = gameResults.filter((item) => item.player === input.playerId && !item.pendingBingoScore);
   const completedGames = getCompletedGamesForPlayer(state.players[playerIndex], playerResults, input.gameKey);
-  const finalSubmitted = GAME_ORDER.every((key) => completedGames.includes(key));
+  // 站立淘汰被淘汰：视为整场比赛结束，标记最终完成
+  const isEliminatedFinal = input.gameKey === "elimination" && Boolean(input.eliminated);
+  const finalSubmitted = isEliminatedFinal || GAME_ORDER.every((key) => completedGames.includes(key));
   const player: Player = {
     ...state.players[playerIndex],
     totalScore,
     completedGames,
     finalSubmitted,
-    finalCompletedAt: finalSubmitted ? nowIso() : state.players[playerIndex].finalCompletedAt,
+    finalCompletedAt: finalSubmitted ? (state.players[playerIndex].finalCompletedAt || nowIso()) : state.players[playerIndex].finalCompletedAt,
     updated: nowIso()
   };
 

@@ -27,6 +27,8 @@ export type Game = {
   bingoPhase?: BingoPhase;
   quizCurrentGroup?: number;
   quizOpenGroups?: number[];
+  created?: string;
+  updated?: string;
 };
 
 export type Question = {

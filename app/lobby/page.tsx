@@ -42,6 +42,7 @@ export default function LobbyPage() {
 
   const completedCount = player.completedGames.length;
   const quizProgress = snapshot.quizProgress;
+  const hasBeenControlled = (game: { created?: string; updated?: string }) => Boolean(game.created && game.updated && game.created !== game.updated);
 
   return (
     <Layout title="活动大厅" hideHeader>
@@ -97,7 +98,7 @@ export default function LobbyPage() {
                 const quizStatus = quizCompleted
                   ? "已完成"
                   : !game.isOpen
-                    ? "未开始"
+                    ? hasBeenControlled(game) ? "已结束" : "未开放"
                     : hasAvailableGroup
                       ? "继续答题"
                       : "等待开启";

@@ -3012,6 +3012,34 @@ button:disabled {
   text-align: center;
 }
 
+.storyBanner .storyBannerTimer {
+  width: 100%;
+  max-width: 220px;
+  margin-top: 4px;
+  justify-content: flex-end;
+}
+
+.storyBanner .bingoProgressTrack {
+  width: 100%;
+  max-width: 220px;
+  margin-bottom: 4px;
+}
+
+.storyQuestionCard .storyCardTimer {
+  margin: 8px 0 0;
+  justify-content: flex-end;
+}
+
+.storyQuestionCard .storyCardTimer b {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.storyQuestionCard .bingoProgressTrack {
+  margin: 6px 0 14px;
+}
+
 .storyQuestionCard {
   padding: 18px 20px 20px;
   border: 1px solid #5e9f8e;
@@ -3216,6 +3244,39 @@ button:disabled {
   font-size: 18px;
   font-weight: 500;
   line-height: 26px;
+}
+
+.eliminationTimer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: -8px 0 16px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  background: rgba(20, 163, 58, 0.15);
+  color: #14a33a;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.eliminationTimer--warning {
+  background: rgba(255, 193, 7, 0.15);
+  color: #ffc107;
+}
+
+.eliminationTimer--danger {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.eliminationTimerLabel {
+  opacity: 0.8;
+}
+
+.eliminationTimerValue {
+  font-size: 16px;
+  font-weight: 700;
 }
 
 .eliminationOptions {
