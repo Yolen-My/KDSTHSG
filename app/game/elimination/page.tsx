@@ -303,10 +303,31 @@ export default function EliminationPage() {
             Round{currentIndex + 1}：{currentQuestion.title}
           </h3>
           {!existing && isOpen === true && (
-            <div className={`eliminationTimer${timeUp ? " eliminationTimer--danger" : seconds <= 5 ? " eliminationTimer--warning" : ""}`}>
-              <span className="eliminationTimerLabel">倒计时</span>
-              <span className="eliminationTimerValue">{seconds}s</span>
-            </div>
+            <>
+              <div className="bingoStatus storyCardTimer">
+                <span />
+                {!timeUp && (
+                  <span className="bingoTimer">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                      <circle cx="8" cy="8.5" r="6.5" stroke="currentColor" strokeWidth="1.2" />
+                      <path d="M8 5.5V8.5L10 10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                    </svg>
+                    {seconds}s
+                  </span>
+                )}
+                {timeUp && (
+                  <span className="bingoTimer bingoTimer--up">时间到</span>
+                )}
+              </div>
+              {!timeUp && (
+                <div className="bingoProgressTrack">
+                  <span
+                    className="bingoProgressBar"
+                    style={{ width: `${(seconds / ELIMINATION_SECONDS) * 100}%` }}
+                  />
+                </div>
+              )}
+            </>
           )}
           <div className="eliminationOptions">
             {currentQuestion.options?.map((option) => (
