@@ -15,6 +15,7 @@ const STORY_SECONDS = 10;
 const LEGACY_STORY_TIMER_KEY = "story_timer_start";
 const LEGACY_STORY_INDEX_KEY = "story_current_index";
 const LEGACY_STORY_ANSWERS_KEY = "story_answers";
+const LEGACY_STORY_FIRST_MODAL_KEY = "story_first_modal_open";
 
 function getStoryTimerKey(playerId?: string | null): string {
   return playerId ? `story_timer_start_${playerId}` : LEGACY_STORY_TIMER_KEY;
@@ -24,6 +25,9 @@ function getStoryIndexKey(playerId?: string | null): string {
 }
 function getStoryAnswersKey(playerId?: string | null): string {
   return playerId ? `story_answers_${playerId}` : LEGACY_STORY_ANSWERS_KEY;
+}
+function getStoryFirstModalKey(playerId?: string | null): string {
+  return playerId ? `story_first_modal_open_${playerId}` : LEGACY_STORY_FIRST_MODAL_KEY;
 }
 
 function StoryNav() {
@@ -90,6 +94,7 @@ export default function StoryPage() {
   const timerKey = getStoryTimerKey(playerId);
   const indexKey = getStoryIndexKey(playerId);
   const answersKey = getStoryAnswersKey(playerId);
+  const firstModalKey = getStoryFirstModalKey(playerId);
 
   useEffect(() => {
     if (playerId === null) router.push("/register");
@@ -126,6 +131,7 @@ export default function StoryPage() {
     localStorage.removeItem(LEGACY_STORY_TIMER_KEY);
     localStorage.removeItem(LEGACY_STORY_INDEX_KEY);
     localStorage.removeItem(LEGACY_STORY_ANSWERS_KEY);
+    localStorage.removeItem(LEGACY_STORY_FIRST_MODAL_KEY);
 
     const savedIndex = localStorage.getItem(indexKey);
     const savedAnswers = localStorage.getItem(answersKey);
@@ -155,7 +161,7 @@ export default function StoryPage() {
       }
     }
     setRestoredFromStorage(true);
-  }, [playerId, restoredFromStorage, indexKey, answersKey, timerKey]);
+  }, [playerId, restoredFromStorage, indexKey, answersKey, timerKey, firstModalKey]);
 
   // 答案变化时持久化
   useEffect(() => {
@@ -190,13 +196,48 @@ export default function StoryPage() {
     setMessage("");
   }
 
+  function resetQuestionTimer() {
+    setMessage("");
+    localStorage.removeItem(timerKey);
+    setSeconds(STORY_SECONDS);
+    setTimeUp(false);
+  }
+
+  function openFirstQuestionModal(nextAnswers: Record<string, string>) {
+    const firstQuestion = questions[0];
+    if (!firstQuestion) return;
+
+    const firstAnswer = nextAnswers[firstQuestion.id] ?? "";
+    const roundScore = firstAnswer === firstQuestion.correctAnswer ? firstQuestion.score || 0 : 0;
+
+    setTimeUp(false);
+    setMessage("");
+    localStorage.setItem(firstModalKey, "1");
+    localStorage.removeItem(timerKey);
+
+    setModal({
+      open: true,
+      score: roundScore,
+      total: calculateStoryScore(questions.map((question) => nextAnswers[question.id] === question.correctAnswer)),
+      rank: 0,
+      buttonText: "继续答题",
+      hideScore: true,
+      gameName: "答题完成",
+      onClose: () => {
+        localStorage.removeItem(firstModalKey);
+        setModal((prev) => ({ ...prev, open: false }));
+        setCurrentIndex((index) => Math.min(index + 1, questions.length - 1));
+        resetQuestionTimer();
+      }
+    });
+  }
+
   function goNext(autoTrigger = false) {
     if (!autoTrigger && !selectedAnswer) {
       setMessage("请先完成本题判断");
       return;
     }
 
-    const answerForCurrentQuestion = currentQuestion ? (answers[currentQuestion.id] ?? "") : "";
     const nextAnswers = autoTrigger && currentQuestion && answers[currentQuestion.id] == null
       ? { ...answers, [currentQuestion.id]: "" }
       : answers;
@@ -205,43 +246,28 @@ export default function StoryPage() {
       setAnswers(nextAnswers);
     }
 
-    const resetQuestionTimer = () => {
-      setMessage("");
-      localStorage.removeItem(timerKey);
-      setSeconds(STORY_SECONDS);
-      setTimeUp(false);
-    };
-
     // 第一题答完后显示分数弹窗
     if (currentIndex === 0) {
-      const currentQuestionScore = questions[currentIndex]?.score || 0;
-      const isCorrect = answerForCurrentQuestion === questions[currentIndex].correctAnswer;
-      const roundScore = isCorrect ? currentQuestionScore : 0;
-
-      setTimeUp(false);
-      setMessage("");
-      localStorage.removeItem(timerKey);
-
-      setModal({
-        open: true,
-        score: roundScore,
-        total: calculateStoryScore(questions.map((question) => nextAnswers[question.id] === question.correctAnswer)),
-        rank: 0,
-        buttonText: "继续答题",
-        hideScore: true,
-        gameName: "第一题已完成",
-        onClose: () => {
-          setModal((prev) => ({ ...prev, open: false }));
-          setCurrentIndex((index) => Math.min(index + 1, questions.length - 1));
-          // 切换到下一题：重置倒计时（清除旧时间戳，effect 会重新写入新的）
-          resetQuestionTimer();
-        }
-      });
+      openFirstQuestionModal(nextAnswers);
     } else {
       setCurrentIndex((index) => Math.min(index + 1, questions.length - 1));
       resetQuestionTimer();
     }
   }
+
+  useEffect(() => {
+    if (!playerId || !restoredFromStorage || existingLoading || existing || !questions.length || modal.open) return;
+    if (localStorage.getItem(firstModalKey) !== "1") return;
+
+    const firstQuestion = questions[0];
+    if (answers[firstQuestion.id] == null) {
+      localStorage.removeItem(firstModalKey);
+      return;
+    }
+
+    setCurrentIndex(0);
+    openFirstQuestionModal(answers);
+  }, [playerId, restoredFromStorage, existingLoading, existing, questions, answers, modal.open, firstModalKey]);
 
   async function submit(autoTrigger = false) {
     if (!playerId || submitting) return;
@@ -274,6 +300,7 @@ export default function StoryPage() {
       localStorage.removeItem(timerKey);
       localStorage.removeItem(indexKey);
       localStorage.removeItem(answersKey);
+      localStorage.removeItem(firstModalKey);
       setModal({ open: true, score: outcome.result.score, total: outcome.player.totalScore, rank: outcome.rank, buttonText: "", onClose: null, hideScore: false, gameName: "真假故事" });
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "提交失败");

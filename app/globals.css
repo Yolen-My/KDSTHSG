@@ -826,6 +826,7 @@ button:disabled {
 
 .mobilePage:has(.registerPage),
 .mobilePage:has(.lobbyPage),
+.mobilePage:has(.reviewPage),
 .mobilePage:has(.bingoPage),
 .mobilePage:has(.quizPage),
 .mobilePage:has(.storyPage),
