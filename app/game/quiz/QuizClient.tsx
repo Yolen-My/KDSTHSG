@@ -366,7 +366,7 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
 
         <ResultModal
           open={modal.open}
-          gameName={modal.completedAll ? "Sector Quiz 已完成" : `${activeSector.sectorName} 已完成`}
+          gameName={modal.completedAll ? "Sector Quiz 已完成" : `${activeSector.sectorName} 已完成\n您该轮的得分`}
           roundScore={modal.completedAll ? modal.quizTotalScore : modal.roundScore}
           totalScore={modal.totalScore}
           rank={modal.rank}

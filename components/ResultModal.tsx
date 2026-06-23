@@ -113,7 +113,13 @@ export default function ResultModal({
                     width={eliminationTitleImage.width}
                   />
                 ) : (
-                  <h2 className="resultModalTitle">{gameName}</h2>
+                  <h2 className="resultModalTitle">
+                    {gameName.includes("\n") ? (
+                      gameName.split("\n").map((line, i) => <span key={i}>{line}</span>)
+                    ) : (
+                      gameName
+                    )}
+                  </h2>
                 )}
               </>
             ) : isEliminated ? (

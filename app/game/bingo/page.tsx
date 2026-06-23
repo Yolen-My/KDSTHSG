@@ -18,18 +18,23 @@ import type { ReactNode } from "react";
 
 const BINGO_SECONDS = 10;
 const LEGACY_BINGO_TIMER_KEY = "bingo_timer_start";
+const LEGACY_BINGO_TIMEOUT_KEY = "bingo_timeout";
 
 function getBingoTimerKey(playerId?: string | null): string {
   return playerId ? `bingo_timer_start_${playerId}` : LEGACY_BINGO_TIMER_KEY;
 }
+function getBingoTimeoutKey(playerId?: string | null): string {
+  return playerId ? `bingo_timeout_${playerId}` : LEGACY_BINGO_TIMEOUT_KEY;
+}
 
-function BingoShell({ children, hideNavActions = false }: { children: ReactNode; hideNavActions?: boolean }) {
+function BingoShell({ children, hideNavActions = false, hideNav = false }: { children: ReactNode; hideNavActions?: boolean; hideNav?: boolean }) {
   return (
     <Layout title="Bingo 猜词" hideHeader>
       <section className="bingoPage">
         <PageBackground />
 
         <div className="bingoPageContent">
+          {!hideNav && (
           <header className={`bingoNav${hideNavActions ? " bingoNav--hideActions" : ""}`}>
             <Link className="bingoNavLink" href="/lobby">
               <svg xmlns="http://www.w3.org/2000/svg" width="10" height="8" viewBox="0 0 10 8" fill="none" aria-hidden="true">
@@ -53,6 +58,7 @@ function BingoShell({ children, hideNavActions = false }: { children: ReactNode;
               排行榜
             </Link>
           </header>
+          )}
 
           <div className="bingoBanner">
             <div className="bingoBannerText">
@@ -109,6 +115,7 @@ export default function BingoPage() {
   const [submitting, setSubmitting] = useState(false);
   const [shouldAutoSubmitOnReentry, setShouldAutoSubmitOnReentry] = useState(false);
   const timerKey = getBingoTimerKey(playerId);
+  const timeoutKey = getBingoTimeoutKey(playerId);
 
   // Bingo 阶段
   const bingoGame = useMemo(() => state.games.find((g) => g.key === "bingo"), [state.games]);
@@ -194,11 +201,18 @@ export default function BingoPage() {
     setSeconds(nextSeconds);
     const expired = elapsed >= BINGO_SECONDS;
     setTimeUp(expired);
-    if (expired) {
+    // 如果本地已标记超时，强制 timeUp=true
+    const hasTimeoutMarker = localStorage.getItem(timeoutKey) === "1";
+    if (!expired && hasTimeoutMarker) {
+      setTimeUp(true);
+      // 已超时但时间戳未过期：清理时间戳，避免倒计时继续
+      localStorage.removeItem(timerKey);
+    }
+    if (expired || hasTimeoutMarker) {
       // 重新进入时倒计时已结束，标记需要自动提交
       setShouldAutoSubmitOnReentry(true);
     }
-  }, [playerId, timerKey]);
+  }, [playerId, timerKey, timeoutKey]);
 
   // 倒计时：时间到后禁止选词，自动提交（必须在 early return 之前）
   const handleSubmitRef = useRef<(autoSubmit?: boolean) => Promise<void>>(async () => {});
@@ -211,6 +225,7 @@ export default function BingoPage() {
       // 已完成/已关闭时清除时间戳
       if (completed || phase === "closed") {
         localStorage.removeItem(timerKey);
+        localStorage.removeItem(timeoutKey);
       }
       return;
     }
@@ -221,13 +236,14 @@ export default function BingoPage() {
     if (seconds <= 0) {
       setTimeUp(true);
       localStorage.removeItem(timerKey);
+      localStorage.setItem(timeoutKey, "1");
       // 自动提交已选答案
       handleSubmitRef.current(true);
       return;
     }
     const timer = window.setInterval(() => setSeconds((v) => Math.max(0, v - 1)), 1000);
     return () => window.clearInterval(timer);
-  }, [playerId, timeUp, seconds, state.games, currentPlayer, myBingoResult, timerKey]);
+  }, [playerId, timeUp, seconds, state.games, currentPlayer, myBingoResult, timerKey, timeoutKey]);
 
   const targetWords = useMemo(() => getBingoTargetWords(questions), [questions]);
   const selectedQuestionIdsForScore = useMemo(() => selectedQuestionIds, [selectedQuestionIds]);
@@ -361,6 +377,10 @@ export default function BingoPage() {
     }
     setSubmitting(true);
     localStorage.removeItem(timerKey);
+    // 仅手动提交时清除超时标记；超时自动提交保留标记，以便返回后再进入仍显示超时弹窗
+    if (!autoSubmit) {
+      localStorage.removeItem(timeoutKey);
+    }
     try {
       const outcome = await submitGameResult({
         playerId,
@@ -388,7 +408,7 @@ export default function BingoPage() {
   const statusHint = message || (timeUp && !submitting ? "正在自动提交..." : "请从词库中选择9个词组成 Bingo 宫格");
 
   return (
-    <BingoShell hideNavActions={canInteract}>
+    <BingoShell hideNavActions={canInteract} hideNav={modal.open || waitingModal || isWaitingForScore}>
       {bingoPhase === "auto_score" && !hasCompletedBingo && (
         <p className="bingoPhaseNotice">Boss 发言已完成，提交后系统将自动判分。</p>
       )}
@@ -461,7 +481,7 @@ export default function BingoPage() {
         rank={modal.rank}
         onBackLobby={goLobby}
       />
-      <WaitingModal open={(waitingModal || isWaitingForScore) && !modal.open} gameName="Bingo 猜词" />
+      <WaitingModal open={(waitingModal || isWaitingForScore) && !modal.open} gameName="Bingo 猜词" timeout={timeUp || localStorage.getItem(timeoutKey) === "1"} />
     </BingoShell>
   );
 }

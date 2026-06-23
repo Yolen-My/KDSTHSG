@@ -11,7 +11,7 @@ export default function ScorePanel({ totalScore, rank }: ScorePanelProps) {
         <b>{totalScore}</b>
       </div>
       <div>
-        <span>当前排名</span>
+        <span>当前总排名</span>
         <b>{rank || "-"}</b>
       </div>
     </section>

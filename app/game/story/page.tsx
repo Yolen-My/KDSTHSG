@@ -222,7 +222,7 @@ export default function StoryPage() {
       rank: 0,
       buttonText: "继续答题",
       hideScore: true,
-      gameName: "答题完成",
+      gameName: "答题完成\n您该轮的得分",
       onClose: () => {
         localStorage.removeItem(firstModalKey);
         setModal((prev) => ({ ...prev, open: false }));

@@ -61,7 +61,7 @@ export default function RegisterPage() {
       processedValue = value.replace(/[^\p{L}\s]/gu, "").replace(/\s+/g, " ");
     }
     if (field === "phone") {
-      processedValue = value.replace(/[^0-9]/g, "").slice(0, 11);
+      processedValue = value.replace(/[^0-9]/g, "");
     }
     setForm((current) => ({ ...current, [field]: processedValue }));
   }
@@ -146,11 +146,11 @@ export default function RegisterPage() {
 
         <div className="registerPageContent">
           <Image
-            className="registerLogo"
-            src="/image/source/logo-hongshan.png"
-            alt="HONGSHAN 红杉中国"
-            width={100}
-            height={33}
+            className="registerHero"
+            src="/image/source/define-the-game.png"
+            alt="DEFINE THE GAME"
+            width={197}
+            height={129}
             priority
           />
 
@@ -174,7 +174,6 @@ export default function RegisterPage() {
                 value={form.phone}
                 inputMode="numeric"
                 pattern="[0-9]*"
-                maxLength={11}
                 placeholder="请输入手机号"
                 onChange={(event) => updateField("phone", event.target.value)}
               />
@@ -226,11 +225,11 @@ export default function RegisterPage() {
           </form>
 
           <Image
-            className="registerHero"
-            src="/image/source/define-the-game.png"
-            alt="DEFINE THE GAME"
-            width={197}
-            height={129}
+            className="registerLogo"
+            src="/image/source/logo-hongshan.png"
+            alt="HONGSHAN 红杉中国"
+            width={100}
+            height={33}
           />
         </div>
       </section>

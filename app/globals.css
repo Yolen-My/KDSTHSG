@@ -880,22 +880,22 @@ button:disabled {
   min-height: 100vh;
   min-height: 100dvh;
   margin: 0 auto;
-  padding: 64px 37px 34px;
+  padding: 40px 24px 34px;
   display: flex;
   flex-direction: column;
 }
 
-.registerLogo {
-  width: 100px;
-  height: 33px;
+.registerHero {
+  width: 197px;
+  height: 129px;
+  margin: 0 auto;
   object-fit: contain;
-  object-position: left center;
 }
 
 .registerForm {
   display: grid;
   gap: 16px;
-  margin-top: 19px;
+  margin-top: 24px;
 }
 
 .registerField {
@@ -1022,10 +1022,12 @@ button:disabled {
   opacity: 0.7;
 }
 
-.registerHero {
-  width: 197px;
-  height: 129px;
-  margin: 84px auto 0;
+.registerLogo {
+  width: 100px;
+  height: 33px;
+  margin-top: auto;
+  margin-left: auto;
+  margin-right: auto;
   object-fit: contain;
 }
 
@@ -1815,6 +1817,10 @@ button:disabled {
   font-weight: 500;
   line-height: 1.25;
   text-align: center;
+  white-space: pre-line;
+  gap: 14px;
+  display: flex;
+  flex-direction: column;
 }
 
 .resultModalScore {
