@@ -388,7 +388,7 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
             className="quizBannerTitle"
             height={20}
             src="/image/source/quiz/quiz-title.png"
-            width={147}
+            width={242}
           />
           <p>Quiz总进度已完成{completedCount}/{TOTAL_GROUPS}</p>
         </div>

@@ -61,7 +61,7 @@ function StoryShell({ children }: { children: ReactNode }) {
               className="storyBannerTitle"
               src="/image/source/story/story-title.png"
               alt="狼人悍跳"
-              width={86}
+              width={244}
               height={20}
             />
           </div>

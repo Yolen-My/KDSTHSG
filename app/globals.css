@@ -1828,16 +1828,16 @@ button:disabled {
 
 .resultModalTitleImage {
   display: block;
-  width: 116px;
+  width: 246px;
   height: auto;
 }
 
 .resultModalTitleImageStory {
-  width: 90px;
+  width: 244px;
 }
 
 .resultModalTitleImageElimination {
-  width: 85px;
+  width: 212px;
 }
 
 .resultModal--elimination {
@@ -2459,7 +2459,7 @@ button:disabled {
 
 .bingoBannerTitle {
   display: block;
-  width: 116px;
+  width: 246px;
   height: auto;
 }
 
@@ -2771,7 +2771,7 @@ button:disabled {
 
 .quizBannerTitle {
   display: block;
-  width: 147px;
+  width: 242px;
   height: auto;
 }
 
@@ -3100,7 +3100,7 @@ button:disabled {
 
 .storyBannerTitle {
   display: block;
-  width: 86px;
+  width: 244px;
   height: auto;
   margin-bottom: 2px;
 }
@@ -3323,7 +3323,7 @@ button:disabled {
 
 .eliminationBannerTitle {
   display: block;
-  width: 85px;
+  width: 212px;
   height: auto;
   margin-bottom: 2px;
 }

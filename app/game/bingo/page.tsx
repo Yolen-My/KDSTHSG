@@ -66,7 +66,7 @@ function BingoShell({ children, hideNavActions = false, hideNav = false }: { chi
                 className="bingoBannerTitle"
                 src="/image/source/bingo/bingo-title.png"
                 alt="预言家验词"
-                width={116}
+                width={246}
                 height={20}
               />
               <p>猜对词语，完成 Bingo</p>

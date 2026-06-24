@@ -6,16 +6,16 @@ const RESULT_TITLE_IMAGES: Record<
   string,
   { src: string; width: number; height: number; className?: string }
 > = {
-  "预言家验词": { src: "/image/source/bingo/bingo-title.png", width: 116, height: 20 },
+  "预言家验词": { src: "/image/source/bingo/bingo-title.png", width: 246, height: 20 },
   "狼人悍跳": {
     src: "/image/source/story/story-title.png",
-    width: 90,
-    height: 21,
+    width: 244,
+    height: 20,
     className: "resultModalTitleImage resultModalTitleImageStory"
   },
   守卫者之夜: {
     src: "/image/source/elimination/modal-title.png",
-    width: 85,
+    width: 212,
     height: 20,
     className: "resultModalTitleImage resultModalTitleImageElimination"
   }

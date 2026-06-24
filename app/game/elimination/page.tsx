@@ -81,7 +81,7 @@ function EliminationShell({ children, hideNavActions = false }: { children: Reac
               className="eliminationBannerTitle"
               src="/image/source/elimination/elimination-title.png"
               alt="守卫者之夜"
-              width={85}
+              width={212}
               height={20}
             />
           </div>

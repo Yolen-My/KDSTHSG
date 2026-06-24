@@ -30,7 +30,7 @@ export default function WaitingModal({ open, gameName, timeout = false }: Waitin
                 className="resultModalTitleImage"
                 height={20}
                 src="/image/source/bingo/bingo-title.png"
-                width={116}
+                width={246}
               />
             ) : (
               <h2 className="resultModalTitle">{gameName}</h2>
