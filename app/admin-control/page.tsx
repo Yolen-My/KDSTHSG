@@ -209,7 +209,7 @@ export default function AdminControlPage() {
       </section>
 
       <section className="sectionBlock">
-        <h2>Sector Quiz 控制</h2>
+        <h2>猎人快答 控制</h2>
         <div className="adminList" style={{ marginTop: 16 }}>
           {quizSectors.map((sector) => (
             <div key={sector.index} style={{ marginBottom: 16 }}>

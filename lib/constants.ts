@@ -10,11 +10,18 @@ export const TEAMS = ["Alpha", "Beta", "Gamma", "Delta"];
 
 export const GAME_ORDER: GameKey[] = ["bingo", "quiz", "story", "elimination"];
 
+export const GAME_DISPLAY_NAMES: Record<GameKey, string> = {
+  bingo: "预言家验词",
+  quiz: "猎人快答",
+  story: "狼人悍跳",
+  elimination: "守卫者之夜"
+};
+
 export const GAMES: Game[] = [
-  { id: "game-bingo", key: "bingo", name: "Bingo 猜词", maxScore: 100, isOpen: false, order: 1, bingoScored: false, bingoPhase: "open" },
-  { id: "game-quiz", key: "quiz", name: "Sector Quiz", maxScore: 100, isOpen: false, order: 2, quizCurrentGroup: 0, quizOpenGroups: [] },
-  { id: "game-story", key: "story", name: "真假故事", maxScore: 100, isOpen: false, order: 3 },
-  { id: "game-elimination", key: "elimination", name: "站立淘汰", maxScore: 100, isOpen: false, order: 4 }
+  { id: "game-bingo", key: "bingo", name: GAME_DISPLAY_NAMES.bingo, maxScore: 100, isOpen: false, order: 1, bingoScored: false, bingoPhase: "open" },
+  { id: "game-quiz", key: "quiz", name: GAME_DISPLAY_NAMES.quiz, maxScore: 100, isOpen: false, order: 2, quizCurrentGroup: 0, quizOpenGroups: [] },
+  { id: "game-story", key: "story", name: GAME_DISPLAY_NAMES.story, maxScore: 100, isOpen: false, order: 3 },
+  { id: "game-elimination", key: "elimination", name: GAME_DISPLAY_NAMES.elimination, maxScore: 200, isOpen: false, order: 4 }
 ];
 
 export const QUESTIONS: Question[] = [];

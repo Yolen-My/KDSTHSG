@@ -7,7 +7,7 @@ import {
   calculateStoryScore
 } from "./scoring.ts";
 
-// ========== Bingo 猜词游戏评分测试 ==========
+// ========== 预言家验词游戏评分测试 ==========
 test("calculateBingoScore: 正常情况测试", () => {
   assert.equal(calculateBingoScore(0), 0);
   assert.equal(calculateBingoScore(1), 10);
@@ -21,7 +21,7 @@ test("calculateBingoScore: 边界情况测试", () => {
   assert.equal(calculateBingoScore(100), 100); // 极大值
 });
 
-// ========== Quick Quiz 游戏评分测试 ==========
+// ========== 猎人快答 游戏评分测试 ==========
 test("calculateQuizScore: 正常情况测试", () => {
   assert.equal(calculateQuizScore(0), 0);
   assert.equal(calculateQuizScore(1), 10);
@@ -35,7 +35,7 @@ test("calculateQuizScore: 边界情况测试", () => {
   assert.equal(calculateQuizScore(50), 100);
 });
 
-// ========== 真假故事游戏评分测试 ==========
+// ========== 狼人悍跳游戏评分测试 ==========
 test("calculateStoryScore: 全对加分测试", () => {
   assert.equal(calculateStoryScore([true, true]), 100); // 全对 50*2=100
   assert.equal(calculateStoryScore([true, false]), 50); // 一个对 50
@@ -53,22 +53,22 @@ test("calculateStoryScore: 边界情况测试", () => {
   assert.equal(calculateStoryScore([true, false, true]), 100); // 50*2=100
 });
 
-// ========== 站立淘汰游戏评分测试 ==========
+// ========== 守卫者之夜游戏评分测试 ==========
 test("calculateEliminationScore: 正常情况测试", () => {
   assert.equal(calculateEliminationScore(0), 0);
-  assert.equal(calculateEliminationScore(1), 20);
-  assert.equal(calculateEliminationScore(3), 60);
-  assert.equal(calculateEliminationScore(5), 100);
+  assert.equal(calculateEliminationScore(1), 25);
+  assert.equal(calculateEliminationScore(3), 75);
+  assert.equal(calculateEliminationScore(8), 200);
 });
 
 test("calculateEliminationScore: 边界情况测试", () => {
   assert.equal(calculateEliminationScore(-1), 0);
-  assert.equal(calculateEliminationScore(6), 100);
-  assert.equal(calculateEliminationScore(20), 100);
+  assert.equal(calculateEliminationScore(9), 200);
+  assert.equal(calculateEliminationScore(20), 200);
 });
 
 // ========== 综合测试 ==========
-test("所有评分函数都返回 0-100 之间的整数", () => {
+test("基础评分函数都返回各自满分范围内的整数", () => {
   const scoringFunctions = [
     calculateBingoScore,
     calculateQuizScore,
@@ -78,7 +78,8 @@ test("所有评分函数都返回 0-100 之间的整数", () => {
   for (const fn of scoringFunctions) {
     for (let i = -10; i <= 20; i++) {
       const score = fn(i);
-      assert.ok(score >= 0 && score <= 100, `${fn.name}(${i}) = ${score} 超出范围`);
+      const maxScore = fn.name === "calculateEliminationScore" ? 200 : 100;
+      assert.ok(score >= 0 && score <= maxScore, `${fn.name}(${i}) = ${score} 超出范围`);
       assert.ok(Number.isInteger(score), `${fn.name}(${i}) = ${score} 不是整数`);
     }
   }
@@ -125,10 +126,10 @@ test("calculateStoryScore: 各种组合测试", () => {
 
 test("calculateEliminationScore: 极端值测试", () => {
   assert.equal(calculateEliminationScore(0), 0);
-  assert.equal(calculateEliminationScore(5), 100);
+  assert.equal(calculateEliminationScore(8), 200);
   assert.equal(calculateEliminationScore(-10), 0);
-  assert.equal(calculateEliminationScore(100), 100);
-  assert.equal(calculateEliminationScore(3.7), 74); // 小数不被取整
+  assert.equal(calculateEliminationScore(100), 200);
+  assert.equal(calculateEliminationScore(3.7), 92.5); // 小数不被取整
 });
 
 // ========== 新增：NaN和非数字输入测试 ==========

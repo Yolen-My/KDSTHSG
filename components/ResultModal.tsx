@@ -6,14 +6,14 @@ const RESULT_TITLE_IMAGES: Record<
   string,
   { src: string; width: number; height: number; className?: string }
 > = {
-  "Bingo 猜词": { src: "/image/source/bingo/bingo-title.png", width: 116, height: 20 },
-  "真假故事": {
+  "预言家验词": { src: "/image/source/bingo/bingo-title.png", width: 116, height: 20 },
+  "狼人悍跳": {
     src: "/image/source/story/story-title.png",
     width: 90,
     height: 21,
     className: "resultModalTitleImage resultModalTitleImageStory"
   },
-  站立淘汰: {
+  守卫者之夜: {
     src: "/image/source/elimination/modal-title.png",
     width: 85,
     height: 20,
@@ -59,7 +59,7 @@ export default function ResultModal({
 
   const handleClick = onClose || onBackLobby;
   const titleImage = RESULT_TITLE_IMAGES[gameName];
-  const isElimination = gameName === "站立淘汰";
+  const isElimination = gameName === "守卫者之夜";
   const resolvedEliminationStyle: Exclude<EliminationModalStyle, "auto"> = isElimination
     ? eliminationModalStyle === "auto"
       ? isEliminated
@@ -75,7 +75,7 @@ export default function ResultModal({
       : showEliminationStatus && resolvedEliminationStyle === "correct"
         ? ELIMINATION_CORNER_BADGES.correct
         : null;
-  const eliminationTitleImage = titleImage ?? RESULT_TITLE_IMAGES["站立淘汰"];
+  const eliminationTitleImage = titleImage ?? RESULT_TITLE_IMAGES["守卫者之夜"];
 
   return (
     <div className="modalMask">

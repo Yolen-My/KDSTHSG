@@ -34,7 +34,7 @@ function StoryNav() {
   return (
     <header className="storyNav">
       <span />
-      <h1>真假故事</h1>
+      <h1>狼人悍跳</h1>
       <span />
     </header>
   );
@@ -42,7 +42,7 @@ function StoryNav() {
 
 function StoryShell({ children }: { children: ReactNode }) {
   return (
-    <Layout title="真假故事" hideHeader>
+    <Layout title="狼人悍跳" hideHeader>
       <section className="storyPage">
         <PageBackground />
         <div className="storyPageContent">
@@ -60,7 +60,7 @@ function StoryShell({ children }: { children: ReactNode }) {
             <Image
               className="storyBannerTitle"
               src="/image/source/story/story-title.png"
-              alt="真假故事"
+              alt="狼人悍跳"
               width={86}
               height={20}
             />
@@ -83,7 +83,7 @@ export default function StoryPage() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [existing, setExisting] = useState<Awaited<ReturnType<typeof getGameResult>>>(null);
   const [existingLoading, setExistingLoading] = useState(true);
-  const [modal, setModal] = useState({ open: false, score: 0, total: 0, rank: 0, buttonText: "", onClose: null as (() => void) | null, hideScore: false, gameName: "真假故事" });
+  const [modal, setModal] = useState({ open: false, score: 0, total: 0, rank: 0, buttonText: "", onClose: null as (() => void) | null, hideScore: false, gameName: "狼人悍跳" });
   const [message, setMessage] = useState("");
   const [isLeaving, setIsLeaving] = useState(false);
   const [seconds, setSeconds] = useState(STORY_SECONDS);
@@ -274,7 +274,7 @@ export default function StoryPage() {
     if (isOpen !== true) {
       if (autoTrigger) {
         // 自动触发但游戏未开放：仍展示完成弹窗，避免用户卡住
-        setModal({ open: true, score: 0, total: score, rank: 0, buttonText: "", onClose: null, hideScore: false, gameName: "真假故事" });
+        setModal({ open: true, score: 0, total: score, rank: 0, buttonText: "", onClose: null, hideScore: false, gameName: "狼人悍跳" });
         return;
       }
       setMessage("该游戏暂未开放");
@@ -301,12 +301,12 @@ export default function StoryPage() {
       localStorage.removeItem(indexKey);
       localStorage.removeItem(answersKey);
       localStorage.removeItem(firstModalKey);
-      setModal({ open: true, score: outcome.result.score, total: outcome.player.totalScore, rank: outcome.rank, buttonText: "", onClose: null, hideScore: false, gameName: "真假故事" });
+      setModal({ open: true, score: outcome.result.score, total: outcome.player.totalScore, rank: outcome.rank, buttonText: "", onClose: null, hideScore: false, gameName: "狼人悍跳" });
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "提交失败");
       if (autoTrigger) {
         // 自动触发提交失败：仍展示完成弹窗，避免用户卡住
-        setModal({ open: true, score: 0, total: score, rank: 0, buttonText: "", onClose: null, hideScore: false, gameName: "真假故事" });
+        setModal({ open: true, score: 0, total: score, rank: 0, buttonText: "", onClose: null, hideScore: false, gameName: "狼人悍跳" });
       }
     } finally {
       setSubmitting(false);
@@ -483,7 +483,7 @@ export default function StoryPage() {
           type="button"
           onClick={() => submit()}
         >
-          提交真假故事
+          提交狼人悍跳
         </button>
       ) : (
         <button

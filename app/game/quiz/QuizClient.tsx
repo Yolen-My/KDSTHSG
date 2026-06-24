@@ -53,7 +53,7 @@ function QuizNav({ hideActions = false }: { hideActions?: boolean }) {
         </svg>
         活动大厅
       </Link>}
-      <h1>Sector Quiz</h1>
+      <h1>猎人快答</h1>
       {hideActions ? <span /> : <Link className="quizNavLink" href="/ranking">
         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="11" viewBox="0 0 12 11" fill="none" aria-hidden="true">
           <path
@@ -70,7 +70,7 @@ function QuizNav({ hideActions = false }: { hideActions?: boolean }) {
 
 function QuizShell({ children, hideNavActions = false }: { children: ReactNode; hideNavActions?: boolean }) {
   return (
-    <Layout title="Sector Quiz" hideHeader>
+    <Layout title="猎人快答" hideHeader>
       <section className="quizPage">
         <PageBackground />
         <div className="quizPageContent">
@@ -366,7 +366,7 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
 
         <ResultModal
           open={modal.open}
-          gameName={modal.completedAll ? "Sector Quiz 已完成" : `${activeSector.sectorName} 已完成\n您该轮的得分`}
+          gameName={modal.completedAll ? "猎人快答 已完成" : `${activeSector.sectorName} 已完成\n您该轮的得分`}
           roundScore={modal.completedAll ? modal.quizTotalScore : modal.roundScore}
           totalScore={modal.totalScore}
           rank={modal.rank}
@@ -384,7 +384,7 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
       <div className="quizBanner">
         <div className="quizBannerText">
           <Image
-            alt="Sector Quiz"
+            alt="猎人快答"
             className="quizBannerTitle"
             height={20}
             src="/image/source/quiz/quiz-title.png"

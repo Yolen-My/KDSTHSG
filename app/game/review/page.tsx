@@ -10,10 +10,10 @@ import { useCurrentPlayer, useAppState } from "@/hooks/use-game-data";
 import type { GameKey, GameResult, Question } from "@/types";
 
 const GAME_LABELS: Record<GameKey, string> = {
-  bingo: "Bingo 猜词",
-  quiz: "Sector Quiz",
-  story: "真假故事",
-  elimination: "站立淘汰"
+  bingo: "预言家验词",
+  quiz: "猎人快答",
+  story: "狼人悍跳",
+  elimination: "守卫者之夜"
 };
 
 const GAME_ORDER: GameKey[] = ["bingo", "quiz", "story", "elimination"];

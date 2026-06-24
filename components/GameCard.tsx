@@ -28,10 +28,10 @@ const GAME_ICONS: Record<GameKey, IconConfig> = {
 };
 
 const DISPLAY_NAMES: Record<GameKey, string> = {
-  bingo: "Bingo猜词",
-  quiz: "Sector Quiz",
-  story: "真假故事",
-  elimination: "站立淘汰"
+  bingo: "预言家验词",
+  quiz: "猎人快答",
+  story: "狼人悍跳",
+  elimination: "守卫者之夜"
 };
 
 function getStatusBadgeClass(status: string, canEnter: boolean): string {

@@ -70,7 +70,7 @@ export type QuizProgress = {
   completedCount: number;
   totalCount: 5;
   score: number;
-  maxScore: 100;
+  maxScore: number;
   openGroups: number[];
   availableGroups: number[];
   completedGroups: number[];

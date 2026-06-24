@@ -15,7 +15,7 @@ export default function QuizStartModal({ open, onStart }: QuizStartModalProps) {
         <div className="resultModalBody">
           <div className="resultModalHeader">
             <span className="resultModalEyebrow">游戏准备</span>
-            <h2 className="resultModalTitle">Sector Quiz</h2>
+            <h2 className="resultModalTitle">猎人快答</h2>
           </div>
 
           <div className="resultModalMain">

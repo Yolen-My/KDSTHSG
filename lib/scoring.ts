@@ -15,5 +15,5 @@ export function calculateStoryScore(results: boolean[]): number {
 }
 
 export function calculateEliminationScore(correctCount: number): number {
-  return Math.max(0, Math.min(correctCount * 20, 100));
+  return Math.max(0, Math.min(correctCount * 25, 200));
 }

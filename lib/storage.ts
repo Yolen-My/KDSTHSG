@@ -36,16 +36,33 @@ function normalizeQuizOpenGroups(value: unknown): number[] {
     .sort((a, b) => a - b);
 }
 
+function normalizeAnswerValue(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  const raw = String(value).trim();
+  try {
+    const decoded = JSON.parse(raw);
+    if (typeof decoded === "string" || typeof decoded === "number" || typeof decoded === "boolean") {
+      return String(decoded).trim();
+    }
+  } catch {}
+  return raw;
+}
+
 function normalizeQuestion(question: Question): Question {
-  if (question.gameKey !== "quiz") return question;
-  const derivedSessionIndex = getQuizSessionIndexFromOrder(question.order);
-  const hasExplicitSector = Boolean(question.sectorKey || question.sectorName);
-  const quizSessionIndex = Number.isInteger(question.quizSessionIndex) && (hasExplicitSector || question.quizSessionIndex !== 0 || derivedSessionIndex === 0)
-    ? question.quizSessionIndex as number
+  const normalizedQuestion: Question = {
+    ...question,
+    options: Array.isArray(question.options) ? question.options.map((option) => normalizeAnswerValue(option)) : question.options,
+    correctAnswer: normalizeAnswerValue(question.correctAnswer)
+  };
+  if (normalizedQuestion.gameKey !== "quiz") return normalizedQuestion;
+  const derivedSessionIndex = getQuizSessionIndexFromOrder(normalizedQuestion.order);
+  const hasExplicitSector = Boolean(normalizedQuestion.sectorKey || normalizedQuestion.sectorName);
+  const quizSessionIndex = Number.isInteger(normalizedQuestion.quizSessionIndex) && (hasExplicitSector || normalizedQuestion.quizSessionIndex !== 0 || derivedSessionIndex === 0)
+    ? normalizedQuestion.quizSessionIndex as number
     : derivedSessionIndex;
   const defaults = getQuizSectorDefaults(quizSessionIndex);
   return {
-    ...question,
+    ...normalizedQuestion,
     quizSessionIndex,
     sectorKey: question.sectorKey || defaults.sectorKey,
     sectorName: question.sectorName || defaults.sectorName
@@ -176,7 +193,11 @@ function loadStateLocal(): AppState {
       ...getInitialState(),
       ...parsed,
       games: (parsed.games?.length ? parsed.games : GAMES).map((game) => (
-        game.key === "quiz" ? { ...game, quizOpenGroups: normalizeQuizOpenGroups(game.quizOpenGroups || []) } : game
+        game.key === "quiz"
+          ? { ...game, quizOpenGroups: normalizeQuizOpenGroups(game.quizOpenGroups || []) }
+          : game.key === "elimination"
+            ? { ...game, maxScore: 200 }
+            : game
       )),
       gameResults: (parsed.gameResults || []).map(normalizeGameResult),
       questions: (parsed.questions?.length ? parsed.questions : []).map(normalizeQuestion)
@@ -556,6 +577,7 @@ export async function submitGameResult(input: {
   const bingoScore = input.gameKey === "bingo"
     ? calculateBingoSelection(state.questions, input.answers, input.score)
     : null;
+  const maxScore = input.gameKey === "elimination" ? 200 : 100;
 
   const result: GameResult = {
     id: createId("result"),
@@ -569,8 +591,8 @@ export async function submitGameResult(input: {
           correctCount: bingoScore.correctCount
         }
       : input.answers,
-    score: Math.max(0, Math.min(100, Math.round(bingoScore?.score ?? input.score))),
-    maxScore: 100,
+    score: Math.max(0, Math.min(maxScore, Math.round(bingoScore?.score ?? input.score))),
+    maxScore,
     completedAt: nowIso(),
     pendingBingoScore: isPending,
     quizSessionIndex: input.quizSessionIndex,

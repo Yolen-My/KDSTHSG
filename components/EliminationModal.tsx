@@ -22,7 +22,7 @@ export default function EliminationModal({
   return (
     <ResultModal
       open={open}
-      gameName="站立淘汰"
+      gameName="守卫者之夜"
       roundScore={roundScore}
       totalScore={totalScore}
       rank={rank}

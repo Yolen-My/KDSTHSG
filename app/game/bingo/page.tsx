@@ -29,7 +29,7 @@ function getBingoTimeoutKey(playerId?: string | null): string {
 
 function BingoShell({ children, hideNavActions = false, hideNav = false }: { children: ReactNode; hideNavActions?: boolean; hideNav?: boolean }) {
   return (
-    <Layout title="Bingo 猜词" hideHeader>
+    <Layout title="预言家验词" hideHeader>
       <section className="bingoPage">
         <PageBackground />
 
@@ -46,7 +46,7 @@ function BingoShell({ children, hideNavActions = false, hideNav = false }: { chi
               </svg>
               活动大厅
             </Link>
-            <h1>Bingo 猜词</h1>
+            <h1>预言家验词</h1>
             <Link className="bingoNavLink" href="/ranking">
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="11" viewBox="0 0 12 11" fill="none" aria-hidden="true">
                 <path
@@ -65,7 +65,7 @@ function BingoShell({ children, hideNavActions = false, hideNav = false }: { chi
               <Image
                 className="bingoBannerTitle"
                 src="/image/source/bingo/bingo-title.png"
-                alt="Bingo 猜词"
+                alt="预言家验词"
                 width={116}
                 height={20}
               />
@@ -475,13 +475,13 @@ export default function BingoPage() {
 
       <ResultModal
         open={modal.open}
-        gameName="Bingo 猜词"
+        gameName="预言家验词"
         roundScore={modal.score}
         totalScore={modal.total}
         rank={modal.rank}
         onBackLobby={goLobby}
       />
-      <WaitingModal open={(waitingModal || isWaitingForScore) && !modal.open} gameName="Bingo 猜词" timeout={timeUp || localStorage.getItem(timeoutKey) === "1"} />
+      <WaitingModal open={(waitingModal || isWaitingForScore) && !modal.open} gameName="预言家验词" timeout={timeUp || localStorage.getItem(timeoutKey) === "1"} />
     </BingoShell>
   );
 }

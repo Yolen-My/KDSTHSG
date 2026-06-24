@@ -119,7 +119,7 @@ export default function LobbyPage() {
 
                 return (
                   <GameCard
-                    game={{ ...game, name: "Sector Quiz" }}
+                    game={{ ...game, name: "猎人快答" }}
                     completed={quizCompleted}
                     key={game.key}
                     subtitle={`进度 ${quizProgress.completedCount}/${quizProgress.totalCount}`}

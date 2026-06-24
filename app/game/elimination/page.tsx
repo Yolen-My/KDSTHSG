@@ -10,7 +10,7 @@ import PageBackground from "@/components/PageBackground";
 import ResultModal from "@/components/ResultModal";
 import { calculateEliminationScore } from "@/lib/scoring";
 import { getGameResult } from "@/lib/storage";
-import { useCurrentPlayer, useGameStatus, useQuestions, useSubmitGameResult } from "@/hooks/use-game-data";
+import { useCurrentPlayer, useGameStatus, useQuestions, useRanking, useSubmitGameResult } from "@/hooks/use-game-data";
 
 function EliminationNav({ hideActions = false }: { hideActions?: boolean }) {
   return (
@@ -25,7 +25,7 @@ function EliminationNav({ hideActions = false }: { hideActions?: boolean }) {
         </svg>
         活动大厅
       </Link>
-      <h1>站立淘汰</h1>
+      <h1>守卫者之夜</h1>
       <Link className="eliminationNavLink" href="/ranking">
         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="11" viewBox="0 0 12 11" fill="none" aria-hidden="true">
           <path
@@ -41,7 +41,20 @@ function EliminationNav({ hideActions = false }: { hideActions?: boolean }) {
 }
 
 const ELIMINATION_SECONDS = 10;
+const ELIMINATION_QUESTION_LIMIT = 8;
 const ELIMINATION_TIMER_KEY_PREFIX = "elimination_timer_start";
+
+function normalizeAnswerValue(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  const raw = String(value).trim();
+  try {
+    const decoded = JSON.parse(raw);
+    if (typeof decoded === "string" || typeof decoded === "number" || typeof decoded === "boolean") {
+      return String(decoded).trim();
+    }
+  } catch {}
+  return raw;
+}
 
 function getEliminationTimerKey(playerId: string | null | undefined, index: number): string {
   return playerId ? `${ELIMINATION_TIMER_KEY_PREFIX}_${playerId}_${index}` : `${ELIMINATION_TIMER_KEY_PREFIX}_guest_${index}`;
@@ -49,7 +62,7 @@ function getEliminationTimerKey(playerId: string | null | undefined, index: numb
 
 function EliminationShell({ children, hideNavActions = false }: { children: ReactNode; hideNavActions?: boolean }) {
   return (
-    <Layout title="站立淘汰" hideHeader>
+    <Layout title="守卫者之夜" hideHeader>
       <section className="eliminationPage">
         <PageBackground />
         <div className="eliminationPageContent">
@@ -67,7 +80,7 @@ function EliminationShell({ children, hideNavActions = false }: { children: Reac
             <Image
               className="eliminationBannerTitle"
               src="/image/source/elimination/elimination-title.png"
-              alt="站立淘汰"
+              alt="守卫者之夜"
               width={85}
               height={20}
             />
@@ -82,7 +95,8 @@ function EliminationShell({ children, hideNavActions = false }: { children: Reac
 
 export default function EliminationPage() {
   const router = useRouter();
-  const { playerId, refresh } = useCurrentPlayer();
+  const { playerId, refresh, player } = useCurrentPlayer();
+  const { ranking } = useRanking(playerId);
   const questions = useQuestions("elimination");
   const submitGameResult = useSubmitGameResult();
   const isOpen = useGameStatus("elimination");
@@ -127,9 +141,10 @@ export default function EliminationPage() {
     };
   }, [playerId]);
 
-  const currentQuestion = questions[currentIndex];
+  const gameQuestions = questions.slice(0, ELIMINATION_QUESTION_LIMIT);
+  const currentQuestion = gameQuestions[currentIndex];
   const selectedAnswer = currentQuestion ? answers[currentQuestion.id] : "";
-  const isLastQuestion = currentIndex === questions.length - 1;
+  const isLastQuestion = currentIndex === gameQuestions.length - 1;
 
   const handleTimeUpRef = useRef<() => Promise<void>>(async () => {});
   const timeUpSubmittingRef = useRef(false);
@@ -137,7 +152,7 @@ export default function EliminationPage() {
   async function submitFinal(nextAnswers: Record<string, string>) {
     if (!playerId || submitting) return;
     setSubmitting(true);
-    const correctCount = questions.filter((q) => nextAnswers[q.id] === q.correctAnswer).length;
+    const correctCount = gameQuestions.filter((q) => normalizeAnswerValue(nextAnswers[q.id]) === normalizeAnswerValue(q.correctAnswer)).length;
     const finalScore = calculateEliminationScore(correctCount);
 
     try {
@@ -146,7 +161,22 @@ export default function EliminationPage() {
       setExisting(outcome.result);
       setModal({ open: true, score: outcome.result.score, total: outcome.player.totalScore, rank: outcome.rank });
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "提交失败");
+      const errorMessage = error instanceof Error ? error.message : "提交失败";
+      if (errorMessage.includes("已完成") && playerId) {
+        const completedResult = await getGameResult(playerId, "elimination");
+        if (completedResult) {
+          refresh();
+          setExisting(completedResult);
+          setModal({
+            open: true,
+            score: completedResult.score,
+            total: player?.totalScore ?? completedResult.score,
+            rank: ranking.context?.rank ?? 0
+          });
+          return;
+        }
+      }
+      setMessage(errorMessage);
     } finally {
       setSubmitting(false);
     }
@@ -163,7 +193,7 @@ export default function EliminationPage() {
     if (isLastQuestion) {
       await submitFinal(newAnswers);
     } else {
-      setCurrentIndex((index) => Math.min(index + 1, questions.length - 1));
+      setCurrentIndex((index) => Math.min(index + 1, gameQuestions.length - 1));
       setSeconds(ELIMINATION_SECONDS);
       setTimeUp(false);
       if (playerId !== undefined) {
@@ -216,7 +246,7 @@ export default function EliminationPage() {
     if (isLastQuestion) {
       await submitFinal(newAnswers);
     } else {
-      setCurrentIndex((index) => Math.min(index + 1, questions.length - 1));
+      setCurrentIndex((index) => Math.min(index + 1, gameQuestions.length - 1));
       setSeconds(ELIMINATION_SECONDS);
       setTimeUp(false);
       if (playerId !== undefined) {
@@ -269,7 +299,11 @@ export default function EliminationPage() {
     );
   }
 
-  const shouldHideNavActions = modal.open || (!existing && isOpen === true);
+  const resultModalOpen = modal.open || Boolean(existing && !existingLoading);
+  const resultRoundScore = modal.open ? modal.score : existing?.score ?? 0;
+  const resultTotalScore = modal.open ? modal.total : player?.totalScore ?? existing?.score ?? 0;
+  const resultRank = modal.open ? modal.rank : ranking.context?.rank ?? 0;
+  const shouldHideNavActions = resultModalOpen || (!existing && isOpen === true);
 
   return (
     <EliminationShell hideNavActions={shouldHideNavActions}>
@@ -328,16 +362,16 @@ export default function EliminationPage() {
       )}
 
       <section className="eliminationHintCard">
-        <b>已完成 {Object.keys(answers).length}/{questions.length}</b>
+        <b>已完成 {Object.keys(answers).length}/{gameQuestions.length}</b>
         <span>{message || (submitting ? "正在提交本轮成绩..." : "答完自动进入下一题，答错也可以继续。")}</span>
       </section>
 
       <ResultModal
-        open={modal.open}
-        gameName="站立淘汰"
-        roundScore={modal.score}
-        totalScore={modal.total}
-        rank={modal.rank}
+        open={resultModalOpen}
+        gameName="守卫者之夜"
+        roundScore={resultRoundScore}
+        totalScore={resultTotalScore}
+        rank={resultRank}
         eliminationModalStyle="standard"
         onBackLobby={() => {
           router.replace("/ranking");

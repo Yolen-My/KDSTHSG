@@ -51,14 +51,14 @@ test("集成测试: 完整的单人游戏流程", () => {
   player.totalScore += storyScore;
   player.completedGames.push("story");
 
-  // 5. 完成 Elimination 游戏（答对 5 题）
-  const eliminationScore = calculateEliminationScore(5);
-  assert.equal(eliminationScore, 100);
+  // 5. 完成 Elimination 游戏（答对 8 题）
+  const eliminationScore = calculateEliminationScore(8);
+  assert.equal(eliminationScore, 200);
   player.totalScore += eliminationScore;
   player.completedGames.push("elimination");
 
   // 6. 验证总分
-  assert.equal(player.totalScore, 380); // 100+80+100+100
+  assert.equal(player.totalScore, 480); // 100+80+100+200
   assert.equal(player.completedGames.length, 4);
 });
 
@@ -71,7 +71,7 @@ test("集成测试: 多人游戏排名流程", () => {
       phone: "13900000001",
       office: "北京",
       team: "Alpha",
-      totalScore: calculateBingoScore(10) + calculateQuizScore(10) + calculateStoryScore([true, true, true]) + calculateEliminationScore(5),
+      totalScore: calculateBingoScore(10) + calculateQuizScore(10) + calculateStoryScore([true, true, true]) + calculateEliminationScore(8),
       completedGames: ["bingo", "quiz", "story", "elimination"],
       finalSubmitted: false,
       created: "2026-01-01T09:00:00.000Z",
@@ -84,7 +84,7 @@ test("集成测试: 多人游戏排名流程", () => {
       phone: "13900000002",
       office: "北京",
       team: "Beta",
-      totalScore: calculateBingoScore(10) + calculateQuizScore(10) + calculateStoryScore([true, true, true]) + calculateEliminationScore(5),
+      totalScore: calculateBingoScore(10) + calculateQuizScore(10) + calculateStoryScore([true, true, true]) + calculateEliminationScore(8),
       completedGames: ["bingo", "quiz", "story", "elimination"],
       finalSubmitted: false,
       created: "2026-01-01T09:00:00.000Z",
@@ -107,9 +107,9 @@ test("集成测试: 多人游戏排名流程", () => {
   ];
 
   // 2. 验证各玩家得分
-  assert.equal(players[0].totalScore, 400); // 100+100+100+100
-  assert.equal(players[1].totalScore, 400); // 100+100+100+100
-  assert.equal(players[2].totalScore, 260); // 80+70+50+60
+  assert.equal(players[0].totalScore, 500); // 100+100+100+200
+  assert.equal(players[1].totalScore, 500); // 100+100+100+200
+  assert.equal(players[2].totalScore, 275); // 80+70+50+75
 
   // 3. 生成排名
   const ranking = buildRanking(players);
@@ -131,9 +131,9 @@ test("集成测试: 多人游戏排名流程", () => {
   // 6. 验证 Office 平均排名
   const officeAverages = getOfficeAverageRanking(players);
   assert.equal(officeAverages[0].office, "北京");
-  assert.equal(officeAverages[0].averageScore, 400); // (400+400)/2
+  assert.equal(officeAverages[0].averageScore, 500); // (500+500)/2
   assert.equal(officeAverages[1].office, "上海");
-  assert.equal(officeAverages[1].averageScore, 260);
+  assert.equal(officeAverages[1].averageScore, 275);
 
   // 7. 验证 Office Top 3
   const officeTop3 = getOfficeTop3(players);
@@ -195,7 +195,7 @@ test("集成测试: 边界场景 - 部分完成游戏", () => {
       phone: "13900000001",
       office: "北京",
       team: "Team",
-      totalScore: calculateBingoScore(10) + calculateQuizScore(10) + calculateStoryScore([true, true, true]) + calculateEliminationScore(5),
+      totalScore: calculateBingoScore(10) + calculateQuizScore(10) + calculateStoryScore([true, true, true]) + calculateEliminationScore(8),
       completedGames: ["bingo", "quiz", "story", "elimination"],
       finalSubmitted: false,
       created: "2026-01-01T09:00:00.000Z",
@@ -272,7 +272,7 @@ test("集成测试: 测试获取最后完成的游戏的分数", () => {
   assert.equal(lastResult.score, 70);
 });
 
-test("集成测试: Quick Quiz 每两题重置计时器逻辑", () => {
+test("集成测试: 猎人快答 每两题重置计时器逻辑", () => {
   // 模拟题次和计时器重置
   const quizQuestions = [
     { index: 0, shouldReset: false }, // 完成第 1 题不重置
@@ -309,10 +309,10 @@ test("集成测试: 游戏结果为空时的处理", () => {
 test("集成测试: 游戏状态管理验证", () => {
   // 模拟游戏状态
   const games = [
-    { id: "game-bingo", key: "bingo", name: "Bingo 猜词", maxScore: 100, isOpen: false, order: 1 },
-    { id: "game-quiz", key: "quiz", name: "Quick Quiz", maxScore: 100, isOpen: false, order: 2 },
-    { id: "game-story", key: "story", name: "真假故事", maxScore: 100, isOpen: false, order: 3 },
-    { id: "game-elimination", key: "elimination", name: "站立淘汰", maxScore: 100, isOpen: false, order: 4 }
+    { id: "game-bingo", key: "bingo", name: "预言家验词", maxScore: 100, isOpen: false, order: 1 },
+    { id: "game-quiz", key: "quiz", name: "猎人快答", maxScore: 100, isOpen: false, order: 2 },
+    { id: "game-story", key: "story", name: "狼人悍跳", maxScore: 100, isOpen: false, order: 3 },
+    { id: "game-elimination", key: "elimination", name: "守卫者之夜", maxScore: 200, isOpen: false, order: 4 }
   ];
 
   // 验证默认状态都是关闭的

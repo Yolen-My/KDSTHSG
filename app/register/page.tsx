@@ -5,10 +5,14 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import Layout from "@/components/Layout";
 import PageBackground from "@/components/PageBackground";
-import { OFFICES } from "@/lib/constants";
 import { registerPlayer, restoreCurrentPlayerFromLocal } from "@/lib/storage";
 
 const DEFAULT_TEAM = "Alpha";
+const OFFICE_OPTIONS = [
+  { label: "Beijing", value: "Beijing" },
+  { label: "Shanghai", value: "Shanghai" },
+  { label: "Hong Kong & Others", value: "Hong Kong & Others" }
+];
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -23,9 +27,9 @@ export default function RegisterPage() {
 
   const filteredOffices = useMemo(() => {
     const query = officeQuery.trim().toLowerCase();
-    if (!query || form.office === officeQuery) return OFFICES;
-    return OFFICES.filter((office) => office.toLowerCase().includes(query));
-  }, [officeQuery, form.office]);
+    if (!query || OFFICE_OPTIONS.some((office) => office.label === officeQuery)) return OFFICE_OPTIONS;
+    return OFFICE_OPTIONS.filter((office) => office.label.toLowerCase().includes(query));
+  }, [officeQuery]);
 
   useEffect(() => {
     let active = true;
@@ -66,9 +70,9 @@ export default function RegisterPage() {
     setForm((current) => ({ ...current, [field]: processedValue }));
   }
 
-  function selectOffice(office: string) {
-    updateField("office", office);
-    setOfficeQuery(office);
+  function selectOffice(office: { label: string; value: string }) {
+    updateField("office", office.value);
+    setOfficeQuery(office.label);
     setOfficeOpen(false);
   }
 
@@ -180,7 +184,7 @@ export default function RegisterPage() {
             </label>
 
             <div className="registerField registerField--office" ref={officeDropdownRef}>
-              <span>Office</span>
+              <span>OFFICE</span>
               <div className="registerSelectWrap">
                 <input
                   value={officeQuery}
@@ -194,7 +198,7 @@ export default function RegisterPage() {
                   onChange={(event) => {
                     const value = event.target.value;
                     setOfficeQuery(value);
-                    updateField("office", OFFICES.includes(value) ? value : "");
+                    updateField("office", OFFICE_OPTIONS.find((office) => office.label === value)?.value || "");
                     setOfficeOpen(true);
                   }}
                 />
@@ -205,8 +209,8 @@ export default function RegisterPage() {
                   <div className="officeDropdown">
                     {filteredOffices.length > 0 ? (
                       filteredOffices.map((office) => (
-                        <button key={office} type="button" onClick={() => selectOffice(office)}>
-                          {office}
+                        <button key={office.value} type="button" onClick={() => selectOffice(office)}>
+                          {office.label}
                         </button>
                       ))
                     ) : (
