@@ -84,7 +84,6 @@ function EliminationShell({ children, hideNavActions = false }: { children: Reac
               width={85}
               height={20}
             />
-            <p>Last Person Standing</p>
           </div>
           {children}
         </div>

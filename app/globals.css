@@ -12,8 +12,8 @@
   --panel-soft: rgba(0, 184, 106, 0.12);
   --border: rgba(64, 216, 138, 0.35);
   --danger: #ff5a5f;
-  --mono: "SF Mono", "Cascadia Code", "Fira Code", "Courier New", monospace;
-  --sans: "PingFang SC", "Microsoft YaHei UI", "Segoe UI", sans-serif;
+  --mono: "Arial", "SF Mono", "Cascadia Code", "Fira Code", "Courier New", monospace;
+  --sans: "Arial", "SimHei", "黑体", "Microsoft YaHei", "Microsoft YaHei UI", "PingFang SC", "Segoe UI", sans-serif;
 }
 
 html,

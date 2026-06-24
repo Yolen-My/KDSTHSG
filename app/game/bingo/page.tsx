@@ -16,7 +16,7 @@ import { useCurrentPlayer, useQuestions, useSubmitGameResult, useAppState } from
 import type { Question } from "@/types";
 import type { ReactNode } from "react";
 
-const BINGO_SECONDS = 10;
+const BINGO_SECONDS = 90;
 const LEGACY_BINGO_TIMER_KEY = "bingo_timer_start";
 const LEGACY_BINGO_TIMEOUT_KEY = "bingo_timeout";
 

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Layout from "@/components/Layout";
-import { GAME_ORDER } from "@/lib/constants";
+import { GAME_ORDER, GAME_DISPLAY_NAMES } from "@/lib/constants";
 import { loadState, resetDemoData } from "@/lib/storage";
 import { useAdminActions, useAppState } from "@/hooks/use-game-data";
 import type { GameKey } from "@/types";
@@ -84,7 +84,7 @@ export default function AdminControlPage() {
   async function handleToggle(key: GameKey) {
     const nextState = await toggleGameOpen(key);
     const game = nextState.games.find((item) => item.key === key);
-    setExportText(`${game?.name || key} 已${game?.isOpen ? "开启" : "关闭"}`);
+    setExportText(`${GAME_DISPLAY_NAMES[key]} 已${game?.isOpen ? "开启" : "关闭"}`);
     await refreshOnce();
   }
 
@@ -162,7 +162,7 @@ export default function AdminControlPage() {
           {[...state.games].sort((a, b) => a.order - b.order).map((game) => (
             <div className="adminRow" key={game.key}>
               <div>
-                <b>{game.name}</b>
+                <b>{GAME_DISPLAY_NAMES[game.key as GameKey]}</b>
                 <span>
                   当前状态：{game.isOpen ? "开放中" : "已关闭"} / 完成人数{" "}
                   {completion.find((item) => item.key === game.key)?.count || 0}

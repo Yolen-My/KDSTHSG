@@ -64,7 +64,6 @@ function StoryShell({ children }: { children: ReactNode }) {
               width={86}
               height={20}
             />
-            <p>Guess if the story is ture or false</p>
           </div>
           {children}
         </div>
