@@ -50,7 +50,7 @@ export default function RankingPage() {
                 <path opacity="0.9" d="M3 5.25V8.75" stroke="white" strokeWidth="1" strokeLinecap="round" />
                 <path opacity="0.9" d="M9 7.25V8.75" stroke="white" strokeWidth="1" strokeLinecap="round" />
               </svg>
-              温故知新
+              复习
             </Link>
           </header>
 

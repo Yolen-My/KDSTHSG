@@ -415,7 +415,7 @@ export default function BingoPage() {
 
       <section className="bingoMainCard">
         <div className="bingoStatus">
-          <b>已选 {selectedWords.length}/9</b>
+          <span aria-hidden="true" />
           {canInteract && !timeUp && (
             <span className="bingoTimer">
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">

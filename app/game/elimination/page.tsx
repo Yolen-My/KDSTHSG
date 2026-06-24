@@ -289,8 +289,10 @@ export default function EliminationPage() {
     );
   }
 
+  const shouldHideNavActions = modal.open || eliminationModal.open || (!existing && isOpen === true);
+
   return (
-    <EliminationShell hideNavActions={!existing && isOpen === true}>
+    <EliminationShell hideNavActions={shouldHideNavActions}>
       {!existingLoading && existing && (
         <section className="eliminationStatusCard">
           <p className="eliminationStatusMessage">该游戏已完成，本关得分 {existing.score}，不能重复提交。</p>

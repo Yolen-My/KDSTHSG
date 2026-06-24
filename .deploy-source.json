@@ -1,6 +1,9 @@
 {
   "repo": "Yolen-My/QHduan",
   "branch": "main",
-  "method": "GitHub API partial frontend download + preserve local env/public + local no-fallback ranking patch",
-  "deployed_at": "2026-06-18T21:50:00+08:00"
+  "remote_head": "719e1208ff8ef262ef0aea947070cdc0907c46f0",
+  "method": "GitHub codeload tarball + npm ci/test/build in temp + rsync preserve env/pb_data",
+  "deployed_at": "2026-06-23T20:45:31+08:00",
+  "backup": "/home/ubuntu/projects/backups/QHduan-frontend-before-redeploy-20260623_202227",
+  "source_dir": "/home/ubuntu/projects/QHduan-archive-20260623_203127"
 }
