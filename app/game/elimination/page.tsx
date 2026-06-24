@@ -7,11 +7,10 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import GameBannerIcon from "@/components/GameBannerIcon";
 import Layout from "@/components/Layout";
 import PageBackground from "@/components/PageBackground";
-import EliminationModal from "@/components/EliminationModal";
 import ResultModal from "@/components/ResultModal";
 import { calculateEliminationScore } from "@/lib/scoring";
 import { getGameResult } from "@/lib/storage";
-import { useCurrentPlayer, useGameStatus, useQuestions, useRanking, useSubmitGameResult } from "@/hooks/use-game-data";
+import { useCurrentPlayer, useGameStatus, useQuestions, useSubmitGameResult } from "@/hooks/use-game-data";
 
 function EliminationNav({ hideActions = false }: { hideActions?: boolean }) {
   return (
@@ -83,8 +82,7 @@ function EliminationShell({ children, hideNavActions = false }: { children: Reac
 
 export default function EliminationPage() {
   const router = useRouter();
-  const { playerId, refresh, player } = useCurrentPlayer();
-  const { ranking } = useRanking(playerId);
+  const { playerId, refresh } = useCurrentPlayer();
   const questions = useQuestions("elimination");
   const submitGameResult = useSubmitGameResult();
   const isOpen = useGameStatus("elimination");
@@ -92,8 +90,8 @@ export default function EliminationPage() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [existing, setExisting] = useState<Awaited<ReturnType<typeof getGameResult>>>(null);
   const [existingLoading, setExistingLoading] = useState(true);
-  const [modal, setModal] = useState({ open: false, score: 0, total: 0, rank: 0, isEliminated: false });
-  const [eliminationModal, setEliminationModal] = useState({ open: false, score: 0, hideScore: false });
+  const [modal, setModal] = useState({ open: false, score: 0, total: 0, rank: 0 });
+  const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [isLeaving, setIsLeaving] = useState(false);
   const [seconds, setSeconds] = useState(ELIMINATION_SECONDS);
@@ -136,34 +134,48 @@ export default function EliminationPage() {
   const handleTimeUpRef = useRef<() => Promise<void>>(async () => {});
   const timeUpSubmittingRef = useRef(false);
 
-  // 时间到自动提交（淘汰）
-  handleTimeUpRef.current = async () => {
-    if (!playerId || !currentQuestion || existing || modal.open || timeUpSubmittingRef.current) return;
-    timeUpSubmittingRef.current = true;
-    // 时间到：将当前题标记为未作答（空字符串），便于 review 页展示题目与正确答案
-    const newAnswers = { ...answers, [currentQuestion.id]: answers[currentQuestion.id] ?? "" };
-    const newCorrectCount = questions.filter((q) => {
-      const answer = newAnswers[q.id];
-      return answer === q.correctAnswer;
-    }).length;
-    const newScore = calculateEliminationScore(newCorrectCount);
-
-    setModal({ open: true, score: newScore, total: (player?.totalScore ?? 0) + newScore, rank: ranking.context?.rank ?? 0, isEliminated: true });
+  async function submitFinal(nextAnswers: Record<string, string>) {
+    if (!playerId || submitting) return;
+    setSubmitting(true);
+    const correctCount = questions.filter((q) => nextAnswers[q.id] === q.correctAnswer).length;
+    const finalScore = calculateEliminationScore(correctCount);
 
     try {
-      const outcome = await submitGameResult({ playerId, gameKey: "elimination", answers: newAnswers, score: newScore, eliminated: true });
+      const outcome = await submitGameResult({ playerId, gameKey: "elimination", answers: nextAnswers, score: finalScore });
       refresh();
       setExisting(outcome.result);
-      setModal({ open: true, score: outcome.result.score, total: outcome.player.totalScore, rank: outcome.rank, isEliminated: true });
+      setModal({ open: true, score: outcome.result.score, total: outcome.player.totalScore, rank: outcome.rank });
     } catch (error) {
-      timeUpSubmittingRef.current = false;
       setMessage(error instanceof Error ? error.message : "提交失败");
+    } finally {
+      setSubmitting(false);
     }
+  }
+
+  // 时间到：当前题记为空答案；非最后一题继续，最后一题统一提交成绩
+  handleTimeUpRef.current = async () => {
+    if (!currentQuestion || existing || modal.open || timeUpSubmittingRef.current || submitting) return;
+    timeUpSubmittingRef.current = true;
+    const newAnswers = { ...answers, [currentQuestion.id]: answers[currentQuestion.id] ?? "" };
+    setAnswers(newAnswers);
+    setMessage("");
+
+    if (isLastQuestion) {
+      await submitFinal(newAnswers);
+    } else {
+      setCurrentIndex((index) => Math.min(index + 1, questions.length - 1));
+      setSeconds(ELIMINATION_SECONDS);
+      setTimeUp(false);
+      if (playerId !== undefined) {
+        localStorage.removeItem(getEliminationTimerKey(playerId, currentIndex + 1));
+      }
+    }
+    timeUpSubmittingRef.current = false;
   };
 
-  // 倒计时：每题 10 秒，到点直接淘汰
+  // 倒计时：每题 10 秒，到点自动进入下一题/最后提交
   useEffect(() => {
-    if (!playerId || !currentQuestion || existing || eliminationModal.open || modal.open) return;
+    if (!playerId || !currentQuestion || existing || modal.open || submitting) return;
 
     let start = Number(localStorage.getItem(timerKey));
     if (!start) {
@@ -186,7 +198,7 @@ export default function EliminationPage() {
     tick();
     const t = window.setInterval(tick, 250);
     return () => window.clearInterval(t);
-  }, [playerId, currentIndex, currentQuestion, timerKey, existing, eliminationModal.open, modal.open]);
+  }, [playerId, currentIndex, currentQuestion, timerKey, existing, modal.open, submitting]);
 
   function goLobby() {
     setIsLeaving(true);
@@ -194,57 +206,25 @@ export default function EliminationPage() {
   }
 
   async function chooseAnswer(option: string) {
-    if (!currentQuestion || isOpen !== true || existing) return;
+    if (!currentQuestion || isOpen !== true || existing || timeUp || submitting) return;
 
     localStorage.removeItem(timerKey);
     const newAnswers = { ...answers, [currentQuestion.id]: option };
     setAnswers(newAnswers);
     setMessage("");
 
-    const isCorrect = option === currentQuestion.correctAnswer;
-    const newCorrectCount = questions.filter((q) => {
-      const answer = newAnswers[q.id];
-      return answer === q.correctAnswer;
-    }).length;
-    const newScore = calculateEliminationScore(newCorrectCount);
-
-    if (isCorrect) {
-      if (isLastQuestion) {
-        if (!playerId) return;
-        try {
-          const outcome = await submitGameResult({ playerId, gameKey: "elimination", answers: newAnswers, score: newScore });
-          refresh();
-          setExisting(outcome.result);
-          setModal({ open: true, score: outcome.result.score, total: outcome.player.totalScore, rank: outcome.rank, isEliminated: false });
-        } catch (error) {
-          setMessage(error instanceof Error ? error.message : "提交失败");
-        }
-      } else {
-        setEliminationModal({ open: true, score: newScore, hideScore: currentIndex < 4 });
-      }
+    if (isLastQuestion) {
+      await submitFinal(newAnswers);
     } else {
-      if (!playerId) return;
-      try {
-        const outcome = await submitGameResult({ playerId, gameKey: "elimination", answers: newAnswers, score: newScore, eliminated: true });
-        refresh();
-        setExisting(outcome.result);
-        setModal({ open: true, score: outcome.result.score, total: outcome.player.totalScore, rank: outcome.rank, isEliminated: true });
-      } catch (error) {
-        setMessage(error instanceof Error ? error.message : "提交失败");
+      setCurrentIndex((index) => Math.min(index + 1, questions.length - 1));
+      setSeconds(ELIMINATION_SECONDS);
+      setTimeUp(false);
+      if (playerId !== undefined) {
+        localStorage.removeItem(getEliminationTimerKey(playerId, currentIndex + 1));
       }
     }
   }
 
-  function goNext() {
-    setCurrentIndex((index) => Math.min(index + 1, questions.length - 1));
-    setEliminationModal({ open: false, score: 0, hideScore: false });
-    setMessage("");
-    setSeconds(ELIMINATION_SECONDS);
-    setTimeUp(false);
-    if (playerId !== undefined) {
-      localStorage.removeItem(getEliminationTimerKey(playerId, currentIndex + 1));
-    }
-  }
 
   if (isLeaving) {
     return (
@@ -289,7 +269,7 @@ export default function EliminationPage() {
     );
   }
 
-  const shouldHideNavActions = modal.open || eliminationModal.open || (!existing && isOpen === true);
+  const shouldHideNavActions = modal.open || (!existing && isOpen === true);
 
   return (
     <EliminationShell hideNavActions={shouldHideNavActions}>
@@ -299,7 +279,7 @@ export default function EliminationPage() {
         </section>
       )}
 
-      {currentQuestion && !eliminationModal.open && (
+      {currentQuestion && (
         <section className="eliminationQuestionCard">
           <h3>
             Round{currentIndex + 1}：{currentQuestion.title}
@@ -335,7 +315,7 @@ export default function EliminationPage() {
             {currentQuestion.options?.map((option) => (
               <button
                 className={selectedAnswer === option ? "selected" : ""}
-                disabled={Boolean(existing) || isOpen !== true || timeUp}
+                disabled={Boolean(existing) || isOpen !== true || timeUp || submitting}
                 key={option}
                 type="button"
                 onClick={() => chooseAnswer(option)}
@@ -348,8 +328,8 @@ export default function EliminationPage() {
       )}
 
       <section className="eliminationHintCard">
-        <b>已完成 {Object.keys(answers).length}/5</b>
-        <span>{message || "答对可进入下一题，答错即被淘汰。"}</span>
+        <b>已完成 {Object.keys(answers).length}/{questions.length}</b>
+        <span>{message || (submitting ? "正在提交本轮成绩..." : "答完自动进入下一题，答错也可以继续。")}</span>
       </section>
 
       <ResultModal
@@ -358,8 +338,7 @@ export default function EliminationPage() {
         roundScore={modal.score}
         totalScore={modal.total}
         rank={modal.rank}
-        isEliminated={modal.isEliminated}
-        eliminationModalStyle={modal.isEliminated ? "wrong" : "standard"}
+        eliminationModalStyle="standard"
         onBackLobby={() => {
           router.replace("/ranking");
           window.setTimeout(() => {
@@ -369,15 +348,6 @@ export default function EliminationPage() {
           }, 300);
         }}
         buttonText="查看最终成绩"
-      />
-
-      <EliminationModal
-        open={eliminationModal.open}
-        roundScore={eliminationModal.score}
-        totalScore={(player?.totalScore ?? 0) + eliminationModal.score}
-        rank={ranking.context?.rank ?? 0}
-        onNext={goNext}
-        hideScore={eliminationModal.hideScore}
       />
     </EliminationShell>
   );
