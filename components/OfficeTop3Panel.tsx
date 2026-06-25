@@ -21,7 +21,7 @@ export default function OfficeTop3Panel({ data, variant = "default" }: OfficeTop
       <div className="rankingOfficeTopList">
         {data.map((group) => (
           <section className="rankingOfficeGroup" key={group.office}>
-            <div className="rankingOfficeGroupHeader">{group.office}TOP3</div>
+            <div className="rankingOfficeGroupHeader">{group.office} TOP3</div>
             {group.players.map((player) => (
               <div className="rankingRow compact" key={player.playerId}>
                 <span className="rankingRankCircle">{player.rank}</span>

@@ -104,7 +104,7 @@ export default function ScreenPage() {
               </section>
 
               <section className="screenPanel">
-                <h2>各地区TOP3</h2>
+                <h2>各地区 TOP3</h2>
                 <OfficeTop3Panel data={ranking.officeTop3 || []} variant="ranking" />
               </section>
             </div>
