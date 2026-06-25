@@ -44,6 +44,12 @@ export default function LobbyPage() {
   const quizProgress = snapshot.quizProgress;
   const hasBeenControlled = (game: { created?: string; updated?: string }) => Boolean(game.created && game.updated && game.created !== game.updated);
   const getClosedStatus = (game: { created?: string; updated?: string }) => hasBeenControlled(game) ? "已结束" : "未开放";
+  const getGroupBasedGameStatus = (game: typeof snapshot.state.games[number], completed: boolean) => {
+    if (completed) return "已完成";
+    if (!game.isOpen) return getClosedStatus(game);
+    return (game.quizOpenGroups || []).length > 0 ? "继续答题" : "等待开启";
+  };
+
   const getLobbyGameStatus = (game: typeof snapshot.state.games[number], completed: boolean, bingoPending = false) => {
     if (completed) return "已完成";
     if (game.key === "bingo") {
@@ -53,6 +59,9 @@ export default function LobbyPage() {
       if (phase === "auto_score") return bingoPending ? "等待 Boss 发言" : "已结束";
       if (phase === "closed") return "已结束";
       return getClosedStatus(game);
+    }
+    if (game.key === "story" || game.key === "elimination") {
+      return getGroupBasedGameStatus(game, completed);
     }
     if (game.isOpen) return "已开启";
     return getClosedStatus(game);
@@ -73,7 +82,7 @@ export default function LobbyPage() {
                 <path opacity="0.9" d="M3 5.25V8.75" stroke="white" strokeWidth="1" strokeLinecap="round" />
                 <path opacity="0.9" d="M9 7.25V8.75" stroke="white" strokeWidth="1" strokeLinecap="round" />
               </svg>
-              复习
+              温故知新
             </Link>
             <h1>活动大厅</h1>
             <Link className="lobbyNavLink" href="/ranking">
@@ -122,7 +131,6 @@ export default function LobbyPage() {
                     game={{ ...game, name: "猎人快答" }}
                     completed={quizCompleted}
                     key={game.key}
-                    subtitle={`进度 ${quizProgress.completedCount}/${quizProgress.totalCount}`}
                     statusOverride={quizStatus}
                     allowEnterOverride={game.isOpen && !quizCompleted}
                   />
