@@ -1,4 +1,5 @@
 import PocketBase from "pocketbase";
+import { LANG_HEADER, getStoredLocale } from "@/lib/i18n";
 
 function getPocketBaseUrl(): string {
   const envUrl = process.env.NEXT_PUBLIC_POCKETBASE_URL;
@@ -16,3 +17,10 @@ export const pb = new PocketBase(getPocketBaseUrl());
 
 // 全局禁用自动取消，防止轮询请求中断关键操作（如 Bingo 判分）
 pb.autoCancellation(false);
+
+// 每个请求自动携带当前语言（默认 zh，可为 en）。
+// 服务端 pb_hooks 读取该头，按语言返回对应的题目字段。
+pb.beforeSend = function (url, options) {
+  options.headers = { ...(options.headers || {}), [LANG_HEADER]: getStoredLocale() };
+  return { url, options };
+};

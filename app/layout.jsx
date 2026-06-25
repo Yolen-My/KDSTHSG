@@ -1,4 +1,5 @@
 import "./globals.css";
+import LanguageProvider from "@/components/LanguageProvider";
 
 export const metadata = {
   title: "Offsite Games",
@@ -8,7 +9,9 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="zh-CN">
-      <body>{children}</body>
+      <body>
+        <LanguageProvider>{children}</LanguageProvider>
+      </body>
     </html>
   );
 }

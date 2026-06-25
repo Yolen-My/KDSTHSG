@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import type { OfficeAverageItem } from "@/types";
 
 type OfficeAverageTableProps = {
@@ -6,6 +9,7 @@ type OfficeAverageTableProps = {
 };
 
 export default function OfficeAverageTable({ data, variant = "default" }: OfficeAverageTableProps) {
+  const t = useTranslations();
   if (variant === "ranking") {
     return (
       <div className="rankingList">
@@ -14,7 +18,7 @@ export default function OfficeAverageTable({ data, variant = "default" }: Office
             <span className="rankingRankCircle">{item.rank}</span>
             <div className="rankingRowInfo">
               <b>{item.office}</b>
-              <small>{item.playerCount}人</small>
+              <small>{t("table.peopleCount", { count: item.playerCount })}</small>
             </div>
             <strong>{item.averageScore}</strong>
           </div>
@@ -29,7 +33,7 @@ export default function OfficeAverageTable({ data, variant = "default" }: Office
         <div className="tableRow" key={item.office}>
           <span>#{item.rank}</span>
           <b>{item.office}</b>
-          <small>{item.playerCount} 人</small>
+          <small>{t("table.peopleCountSpaced", { count: item.playerCount })}</small>
           <strong>{item.averageScore}</strong>
         </div>
       ))}

@@ -1,21 +1,23 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslations } from "next-intl";
+import type { GameKey } from "@/types";
 
 type WaitingModalProps = {
   open: boolean;
   gameName: string;
+  gameKey?: GameKey;
   timeout?: boolean;
 };
 
-export default function WaitingModal({ open, gameName, timeout = false }: WaitingModalProps) {
+export default function WaitingModal({ open, gameName, gameKey, timeout = false }: WaitingModalProps) {
+  const t = useTranslations();
   if (!open) return null;
 
-  const showTitleImage = /bingo/i.test(gameName);
-  const eyebrowText = timeout ? "已超时" : "已提交";
-  const waitingText = timeout
-    ? "很遗憾已超时，请继续认真听讲，演讲结束后，查看结果"
-    : "感谢提交，认真听讲时刻到了，演讲结束后，会揭幕结果";
+  const showTitleImage = gameKey === "bingo";
+  const eyebrowText = timeout ? t("waitingModal.timeoutEyebrow") : t("waitingModal.submittedEyebrow");
+  const waitingText = timeout ? t("waitingModal.timeoutText") : t("waitingModal.submittedText");
 
   return (
     <div className="modalMask">

@@ -1,12 +1,14 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import OfficeAverageTable from "@/components/OfficeAverageTable";
 import OfficeTop3Panel from "@/components/OfficeTop3Panel";
 import RankingTable from "@/components/RankingTable";
 import { useRanking } from "@/hooks/use-game-data";
 
 export default function ScreenPage() {
+  const t = useTranslations();
   const { ranking, loading } = useRanking(null, 3000);
 
   return (
@@ -29,7 +31,7 @@ export default function ScreenPage() {
           <div className="screenHeaderMain">
             <span className="screenEyebrow">LIVE SCREEN </span>
             <div className="screenTitleRow">
-              <h1 className="screenTitle">互动游戏大厅</h1>
+              <h1 className="screenTitle">{t("screen.title")}</h1>
               <Image
                 className="screenLogo"
                 src="/image/source/screen/logo-icon.png"
@@ -41,7 +43,7 @@ export default function ScreenPage() {
             </div>
             <p className="screenParticipantCount">
               <strong>{loading || !ranking ? "—" : ranking.players.length || 0}</strong>
-              <span>人参与</span>
+              <span>{t("screen.participants")}</span>
             </p>
           </div>
 
@@ -60,13 +62,13 @@ export default function ScreenPage() {
                   <Image
                     className="screenQrImage"
                     src="/image/source/screen/qr-code.png"
-                    alt="微信扫码参加游戏"
+                    alt={t("screen.qrAlt")}
                     width={136}
                     height={136}
                     priority
                   />
                 </div>
-                <p className="screenQrText">微信扫一扫参加游戏</p>
+                <p className="screenQrText">{t("screen.scanText")}</p>
               </div>
             </div>
           </div>
@@ -77,14 +79,14 @@ export default function ScreenPage() {
           <div className="screenLoading">
             <div className="loadingSpinner">
               <div className="spinner"></div>
-              <p>加载中...</p>
+              <p>{t("common.loading")}</p>
             </div>
           </div>
         ) : (
           <section className="screenGrid">
             <section className="screenPanel top10Panel">
               <div className="screenPanelHeader">
-                <h2>总排行榜</h2>
+                <h2>{t("screen.totalRanking")}</h2>
                 <Image
                   className="screenTop10Watermark"
                   src="/image/source/ranking/top10-watermark.png"
@@ -99,12 +101,12 @@ export default function ScreenPage() {
 
             <div className="screenSideColumn">
               <section className="screenPanel">
-                <h2>地区平均分排行榜</h2>
+                <h2>{t("screen.officeAverage")}</h2>
                 <OfficeAverageTable data={ranking.officeAverage || []} variant="ranking" />
               </section>
 
               <section className="screenPanel">
-                <h2>各地区 TOP3</h2>
+                <h2>{t("screen.officeTop3")}</h2>
                 <OfficeTop3Panel data={ranking.officeTop3 || []} variant="ranking" />
               </section>
             </div>

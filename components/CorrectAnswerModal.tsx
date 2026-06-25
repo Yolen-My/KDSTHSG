@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 
 type CorrectAnswerModalProps = {
   open: boolean;
@@ -10,11 +11,12 @@ type CorrectAnswerModalProps = {
 };
 
 export default function CorrectAnswerModal({ open, isCorrect, isTimeout = false, onNext }: CorrectAnswerModalProps) {
+  const t = useTranslations();
   if (!open) return null;
 
   const getTitle = () => {
-    if (isTimeout) return "遗憾超时";
-    return isCorrect ? "恭喜答对" : "遗憾答错";
+    if (isTimeout) return t("correctAnswerModal.timeout");
+    return isCorrect ? t("correctAnswerModal.correct") : t("correctAnswerModal.wrong");
   };
 
   const getImage = () => {
@@ -60,7 +62,7 @@ export default function CorrectAnswerModal({ open, isCorrect, isTimeout = false,
             type="button"
             onClick={onNext}
           >
-            下一题
+            {t("common.nextQuestion")}
           </button>
         </div>
       </section>

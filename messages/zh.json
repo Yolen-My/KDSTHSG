@@ -1,0 +1,203 @@
+{
+  "common": {
+    "ranking": "排行榜",
+    "lobby": "活动大厅",
+    "review": "温故知新",
+    "backToLobby": "返回活动大厅",
+    "backToLobbyShort": "回到大厅",
+    "backToLobbyAlt": "返回大厅",
+    "submit": "提交",
+    "submitting": "提交中...",
+    "submitFailed": "提交失败",
+    "continue": "继续",
+    "nextQuestion": "下一题",
+    "loading": "加载中...",
+    "redirecting": "正在跳转...",
+    "loadingIdentity": "正在读取身份...",
+    "gameLoading": "游戏加载中，请耐心等待",
+    "questionsLoading": "题库加载中，请稍候",
+    "questionsReloading": "题库正在重新加载：{error}",
+    "noQuestions": "暂无题目",
+    "waitForHost": "等待主持人开启",
+    "enterAnswer": "进入答题",
+    "completed": "已完成",
+    "available": "可答题",
+    "notOpen": "未开放",
+    "statusLabel": "状态：{status}",
+    "timeUp": "时间到",
+    "countdownLabel": "答题倒计时",
+    "countdown": "倒计时",
+    "gameNotOpen": "{game}尚未开放",
+    "questionOf": "题目{current}/{total}",
+    "completedOf": "已完成 {completed}/{total}",
+    "alreadyDone": "该游戏已完成，本关得分 {score}，不能重复提交。",
+    "submitFinal": "提交最终成绩",
+    "submittingFinal": "正在提交最终成绩...",
+    "seconds": "{seconds}s"
+  },
+  "game": {
+    "name": {
+      "bingo": "预言家验词",
+      "quiz": "猎人快答",
+      "story": "狼人悍跳",
+      "elimination": "守卫者之夜"
+    }
+  },
+  "status": {
+    "done": "已完成",
+    "open": "已开启",
+    "closed": "已结束",
+    "notOpen": "未开放",
+    "waitingBoss": "等待 Boss 发言",
+    "waitingOpen": "等待开启",
+    "continueQuiz": "继续答题"
+  },
+  "home": {
+    "brandTitle": "年会互动游戏系统",
+    "desc": "手机端四关游戏、自动判分、防重复提交、实时排行榜、大屏和简易后台控制。",
+    "start": "开始参与",
+    "screenDemo": "大屏演示",
+    "adminControl": "后台控制"
+  },
+  "register": {
+    "name": "姓名",
+    "namePlaceholder": "请输入姓名",
+    "phone": "手机号",
+    "phonePlaceholder": "请输入手机号",
+    "officePlaceholder": "请选择Office",
+    "officeNotFound": "未找到匹配 Office",
+    "confirm": "确认",
+    "processing": "处理中...",
+    "invalidName": "请输入有效姓名",
+    "phoneRequired": "手机号不能为空",
+    "registerFailed": "注册失败",
+    "welcomeBack": "欢迎回来，正在恢复您的参赛信息...",
+    "registerSuccess": "注册成功，正在进入活动大厅...",
+    "office": {
+      "beijing": "北京",
+      "shanghai": "上海",
+      "hkOthers": "香港及其他"
+    }
+  },
+  "lobby": {
+    "progress": "进度 {completed}/{total}",
+    "maxScore": "满分 {score}分"
+  },
+  "ranking": {
+    "rankNo": "第 {rank} 名",
+    "notRanked": "未上榜",
+    "totalRanking": "总排行榜",
+    "officeAverage": "地区平均分排行榜",
+    "officeTop3": "各地区 TOP3"
+  },
+  "result": {
+    "title": "最终成绩",
+    "loadingResult": "正在读取成绩...",
+    "notFound": "未找到当前用户，请重新注册。",
+    "rankingShort": "排行",
+    "missingGames": "还有 {count} 个游戏未完成，当前展示的是已完成环节成绩。",
+    "gapToTop10": "距离 TOP10 还差 {gap} 分",
+    "prevPlayer": "当前上一名：{name}，差距 {gap} 分。",
+    "top10": "总排行榜 TOP10",
+    "officeAverage": "地区平均分",
+    "officeTop3": "各地区 TOP3"
+  },
+  "screen": {
+    "title": "互动游戏大厅",
+    "participants": "人参与",
+    "scanText": "微信扫一扫参加游戏",
+    "qrAlt": "微信扫码参加游戏",
+    "totalRanking": "总排行榜",
+    "officeAverage": "地区平均分排行榜",
+    "officeTop3": "各地区 TOP3"
+  },
+  "review": {
+    "empty": "暂无已完成的游戏记录",
+    "score": "得分：",
+    "correctTargets": "答对 {count} 个目标词",
+    "correctAnswer": "正确答案：",
+    "yourAnswer": "你的答案：",
+    "notAnswered": "未作答",
+    "total": "总分：",
+    "sectorScore": "得分 {score} / 20"
+  },
+  "bingo": {
+    "subtitle": "猜对词语，完成 Bingo",
+    "hint": "请从词库中选择9个词组成 Bingo 宫格",
+    "pickNine": "请选择 9 个词组成 Bingo 宫格",
+    "autoSubmitting": "正在自动提交...",
+    "phaseNotice": "Boss 发言已完成，提交后系统将自动判分。",
+    "ended": "Bingo 已结束"
+  },
+  "quiz": {
+    "bannerProgress": "Quiz总进度已完成{completed}/{total}",
+    "syncing": "正在同步 Quiz 状态...",
+    "notOpen": "Quiz 尚未开放",
+    "sectorNotExist": "该 Quiz 板块不存在",
+    "sectorDone": "该 Quiz 板块已完成",
+    "sectorNotOpen": "该 Quiz 板块尚未开放",
+    "sectorNoQuestions": "该 Quiz 板块暂无题目",
+    "backToSectors": "返回 Quiz 板块选择",
+    "chooseFirst": "请先选择本题答案",
+    "selectedOfTotal": "本组已选择 {answered}/{total}",
+    "chooseToContinue": "选择答案后继续",
+    "submitGroup": "提交本组",
+    "sectorComplete": "{sector} 已完成\n您该轮的得分",
+    "backPrev": "返回上一页"
+  },
+  "story": {
+    "bannerProgress": "Group总进度已完成{completed}/{total}",
+    "groupNotExist": "该 Group 不存在",
+    "groupDone": "该 Group 已完成",
+    "groupNotOpen": "该 Group 尚未开放",
+    "groupNoQuestions": "该 Group 暂无题目",
+    "backToGroups": "返回 Group 选择",
+    "chooseToReturn": "选择答案后返回 Group 选择"
+  },
+  "elimination": {
+    "bannerProgress": "Mission总进度已完成{completed}/{total}",
+    "missionNotExist": "该 Mission 不存在",
+    "missionDone": "该 Mission 已完成",
+    "missionNotOpen": "该 Mission 尚未开放",
+    "missionNoQuestions": "该 Mission 暂无题目",
+    "backToMissions": "返回 Mission 选择",
+    "chooseToReturn": "选择答案后返回 Mission 选择",
+    "viewFinal": "查看最终成绩"
+  },
+  "resultModal": {
+    "eyebrowComplete": "游戏完成",
+    "eyebrowOver": "游戏结束",
+    "eliminated": "遗憾淘汰，请坐下",
+    "survived": "恭喜答对，保持站立",
+    "stats": "累计积分 {total} 当前排名 <r>{rank}</r>"
+  },
+  "correctAnswerModal": {
+    "timeout": "遗憾超时",
+    "correct": "恭喜答对",
+    "wrong": "遗憾答错"
+  },
+  "waitingModal": {
+    "timeoutEyebrow": "已超时",
+    "submittedEyebrow": "已提交",
+    "timeoutText": "很遗憾已超时，请继续认真听讲，演讲结束后，查看结果",
+    "submittedText": "感谢提交，认真听讲时刻到了，演讲结束后，会揭幕结果"
+  },
+  "quizStartModal": {
+    "eyebrow": "游戏准备",
+    "line1": "共5个板块，每板块1题",
+    "line2": "每题20分，猎人快答总分100分",
+    "start": "开始答题"
+  },
+  "scorePanel": {
+    "totalPoints": "累计积分",
+    "currentRank": "当前总排名"
+  },
+  "table": {
+    "notCompleted": "未完成",
+    "completedTime": "完成时间：{time}",
+    "peopleCount": "{count}人",
+    "peopleCountSpaced": "{count} 人",
+    "officeTop3Header": "{office} TOP3",
+    "officeTop3HeaderSpaced": "{office} TOP3"
+  }
+}

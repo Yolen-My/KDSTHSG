@@ -1,4 +1,7 @@
+"use client";
+
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import type { RankingItem } from "@/types";
 
 type RankingTableProps = {
@@ -7,8 +10,7 @@ type RankingTableProps = {
   variant?: "default" | "ranking";
 };
 
-function formatCompletedTime(completedAt?: string) {
-  if (!completedAt) return "未完成";
+function formatTime(completedAt: string) {
   return new Date(completedAt).toLocaleTimeString("zh-CN", {
     hour: "2-digit",
     minute: "2-digit",
@@ -43,6 +45,10 @@ function RankingRankBadge({ rank }: { rank: number }) {
 }
 
 export default function RankingTable({ data, currentPlayerId, variant = "default" }: RankingTableProps) {
+  const t = useTranslations();
+  const completedLabel = (completedAt?: string) =>
+    t("table.completedTime", { time: completedAt ? formatTime(completedAt) : t("table.notCompleted") });
+
   if (variant === "ranking") {
     return (
       <div className="rankingList">
@@ -55,7 +61,7 @@ export default function RankingTable({ data, currentPlayerId, variant = "default
             <div className="rankingRowInfo">
               <b>{item.name}</b>
               <small>{item.office}</small>
-              <small>完成时间：{formatCompletedTime(item.completedAt)}</small>
+              <small>{completedLabel(item.completedAt)}</small>
             </div>
             <strong>{item.totalScore}</strong>
           </div>

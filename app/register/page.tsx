@@ -2,20 +2,23 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import Layout from "@/components/Layout";
+import LanguageToggle from "@/components/LanguageToggle";
 import PageBackground from "@/components/PageBackground";
 import { registerPlayer, restoreCurrentPlayerFromLocal } from "@/lib/storage";
 
 const DEFAULT_TEAM = "Alpha";
 const OFFICE_OPTIONS = [
-  { label: "Beijing", value: "Beijing" },
-  { label: "Shanghai", value: "Shanghai" },
-  { label: "Hong Kong & Others", value: "Hong Kong & Others" }
-];
+  { value: "Beijing", labelKey: "beijing" },
+  { value: "Shanghai", labelKey: "shanghai" },
+  { value: "Hong Kong & Others", labelKey: "hkOthers" }
+] as const;
 
 export default function RegisterPage() {
   const router = useRouter();
+  const t = useTranslations();
   const [form, setForm] = useState({ name: "", phone: "", office: "", team: DEFAULT_TEAM });
   const [message, setMessage] = useState("");
   const [officeQuery, setOfficeQuery] = useState("");
@@ -25,11 +28,16 @@ export default function RegisterPage() {
   const [isComposing, setIsComposing] = useState(false);
   const officeDropdownRef = useRef<HTMLDivElement>(null);
 
+  const officeOptions = useMemo(
+    () => OFFICE_OPTIONS.map((office) => ({ value: office.value, label: t(`register.office.${office.labelKey}`) })),
+    [t]
+  );
+
   const filteredOffices = useMemo(() => {
     const query = officeQuery.trim().toLowerCase();
-    if (!query || OFFICE_OPTIONS.some((office) => office.label === officeQuery)) return OFFICE_OPTIONS;
-    return OFFICE_OPTIONS.filter((office) => office.label.toLowerCase().includes(query));
-  }, [officeQuery]);
+    if (!query || officeOptions.some((office) => office.label === officeQuery)) return officeOptions;
+    return officeOptions.filter((office) => office.label.toLowerCase().includes(query));
+  }, [officeQuery, officeOptions]);
 
   useEffect(() => {
     let active = true;
@@ -59,7 +67,7 @@ export default function RegisterPage() {
       setForm((current) => ({ ...current, [field]: value }));
       return;
     }
-    
+
     let processedValue = value;
     if (field === "name") {
       processedValue = value.replace(/[^\p{L}\s]/gu, "").replace(/\s+/g, " ");
@@ -96,12 +104,12 @@ export default function RegisterPage() {
     setMessage("");
     const name = form.name.trim();
     if (!name || name.length < 2 || name.length > 50 || !/[\p{L}]/u.test(name)) {
-      setMessage("请输入有效姓名");
+      setMessage(t("register.invalidName"));
       setIsSubmitting(false);
       return;
     }
     if (!form.phone) {
-      setMessage("手机号不能为空");
+      setMessage(t("register.phoneRequired"));
       setIsSubmitting(false);
       return;
     }
@@ -109,7 +117,7 @@ export default function RegisterPage() {
 
     try {
       const result = await registerPlayer({ ...form, name, team: DEFAULT_TEAM });
-      setMessage(result.reused ? "欢迎回来，正在恢复您的参赛信息..." : "注册成功，正在进入活动大厅...");
+      setMessage(result.reused ? t("register.welcomeBack") : t("register.registerSuccess"));
       router.replace("/lobby");
       window.setTimeout(() => {
         if (window.location.pathname !== "/lobby") {
@@ -117,7 +125,7 @@ export default function RegisterPage() {
         }
       }, 300);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "注册失败");
+      setMessage(error instanceof Error ? error.message : t("register.registerFailed"));
       setIsSubmitting(false);
     }
   }
@@ -136,7 +144,7 @@ export default function RegisterPage() {
               height={33}
               priority
             />
-            <p className="restoreMessage">欢迎回来，正在恢复您的参赛信息...</p>
+            <p className="restoreMessage">{t("register.welcomeBack")}</p>
           </div>
         </section>
       </Layout>
@@ -160,11 +168,11 @@ export default function RegisterPage() {
 
           <form className="registerForm" onSubmit={handleSubmit}>
             <label className="registerField">
-              <span>姓名</span>
+              <span>{t("register.name")}</span>
               <input
                 value={form.name}
                 maxLength={16}
-                placeholder="请输入姓名"
+                placeholder={t("register.namePlaceholder")}
                 onChange={(event) => updateField("name", event.target.value)}
                 onCompositionStart={() => setIsComposing(true)}
                 onCompositionEnd={() => setIsComposing(false)}
@@ -172,13 +180,13 @@ export default function RegisterPage() {
             </label>
 
             <label className="registerField">
-              <span>手机号</span>
+              <span>{t("register.phone")}</span>
               <input
                 className="registerPhoneInput"
                 value={form.phone}
                 inputMode="numeric"
                 pattern="[0-9]*"
-                placeholder="请输入手机号"
+                placeholder={t("register.phonePlaceholder")}
                 onChange={(event) => updateField("phone", event.target.value)}
               />
             </label>
@@ -188,7 +196,7 @@ export default function RegisterPage() {
               <div className="registerSelectWrap">
                 <input
                   value={officeQuery}
-                  placeholder="请选择Office"
+                  placeholder={t("register.officePlaceholder")}
                   autoComplete="off"
                   onFocus={() => setOfficeOpen(true)}
                   onMouseDown={(event) => {
@@ -198,7 +206,7 @@ export default function RegisterPage() {
                   onChange={(event) => {
                     const value = event.target.value;
                     setOfficeQuery(value);
-                    updateField("office", OFFICE_OPTIONS.find((office) => office.label === value)?.value || "");
+                    updateField("office", officeOptions.find((office) => office.label === value)?.value || "");
                     setOfficeOpen(true);
                   }}
                 />
@@ -214,7 +222,7 @@ export default function RegisterPage() {
                         </button>
                       ))
                     ) : (
-                      <em>未找到匹配 Office</em>
+                      <em>{t("register.officeNotFound")}</em>
                     )}
                   </div>
                 )}
@@ -224,9 +232,11 @@ export default function RegisterPage() {
             {message && <p className="registerMessage">{message}</p>}
 
             <button className="registerSubmit" type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "处理中..." : "确认"}
+              {isSubmitting ? t("register.processing") : t("register.confirm")}
             </button>
           </form>
+
+          <LanguageToggle />
 
           <Image
             className="registerLogo"

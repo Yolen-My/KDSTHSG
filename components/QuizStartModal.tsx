@@ -1,11 +1,14 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 type QuizStartModalProps = {
   open: boolean;
   onStart: () => void;
 };
 
 export default function QuizStartModal({ open, onStart }: QuizStartModalProps) {
+  const t = useTranslations();
   if (!open) return null;
 
   return (
@@ -14,18 +17,18 @@ export default function QuizStartModal({ open, onStart }: QuizStartModalProps) {
         <div className="resultModalGlow" aria-hidden="true" />
         <div className="resultModalBody">
           <div className="resultModalHeader">
-            <span className="resultModalEyebrow">游戏准备</span>
-            <h2 className="resultModalTitle">猎人快答</h2>
+            <span className="resultModalEyebrow">{t("quizStartModal.eyebrow")}</span>
+            <h2 className="resultModalTitle">{t("game.name.quiz")}</h2>
           </div>
 
           <div className="resultModalMain">
-            <p className="resultModalWaiting">共5个板块，每板块1题</p>
-            <p className="resultModalWaiting">每题20分，猎人快答总分100分</p>
+            <p className="resultModalWaiting">{t("quizStartModal.line1")}</p>
+            <p className="resultModalWaiting">{t("quizStartModal.line2")}</p>
           </div>
 
           <div className="resultModalFooter">
             <button className="resultModalButton" type="button" onClick={onStart}>
-              开始答题
+              {t("quizStartModal.start")}
             </button>
           </div>
         </div>

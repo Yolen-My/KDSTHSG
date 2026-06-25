@@ -1,14 +1,26 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import type { CSSProperties } from "react";
 import type { Game, GameKey } from "@/types";
+
+export type GameStatusKey =
+  | "done"
+  | "open"
+  | "closed"
+  | "notOpen"
+  | "waitingBoss"
+  | "waitingOpen"
+  | "continueQuiz";
 
 type GameCardProps = {
   game: Game;
   completed: boolean;
   bingoPending?: boolean;
   subtitle?: string;
-  statusOverride?: string;
+  statusKeyOverride?: GameStatusKey;
   allowEnterOverride?: boolean;
 };
 
@@ -27,16 +39,9 @@ const GAME_ICONS: Record<GameKey, IconConfig> = {
   elimination: { src: "/image/source/lobby/game-elimination.png", width: 64, height: 78, right: 22, offsetY: 5 }
 };
 
-const DISPLAY_NAMES: Record<GameKey, string> = {
-  bingo: "预言家验词",
-  quiz: "猎人快答",
-  story: "狼人悍跳",
-  elimination: "守卫者之夜"
-};
-
-function getStatusBadgeClass(status: string, canEnter: boolean): string {
-  if (status === "已完成" || status === "已结束") return "lobbyGameBadge lobbyGameBadge--done";
-  if (!canEnter || status === "等待开启") return "lobbyGameBadge lobbyGameBadge--locked";
+function getStatusBadgeClass(statusKey: GameStatusKey, canEnter: boolean): string {
+  if (statusKey === "done" || statusKey === "closed") return "lobbyGameBadge lobbyGameBadge--done";
+  if (!canEnter || statusKey === "waitingOpen") return "lobbyGameBadge lobbyGameBadge--locked";
   return "lobbyGameBadge";
 }
 
@@ -49,59 +54,61 @@ export default function GameCard({
   completed,
   bingoPending = false,
   subtitle,
-  statusOverride,
+  statusKeyOverride,
   allowEnterOverride
 }: GameCardProps) {
+  const t = useTranslations();
   const href = `/game/${game.key}`;
   const icon = GAME_ICONS[game.key];
 
-  let status: string;
+  let statusKey: GameStatusKey;
   let canEnter: boolean;
 
-  if (statusOverride) {
-    status = statusOverride;
+  if (statusKeyOverride) {
+    statusKey = statusKeyOverride;
     canEnter = Boolean(allowEnterOverride);
   } else if (game.key === "bingo") {
     const phase = game.bingoPhase || "open";
     const controlled = hasBeenControlled(game);
     if (completed) {
-      status = "已完成";
+      statusKey = "done";
       canEnter = false;
     } else if (bingoPending) {
-      status = "等待 Boss 发言";
+      statusKey = "waitingBoss";
       canEnter = true;
     } else if (phase === "open" && game.isOpen) {
-      status = "已开启";
+      statusKey = "open";
       canEnter = true;
     } else if (phase === "auto_score") {
       if (bingoPending) {
-        status = "等待 Boss 发言";
+        statusKey = "waitingBoss";
         canEnter = true;
       } else {
-        status = "已结束";
+        statusKey = "closed";
         canEnter = false;
       }
     } else if (phase === "closed") {
-      status = "已结束";
+      statusKey = "closed";
       canEnter = false;
     } else {
-      status = controlled ? "已结束" : "未开放";
+      statusKey = controlled ? "closed" : "notOpen";
       canEnter = false;
     }
   } else {
     const controlled = hasBeenControlled(game);
     if (completed) {
-      status = "已完成";
+      statusKey = "done";
       canEnter = false;
     } else if (game.isOpen) {
-      status = "已开启";
+      statusKey = "open";
       canEnter = true;
     } else {
-      status = controlled ? "已结束" : "未开放";
+      statusKey = controlled ? "closed" : "notOpen";
       canEnter = false;
     }
   }
 
+  const status = t(`status.${statusKey}`);
   const iconLeft = 104 - icon.width - icon.right;
 
   const iconStyle = {
@@ -113,10 +120,10 @@ export default function GameCard({
 
   const cardBody = (
     <div className="lobbyGameCard">
-      <h3>{DISPLAY_NAMES[game.key]}</h3>
+      <h3>{t(`game.name.${game.key}`)}</h3>
       <div className="lobbyGameCardMeta">
-        <p>{subtitle || `满分 ${game.maxScore}分`}</p>
-        <span className={getStatusBadgeClass(status, canEnter)}>{status}</span>
+        <p>{subtitle || t("lobby.maxScore", { score: game.maxScore })}</p>
+        <span className={getStatusBadgeClass(statusKey, canEnter)}>{status}</span>
       </div>
     </div>
   );

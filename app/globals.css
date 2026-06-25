@@ -1039,6 +1039,23 @@ button:disabled {
   opacity: 0.7;
 }
 
+.languageToggle {
+  display: block;
+  margin: 24px auto 0;
+  padding: 8px 28px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 4px;
+  color: var(--ink);
+  font-size: 14px;
+  line-height: normal;
+  cursor: pointer;
+}
+
+.languageToggle:active {
+  opacity: 0.7;
+}
+
 .registerLogo {
   width: 100px;
   height: 33px;

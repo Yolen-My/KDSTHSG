@@ -72,6 +72,44 @@
         }
       },
       {
+        "id": "text_title_en00",
+        "name": "title_en",
+        "type": "text",
+        "system": false,
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": 500,
+          "pattern": ""
+        }
+      },
+      {
+        "id": "json_options_en",
+        "name": "options_en",
+        "type": "json",
+        "system": false,
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      },
+      {
+        "id": "json_correct_en",
+        "name": "correctAnswer_en",
+        "type": "json",
+        "system": false,
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 2000000
+        }
+      },
+      {
         "id": "num_score000000",
         "name": "score",
         "type": "number",
