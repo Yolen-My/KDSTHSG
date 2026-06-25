@@ -11,11 +11,8 @@ const QUIZ_SECTOR_COUNT = 5;
 const ELIMINATION_MISSION_COUNT = 8;
 const STORY_GROUP_COUNT = 2;
 
-function getQuizSessionIndex(question: any): number {
-  if (Number.isInteger(question.quizSessionIndex)) {
-    return question.quizSessionIndex as number;
-  }
-  return Math.max(0, Math.min(QUIZ_SECTOR_COUNT - 1, Math.floor((Math.max(1, question.order) - 1) / 2)));
+function getQuizSessionIndexFromOrder(order: number): number {
+  return Math.max(0, Math.min(4, Math.max(1, order) - 1));
 }
 
 function getSectorName(index: number, questions: any[]): string {
@@ -65,7 +62,9 @@ export default function AdminControlPage() {
       .filter((question) => question.gameKey === "quiz" && question.isActive === true)
       .map((question) => ({
         ...question,
-        quizSessionIndex: getQuizSessionIndex(question)
+        quizSessionIndex: Number.isInteger(question.quizSessionIndex)
+          ? question.quizSessionIndex as number
+          : getQuizSessionIndexFromOrder(question.order)
       }));
 
     return Array.from({ length: QUIZ_SECTOR_COUNT }, (_, index) => {

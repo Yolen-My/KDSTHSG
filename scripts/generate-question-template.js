@@ -36,9 +36,8 @@ const descriptions = [
 const examples = [
   ["bingo", "word", "年会互动", "", "", 10, 1, true, "", "", ""],
   ["bingo", "word", "团队协作", "", "", 10, 2, true, "", "", ""],
-  ["quiz", "single", "公司年会互动系统的现场目标人数约为？", "[\"100\",\"300\",\"500\",\"2000\"]", "500", 10, 1, true, "sector-1", "Sector 1", 0],
-  ["quiz", "single", "Quick Quiz 每题基础分是多少？", "[\"5\",\"10\",\"20\",\"30\"]", "10", 10, 2, true, "sector-1", "Sector 1", 0],
-  ["quiz", "single", "本系统推荐使用哪个轻量数据库？", "[\"MongoDB\",\"SQLite\",\"Oracle\",\"Redis\"]", "SQLite", 10, 3, true, "sector-2", "Sector 2", 1],
+  ["quiz", "single", "公司年会互动系统的现场目标人数约为？", "[\"100\",\"300\",\"500\",\"2000\"]", "500", 20, 1, true, "sector-1", "Sector 1", 0],
+  ["quiz", "single", "本系统推荐使用哪个轻量数据库？", "[\"MongoDB\",\"SQLite\",\"Oracle\",\"Redis\"]", "SQLite", 20, 2, true, "sector-2", "Sector 2", 1],
   ["story", "story", "同事A的三个故事里，哪个是假故事？", "[\"A.访谈12场\",\"B.误当生产服上线\",\"C.Excel做排行榜\"]", "B.误当生产服上线", 50, 1, true, "", "", ""],
   ["elimination", "single", "活动大屏不应展示什么？", "[\"姓名\",\"Office\",\"Team\",\"手机号\"]", "手机号", 20, 1, true, "", "", ""],
 ];

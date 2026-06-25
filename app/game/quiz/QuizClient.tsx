@@ -12,6 +12,7 @@ import { useAppState, useCurrentPlayer, useQuestions, useSubmitGameResult } from
 import type { Question } from "@/types";
 
 const TOTAL_GROUPS = 5;
+const QUIZ_SCORE_PER_QUESTION = 20;
 
 type QuizModalState = {
   open: boolean;
@@ -216,9 +217,9 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
     submittingRef.current = true;
     setSubmitting(true);
     try {
-      const sectorScore = activeSector.questions.reduce((sum, question) => (
-        sum + (isCorrectAnswer(question, answers[question.id]) ? question.score : 0)
-      ), 0);
+      const sectorScore = Math.max(0, Math.min(100, activeSector.questions.reduce((sum, question) => (
+        sum + (isCorrectAnswer(question, answers[question.id]) ? QUIZ_SCORE_PER_QUESTION : 0)
+      ), 0)));
       const outcome = await submitGameResult({
         playerId,
         gameKey: "quiz",

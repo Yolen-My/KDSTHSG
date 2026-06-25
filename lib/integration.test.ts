@@ -39,8 +39,8 @@ test("集成测试: 完整的单人游戏流程", () => {
   player.totalScore += bingoScore;
   player.completedGames.push("bingo");
 
-  // 3. 完成 Quiz 游戏（答对 8 题）
-  const quizScore = calculateQuizScore(8);
+  // 3. 完成 Quiz 游戏（答对 4 题）
+  const quizScore = calculateQuizScore(4);
   assert.equal(quizScore, 80);
   player.totalScore += quizScore;
   player.completedGames.push("quiz");
@@ -71,7 +71,7 @@ test("集成测试: 多人游戏排名流程", () => {
       phone: "13900000001",
       office: "北京",
       team: "Alpha",
-      totalScore: calculateBingoScore(10) + calculateQuizScore(10) + calculateStoryScore([true, true, true]) + calculateEliminationScore(8),
+      totalScore: calculateBingoScore(10) + calculateQuizScore(5) + calculateStoryScore([true, true, true]) + calculateEliminationScore(8),
       completedGames: ["bingo", "quiz", "story", "elimination"],
       finalSubmitted: false,
       created: "2026-01-01T09:00:00.000Z",
@@ -84,7 +84,7 @@ test("集成测试: 多人游戏排名流程", () => {
       phone: "13900000002",
       office: "北京",
       team: "Beta",
-      totalScore: calculateBingoScore(10) + calculateQuizScore(10) + calculateStoryScore([true, true, true]) + calculateEliminationScore(8),
+      totalScore: calculateBingoScore(10) + calculateQuizScore(5) + calculateStoryScore([true, true, true]) + calculateEliminationScore(8),
       completedGames: ["bingo", "quiz", "story", "elimination"],
       finalSubmitted: false,
       created: "2026-01-01T09:00:00.000Z",
@@ -97,7 +97,7 @@ test("集成测试: 多人游戏排名流程", () => {
       phone: "13900000003",
       office: "上海",
       team: "Gamma",
-      totalScore: calculateBingoScore(8) + calculateQuizScore(7) + calculateStoryScore([true, false, false]) + calculateEliminationScore(3),
+      totalScore: calculateBingoScore(8) + calculateQuizScore(3) + calculateStoryScore([true, false, false]) + calculateEliminationScore(3),
       completedGames: ["bingo", "quiz", "story", "elimination"],
       finalSubmitted: false,
       created: "2026-01-01T09:00:00.000Z",
@@ -109,7 +109,7 @@ test("集成测试: 多人游戏排名流程", () => {
   // 2. 验证各玩家得分
   assert.equal(players[0].totalScore, 500); // 100+100+100+200
   assert.equal(players[1].totalScore, 500); // 100+100+100+200
-  assert.equal(players[2].totalScore, 275); // 80+70+50+75
+  assert.equal(players[2].totalScore, 265); // 80+60+50+75
 
   // 3. 生成排名
   const ranking = buildRanking(players);
@@ -133,7 +133,7 @@ test("集成测试: 多人游戏排名流程", () => {
   assert.equal(officeAverages[0].office, "北京");
   assert.equal(officeAverages[0].averageScore, 500); // (500+500)/2
   assert.equal(officeAverages[1].office, "上海");
-  assert.equal(officeAverages[1].averageScore, 275);
+  assert.equal(officeAverages[1].averageScore, 265);
 
   // 7. 验证 Office Top 3
   const officeTop3 = getOfficeTop3(players);
@@ -195,7 +195,7 @@ test("集成测试: 边界场景 - 部分完成游戏", () => {
       phone: "13900000001",
       office: "北京",
       team: "Team",
-      totalScore: calculateBingoScore(10) + calculateQuizScore(10) + calculateStoryScore([true, true, true]) + calculateEliminationScore(8),
+      totalScore: calculateBingoScore(10) + calculateQuizScore(5) + calculateStoryScore([true, true, true]) + calculateEliminationScore(8),
       completedGames: ["bingo", "quiz", "story", "elimination"],
       finalSubmitted: false,
       created: "2026-01-01T09:00:00.000Z",
@@ -208,7 +208,7 @@ test("集成测试: 边界场景 - 部分完成游戏", () => {
       phone: "13900000002",
       office: "北京",
       team: "Team",
-      totalScore: calculateBingoScore(10) + calculateQuizScore(10),
+      totalScore: calculateBingoScore(10) + calculateQuizScore(5),
       completedGames: ["bingo", "quiz"],
       finalSubmitted: false,
       created: "2026-01-01T09:00:00.000Z",
@@ -272,27 +272,19 @@ test("集成测试: 测试获取最后完成的游戏的分数", () => {
   assert.equal(lastResult.score, 70);
 });
 
-test("集成测试: 猎人快答 每两题重置计时器逻辑", () => {
-  // 模拟题次和计时器重置
-  const quizQuestions = [
-    { index: 0, shouldReset: false }, // 完成第 1 题不重置
-    { index: 1, shouldReset: true },  // 完成第 2 题（第3题开始前）重置
-    { index: 2, shouldReset: false }, // 完成第 3 题不重置
-    { index: 3, shouldReset: true },  // 完成第 4 题（第5题开始前）重置
-    { index: 4, shouldReset: false }, // 完成第 5 题不重置
-    { index: 5, shouldReset: true },  // 完成第 6 题（第7题开始前）重置
-    { index: 6, shouldReset: false }, // 完成第 7 题不重置
-    { index: 7, shouldReset: true },  // 完成第 8 题（第9题开始前）重置
-    { index: 8, shouldReset: false }, // 完成第 9 题不重置
-    { index: 9, shouldReset: true }   // 完成第 10 题（第11题开始前）重置（但没有第11题）
+test("集成测试: 猎人快答 每个 Sector 1 题计分逻辑", () => {
+  // 猎人快答共 5 个 Sector，每个 Sector 1 题，每题 20 分；板块分仍按 100 封顶。
+  const sectorQuestions = [
+    { index: 0, sectorIndex: 0, score: calculateQuizScore(1) },
+    { index: 1, sectorIndex: 1, score: calculateQuizScore(1) },
+    { index: 2, sectorIndex: 2, score: calculateQuizScore(1) },
+    { index: 3, sectorIndex: 3, score: calculateQuizScore(1) },
+    { index: 4, sectorIndex: 4, score: calculateQuizScore(1) }
   ];
 
-  for (const question of quizQuestions) {
-    const currentIndex = question.index;
-    // 检查是否完成了偶数题（0-based），即第 2、4、6、8、10 题完成后重置
-    const shouldReset = (currentIndex + 1) % 2 === 0;
-    assert.equal(shouldReset, question.shouldReset, 
-      `题次 ${currentIndex} 后是否重置错误: 期望 ${question.shouldReset}, 实际 ${shouldReset}`);
+  for (const question of sectorQuestions) {
+    assert.equal(question.sectorIndex, question.index);
+    assert.equal(question.score, 20);
   }
 });
 

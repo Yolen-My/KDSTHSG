@@ -19,8 +19,8 @@ export default function QuizStartModal({ open, onStart }: QuizStartModalProps) {
           </div>
 
           <div className="resultModalMain">
-            <p className="resultModalWaiting">共5个板块，每板块2题</p>
-            <p className="resultModalWaiting">每板块限时1分钟</p>
+            <p className="resultModalWaiting">共5个板块，每板块1题</p>
+            <p className="resultModalWaiting">每题20分，猎人快答总分100分</p>
           </div>
 
           <div className="resultModalFooter">

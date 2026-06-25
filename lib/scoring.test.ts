@@ -24,14 +24,14 @@ test("calculateBingoScore: 边界情况测试", () => {
 // ========== 猎人快答 游戏评分测试 ==========
 test("calculateQuizScore: 正常情况测试", () => {
   assert.equal(calculateQuizScore(0), 0);
-  assert.equal(calculateQuizScore(1), 10);
-  assert.equal(calculateQuizScore(5), 50);
-  assert.equal(calculateQuizScore(10), 100);
+  assert.equal(calculateQuizScore(1), 20);
+  assert.equal(calculateQuizScore(3), 60);
+  assert.equal(calculateQuizScore(5), 100);
 });
 
 test("calculateQuizScore: 边界情况测试", () => {
   assert.equal(calculateQuizScore(-5), 0);
-  assert.equal(calculateQuizScore(11), 100);
+  assert.equal(calculateQuizScore(6), 100);
   assert.equal(calculateQuizScore(50), 100);
 });
 
@@ -111,10 +111,10 @@ test("calculateBingoScore: 极端值测试", () => {
 
 test("calculateQuizScore: 极端值测试", () => {
   assert.equal(calculateQuizScore(0), 0);
-  assert.equal(calculateQuizScore(10), 100);
+  assert.equal(calculateQuizScore(5), 100);
   assert.equal(calculateQuizScore(-50), 0);
   assert.equal(calculateQuizScore(100), 100);
-  assert.equal(calculateQuizScore(7.3), 73); // 小数不被取整
+  assert.equal(calculateQuizScore(3.7), 74); // 小数不被取整
 });
 
 test("calculateStoryScore: 各种组合测试", () => {
