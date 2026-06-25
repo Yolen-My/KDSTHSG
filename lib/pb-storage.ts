@@ -20,7 +20,13 @@ function createId(prefix: string): string {
 }
 
 function getQuizSessionIndexFromOrder(order: number): number {
-  return Math.max(0, Math.min(4, Math.floor((Math.max(1, order) - 1) / 2)));
+  return Math.max(0, Math.min(4, Math.max(1, order) - 1));
+}
+
+function getGroupMaxIndex(gameKey: GameKey): number {
+  if (gameKey === "elimination") return 7;
+  if (gameKey === "story") return 1;
+  return 4;
 }
 
 function getQuizSectorDefaults(index: number): { sectorKey: string; sectorName: string } {
@@ -34,7 +40,7 @@ function normalizeQuizOpenGroups(value: unknown): number[] {
   if (!Array.isArray(value)) return [];
   return [...new Set(value
     .map((item) => Number(item))
-    .filter((item) => Number.isInteger(item) && item >= 0 && item <= 4))]
+    .filter((item) => Number.isInteger(item) && item >= 0 && item <= 7))]
     .sort((a, b) => a - b);
 }
 
@@ -817,13 +823,14 @@ export async function advanceQuizGroup(): Promise<AppState> {
   return await loadState();
 }
 
-export async function openQuizGroup(groupIndex: number): Promise<AppState> {
-  if (!Number.isInteger(groupIndex) || groupIndex < 0 || groupIndex > 4) {
-    throw new Error("Quiz group index must be between 0 and 4");
+export async function openQuizGroup(groupIndex: number, gameKey: GameKey = "quiz"): Promise<AppState> {
+  const maxGroupIndex = getGroupMaxIndex(gameKey);
+  if (!Number.isInteger(groupIndex) || groupIndex < 0 || groupIndex > maxGroupIndex) {
+    throw new Error(`${gameKey} group index must be between 0 and ${maxGroupIndex}`);
   }
   const state = await loadState();
   const newGames = state.games.map((game) => {
-    if (game.key !== "quiz") return game;
+    if (game.key !== gameKey) return game;
     return {
       ...game,
       isOpen: true,
@@ -835,11 +842,11 @@ export async function openQuizGroup(groupIndex: number): Promise<AppState> {
   const available = await checkPocketBase();
   if (available) {
     const list = await pb.collection("games").getFullList();
-    const quiz = list.find(g => g.key === "quiz");
-    if (quiz) {
-      await pb.collection("games").update(quiz.id, {
+    const targetGame = list.find(g => g.key === gameKey);
+    if (targetGame) {
+      await pb.collection("games").update(targetGame.id, {
         isOpen: true,
-        quizOpenGroups: normalizeQuizOpenGroups([...(quiz.quizOpenGroups || []), groupIndex])
+        quizOpenGroups: normalizeQuizOpenGroups([...(targetGame.quizOpenGroups || []), groupIndex])
       });
     }
   }
@@ -849,13 +856,14 @@ export async function openQuizGroup(groupIndex: number): Promise<AppState> {
   return await loadState();
 }
 
-export async function closeQuizGroup(groupIndex: number): Promise<AppState> {
-  if (!Number.isInteger(groupIndex) || groupIndex < 0 || groupIndex > 4) {
-    throw new Error("Quiz group index must be between 0 and 4");
+export async function closeQuizGroup(groupIndex: number, gameKey: GameKey = "quiz"): Promise<AppState> {
+  const maxGroupIndex = getGroupMaxIndex(gameKey);
+  if (!Number.isInteger(groupIndex) || groupIndex < 0 || groupIndex > maxGroupIndex) {
+    throw new Error(`${gameKey} group index must be between 0 and ${maxGroupIndex}`);
   }
   const state = await loadState();
   const newGames = state.games.map((game) => {
-    if (game.key !== "quiz") return game;
+    if (game.key !== gameKey) return game;
     const quizOpenGroups = normalizeQuizOpenGroups(game.quizOpenGroups || []).filter((index) => index !== groupIndex);
     return {
       ...game,
@@ -868,10 +876,10 @@ export async function closeQuizGroup(groupIndex: number): Promise<AppState> {
   const available = await checkPocketBase();
   if (available) {
     const list = await pb.collection("games").getFullList();
-    const quiz = list.find(g => g.key === "quiz");
-    if (quiz) {
-      const quizOpenGroups = normalizeQuizOpenGroups(quiz.quizOpenGroups || []).filter((index) => index !== groupIndex);
-      await pb.collection("games").update(quiz.id, {
+    const targetGame = list.find(g => g.key === gameKey);
+    if (targetGame) {
+      const quizOpenGroups = normalizeQuizOpenGroups(targetGame.quizOpenGroups || []).filter((index) => index !== groupIndex);
+      await pb.collection("games").update(targetGame.id, {
         isOpen: quizOpenGroups.length > 0,
         quizOpenGroups
       });
@@ -1193,8 +1201,10 @@ export async function resetDemoData(): Promise<void> {
           isOpen: false,
           bingoScored: game.key === "bingo" ? false : Boolean(game.bingoScored)
         };
-        if (game.key === "quiz") {
-          updateData.quizCurrentGroup = 0;
+        if (game.key === "quiz" || game.key === "elimination" || game.key === "story") {
+          if (game.key === "quiz") {
+            updateData.quizCurrentGroup = 0;
+          }
           updateData.quizOpenGroups = [];
         }
         await pb.collection("games").update(game.id, updateData);

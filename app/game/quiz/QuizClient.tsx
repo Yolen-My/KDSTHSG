@@ -26,11 +26,22 @@ function getQuizSessionIndex(question: Question): number {
   if (Number.isInteger(question.quizSessionIndex)) {
     return question.quizSessionIndex as number;
   }
-  return Math.max(0, Math.min(TOTAL_GROUPS - 1, Math.floor((Math.max(1, question.order) - 1) / 2)));
+  return Math.max(0, Math.min(TOTAL_GROUPS - 1, Math.max(1, question.order) - 1));
 }
 
-function getSectorName(index: number, questions: Question[]): string {
-  return questions.find((question) => question.sectorName)?.sectorName || `Sector ${index + 1}`;
+function getSectorName(index: number): string {
+  return `Sector ${index + 1}`;
+}
+
+function getSectorDisplayName(index: number): string {
+  const labels = [
+    "Sector 1 TECH",
+    "Sector 2\nSEED / X",
+    "Sector 3 CONSUMER",
+    "Sector 4 HEALTHCARE",
+    "Sector 5 SECONDARY MARKETS"
+  ];
+  return labels[index] ?? `Sector ${index + 1}`;
 }
 
 function isCorrectAnswer(question: Question, answer: string | undefined): boolean {
@@ -125,14 +136,14 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
       const sectorQuestions = activeQuestions
         .filter((question) => question.quizSessionIndex === index)
         .sort((a, b) => a.order - b.order)
-        .slice(0, 2);
+        .slice(0, 1);
       const result = playerQuizResults.find((item) => (
         (Number.isInteger(item.quizSessionIndex) ? item.quizSessionIndex : 0) === index
       ));
 
       return {
         index,
-        sectorName: getSectorName(index, sectorQuestions),
+        sectorName: getSectorName(index),
         questions: sectorQuestions,
         isOpen: quizOpenGroups.includes(index),
         result
@@ -366,7 +377,7 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
 
         <ResultModal
           open={modal.open}
-          gameName={modal.completedAll ? "猎人快答 已完成" : `${activeSector.sectorName} 已完成\n您该轮的得分`}
+          gameName={modal.completedAll ? "猎人快答" : `${activeSector.sectorName} 已完成\n您该轮的得分`}
           roundScore={modal.completedAll ? modal.quizTotalScore : modal.roundScore}
           totalScore={modal.totalScore}
           rank={modal.rank}
@@ -411,10 +422,9 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
           return (
             <div className="quizSectorRow" key={sector.index}>
               <div className="quizSectorInfo">
-                <b>{sector.sectorName}</b>
+                <b>{getSectorDisplayName(sector.index)}</b>
                 <div className="quizSectorMeta">
                   <span>状态：{status}</span>
-                  <span>题目数：{sector.questions.length}/2</span>
                 </div>
               </div>
               {sector.result ? (

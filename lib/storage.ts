@@ -18,7 +18,13 @@ function createId(prefix: string): string {
 }
 
 function getQuizSessionIndexFromOrder(order: number): number {
-  return Math.max(0, Math.min(4, Math.floor((Math.max(1, order) - 1) / 2)));
+  return Math.max(0, Math.min(4, Math.max(1, order) - 1));
+}
+
+function getGroupMaxIndex(gameKey: GameKey): number {
+  if (gameKey === "elimination") return 7;
+  if (gameKey === "story") return 1;
+  return 4;
 }
 
 function getQuizSectorDefaults(index: number): { sectorKey: string; sectorName: string } {
@@ -32,7 +38,7 @@ function normalizeQuizOpenGroups(value: unknown): number[] {
   if (!Array.isArray(value)) return [];
   return [...new Set(value
     .map((item) => Number(item))
-    .filter((item) => Number.isInteger(item) && item >= 0 && item <= 4))]
+    .filter((item) => Number.isInteger(item) && item >= 0 && item <= 7))]
     .sort((a, b) => a - b);
 }
 
@@ -456,17 +462,18 @@ export async function advanceQuizGroup(): Promise<AppState> {
   return state;
 }
 
-export async function openQuizGroup(groupIndex: number): Promise<AppState> {
+export async function openQuizGroup(groupIndex: number, gameKey: GameKey = "quiz"): Promise<AppState> {
   const available = await checkBackend();
   if (available) {
-    return await pbStorage.openQuizGroup(groupIndex);
+    return await pbStorage.openQuizGroup(groupIndex, gameKey);
   }
-  if (!Number.isInteger(groupIndex) || groupIndex < 0 || groupIndex > 4) {
-    throw new Error("Quiz group index must be between 0 and 4");
+  const maxGroupIndex = getGroupMaxIndex(gameKey);
+  if (!Number.isInteger(groupIndex) || groupIndex < 0 || groupIndex > maxGroupIndex) {
+    throw new Error(`${gameKey} group index must be between 0 and ${maxGroupIndex}`);
   }
   const state = loadStateLocal();
   state.games = state.games.map((game) => (
-    game.key === "quiz"
+    game.key === gameKey
       ? {
           ...game,
           isOpen: true,
@@ -478,17 +485,18 @@ export async function openQuizGroup(groupIndex: number): Promise<AppState> {
   return state;
 }
 
-export async function closeQuizGroup(groupIndex: number): Promise<AppState> {
+export async function closeQuizGroup(groupIndex: number, gameKey: GameKey = "quiz"): Promise<AppState> {
   const available = await checkBackend();
   if (available) {
-    return await pbStorage.closeQuizGroup(groupIndex);
+    return await pbStorage.closeQuizGroup(groupIndex, gameKey);
   }
-  if (!Number.isInteger(groupIndex) || groupIndex < 0 || groupIndex > 4) {
-    throw new Error("Quiz group index must be between 0 and 4");
+  const maxGroupIndex = getGroupMaxIndex(gameKey);
+  if (!Number.isInteger(groupIndex) || groupIndex < 0 || groupIndex > maxGroupIndex) {
+    throw new Error(`${gameKey} group index must be between 0 and ${maxGroupIndex}`);
   }
   const state = loadStateLocal();
   state.games = state.games.map((game) => {
-    if (game.key !== "quiz") return game;
+    if (game.key !== gameKey) return game;
     const quizOpenGroups = normalizeQuizOpenGroups(game.quizOpenGroups || []).filter((index) => index !== groupIndex);
     return {
       ...game,

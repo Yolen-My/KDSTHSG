@@ -18,7 +18,8 @@ const RESULT_TITLE_IMAGES: Record<
     width: 212,
     height: 20,
     className: "resultModalTitleImage resultModalTitleImageElimination"
-  }
+  },
+  "猎人快答": { src: "/image/source/quiz/quiz-title.png", width: 242, height: 20 }
 };
 
 type EliminationModalStyle = "auto" | "standard" | "correct" | "wrong";

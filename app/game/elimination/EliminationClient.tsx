@@ -1,0 +1,555 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import GameBannerIcon from "@/components/GameBannerIcon";
+import Layout from "@/components/Layout";
+import PageBackground from "@/components/PageBackground";
+import ResultModal from "@/components/ResultModal";
+import CorrectAnswerModal from "@/components/CorrectAnswerModal";
+import { calculateEliminationScore } from "@/lib/scoring";
+import { getGameResult } from "@/lib/storage";
+import { useAppState, useCurrentPlayer, useQuestions, useRanking, useSubmitGameResult } from "@/hooks/use-game-data";
+import type { Question } from "@/types";
+
+const ELIMINATION_SECONDS = 10;
+const ELIMINATION_MISSION_COUNT = 8;
+const ELIMINATION_ANSWERS_KEY_PREFIX = "elimination_mission_answers";
+const ELIMINATION_TIMER_KEY_PREFIX = "elimination_timer_start";
+
+function normalizeAnswerValue(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  const raw = String(value).trim();
+  try {
+    const decoded = JSON.parse(raw);
+    if (typeof decoded === "string" || typeof decoded === "number" || typeof decoded === "boolean") {
+      return String(decoded).trim();
+    }
+  } catch {}
+  return raw;
+}
+
+function isCorrectAnswer(question: Question, answer: string | undefined): boolean {
+  if (!answer) return false;
+  return Array.isArray(question.correctAnswer)
+    ? question.correctAnswer.map(normalizeAnswerValue).includes(normalizeAnswerValue(answer))
+    : normalizeAnswerValue(question.correctAnswer) === normalizeAnswerValue(answer);
+}
+
+function getMissionName(index: number): string {
+  return `Mission ${index + 1}`;
+}
+
+function getAnswersKey(playerId?: string | null): string {
+  return playerId ? `${ELIMINATION_ANSWERS_KEY_PREFIX}_${playerId}` : `${ELIMINATION_ANSWERS_KEY_PREFIX}_guest`;
+}
+
+function getTimerKey(playerId: string | null | undefined, index: number): string {
+  return playerId ? `${ELIMINATION_TIMER_KEY_PREFIX}_${playerId}_${index}` : `${ELIMINATION_TIMER_KEY_PREFIX}_guest_${index}`;
+}
+
+function hasAnswer(answers: Record<string, string>, question?: Question): boolean {
+  return Boolean(question && Object.prototype.hasOwnProperty.call(answers, question.id));
+}
+
+function EliminationNav({ hideActions = false }: { hideActions?: boolean }) {
+  return (
+    <header className="quizNav">
+      {hideActions ? <span /> : (
+        <Link className="quizNavLink" href="/lobby">
+          活动大厅
+        </Link>
+      )}
+      <h1>守卫者之夜</h1>
+      {hideActions ? <span /> : (
+        <Link className="quizNavLink" href="/ranking">
+          排行榜
+        </Link>
+      )}
+    </header>
+  );
+}
+
+function EliminationShell({ children, hideNavActions = false }: { children: ReactNode; hideNavActions?: boolean }) {
+  return (
+    <Layout title="守卫者之夜" hideHeader>
+      <section className="quizPage">
+        <PageBackground />
+        <div className="quizPageContent">
+          <EliminationNav hideActions={hideNavActions} />
+          {children}
+        </div>
+      </section>
+    </Layout>
+  );
+}
+
+export default function EliminationClient({ initialMissionIndex = null }: { initialMissionIndex?: number | null }) {
+  const router = useRouter();
+  const { playerId, refresh: refreshPlayer, player } = useCurrentPlayer();
+  const { state, refresh: refreshState, loading: stateLoading } = useAppState();
+  const { ranking } = useRanking(playerId);
+  const questions = useQuestions("elimination");
+  const submitGameResult = useSubmitGameResult();
+
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [existing, setExisting] = useState<Awaited<ReturnType<typeof getGameResult>>>(null);
+  const [existingLoading, setExistingLoading] = useState(true);
+  const [modal, setModal] = useState({ open: false, score: 0, total: 0, rank: 0 });
+  const [correctModalOpen, setCorrectModalOpen] = useState(false);
+  const [correctModalIsCorrect, setCorrectModalIsCorrect] = useState(true);
+  const [correctModalIsTimeout, setCorrectModalIsTimeout] = useState(false);
+  const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [isLeaving, setIsLeaving] = useState(false);
+  const [seconds, setSeconds] = useState(ELIMINATION_SECONDS);
+  const [timeUp, setTimeUp] = useState(false);
+
+  const submittingRef = useRef(false);
+  const timeUpSubmittingRef = useRef(false);
+  const handleTimeUpRef = useRef<() => Promise<void>>(async () => {});
+
+  const eliminationGame = state.games.find((game) => game.key === "elimination");
+  const openMissions = eliminationGame?.quizOpenGroups || [];
+  const eliminationIsOpen = Boolean(eliminationGame?.isOpen);
+
+  const gameQuestions = useMemo(() => (
+    questions
+      .filter((question) => question.gameKey === "elimination" && question.isActive === true)
+      .sort((a, b) => a.order - b.order)
+      .slice(0, ELIMINATION_MISSION_COUNT)
+  ), [questions]);
+
+  const missions = useMemo(() => (
+    Array.from({ length: ELIMINATION_MISSION_COUNT }, (_, index) => {
+      const question = gameQuestions[index];
+      return {
+        index,
+        missionName: getMissionName(index),
+        question,
+        isOpen: openMissions.includes(index),
+        answered: hasAnswer(answers, question)
+      };
+    })
+  ), [answers, gameQuestions, openMissions]);
+
+  const activeMission = initialMissionIndex === null ? null : missions[initialMissionIndex];
+  const currentQuestion = activeMission?.question;
+  const selectedAnswer = currentQuestion ? answers[currentQuestion.id] || "" : "";
+  const completedCount = missions.filter((mission) => mission.answered).length;
+  const allMissionsAnswered = gameQuestions.length >= ELIMINATION_MISSION_COUNT && gameQuestions.every((question) => hasAnswer(answers, question));
+  const resultModalOpen = modal.open || Boolean(existing && !existingLoading);
+  const resultRoundScore = modal.open ? modal.score : existing?.score ?? 0;
+  const resultTotalScore = modal.open ? modal.total : player?.totalScore ?? existing?.score ?? 0;
+  const resultRank = modal.open ? modal.rank : ranking.context?.rank ?? 0;
+
+  useEffect(() => {
+    if (playerId === null) router.push("/register");
+  }, [playerId, router]);
+
+  useEffect(() => {
+    if (!playerId) {
+      setExisting(null);
+      setExistingLoading(playerId === undefined);
+      setAnswers({});
+      return;
+    }
+
+    let active = true;
+    const currentPlayerId = playerId;
+    async function loadExisting() {
+      setExistingLoading(true);
+      try {
+        const result = await getGameResult(currentPlayerId, "elimination");
+        if (!active) return;
+        setExisting(result);
+      } finally {
+        if (active) setExistingLoading(false);
+      }
+    }
+    loadExisting();
+
+    try {
+      const raw = window.localStorage.getItem(getAnswersKey(currentPlayerId));
+      setAnswers(raw ? JSON.parse(raw) : {});
+    } catch {
+      setAnswers({});
+    }
+
+    return () => {
+      active = false;
+    };
+  }, [playerId]);
+
+  function persistAnswers(nextAnswers: Record<string, string>) {
+    setAnswers(nextAnswers);
+    if (playerId) {
+      window.localStorage.setItem(getAnswersKey(playerId), JSON.stringify(nextAnswers));
+    }
+  }
+
+  function goLobby() {
+    setIsLeaving(true);
+    router.push("/lobby");
+  }
+
+  function goRanking() {
+    router.replace("/ranking");
+    window.setTimeout(() => {
+      if (window.location.pathname !== "/ranking") {
+        window.location.assign("/ranking");
+      }
+    }, 300);
+  }
+
+  function startMission(index: number) {
+    const mission = missions[index];
+    if (!mission || mission.answered || !mission.isOpen || !mission.question || existing) return;
+    setIsLeaving(true);
+    router.push(`/game/elimination/mission/${index + 1}`);
+  }
+
+  async function submitFinal(nextAnswers: Record<string, string>) {
+    if (!playerId || existing || submittingRef.current) return;
+    if (gameQuestions.length < ELIMINATION_MISSION_COUNT) return;
+    if (!gameQuestions.every((question) => hasAnswer(nextAnswers, question))) return;
+
+    submittingRef.current = true;
+    setSubmitting(true);
+    const correctCount = gameQuestions.filter((question) => isCorrectAnswer(question, nextAnswers[question.id])).length;
+    const finalScore = calculateEliminationScore(correctCount);
+
+    try {
+      const outcome = await submitGameResult({
+        playerId,
+        gameKey: "elimination",
+        answers: nextAnswers,
+        score: finalScore
+      });
+      await refreshState();
+      await refreshPlayer();
+      setExisting(outcome.result);
+      setModal({ open: true, score: outcome.result.score, total: outcome.player.totalScore, rank: outcome.rank });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "提交失败";
+      if (errorMessage.includes("已完成") && playerId) {
+        const completedResult = await getGameResult(playerId, "elimination");
+        if (completedResult) {
+          await refreshState();
+          await refreshPlayer();
+          setExisting(completedResult);
+          setModal({
+            open: true,
+            score: completedResult.score,
+            total: player?.totalScore ?? completedResult.score,
+            rank: ranking.context?.rank ?? 0
+          });
+          return;
+        }
+      }
+      setMessage(errorMessage);
+    } finally {
+      setSubmitting(false);
+      submittingRef.current = false;
+    }
+  }
+
+  async function completeMission(answer: string) {
+    if (!currentQuestion || !activeMission || existing || submitting) return;
+
+    window.localStorage.removeItem(getTimerKey(playerId, activeMission.index));
+    const nextAnswers = { ...answers, [currentQuestion.id]: answer };
+    persistAnswers(nextAnswers);
+    setMessage("");
+
+    const completedAll = gameQuestions.length >= ELIMINATION_MISSION_COUNT && gameQuestions.every((question) => hasAnswer(nextAnswers, question));
+    
+    if (activeMission.index < 7) {
+      const correct = isCorrectAnswer(currentQuestion, answer);
+      setCorrectModalIsCorrect(correct);
+      setCorrectModalIsTimeout(false);
+      setCorrectModalOpen(true);
+      return;
+    }
+
+    if (completedAll) {
+      await submitFinal(nextAnswers);
+      return;
+    }
+    setIsLeaving(true);
+    router.replace("/game/elimination");
+  }
+
+  function handleCorrectModalNext() {
+    setCorrectModalOpen(false);
+    setIsLeaving(true);
+    router.replace("/game/elimination");
+  }
+
+  handleTimeUpRef.current = async () => {
+    if (!currentQuestion || !activeMission || existing || modal.open || timeUpSubmittingRef.current || submitting) return;
+    timeUpSubmittingRef.current = true;
+    setTimeUp(true);
+    if (activeMission.index < 7) {
+      setCorrectModalIsCorrect(false);
+      setCorrectModalIsTimeout(true);
+      setCorrectModalOpen(true);
+      const nextAnswers = { ...answers, [currentQuestion.id]: "" };
+      persistAnswers(nextAnswers);
+      timeUpSubmittingRef.current = false;
+      return;
+    }
+    await completeMission(answers[currentQuestion.id] ?? "");
+    timeUpSubmittingRef.current = false;
+  };
+
+  useEffect(() => {
+    if (!playerId || !currentQuestion || !activeMission || !activeMission.isOpen || existing || modal.open || correctModalOpen || submitting) return;
+
+    const timerKey = getTimerKey(playerId, activeMission.index);
+    let start = Number(window.localStorage.getItem(timerKey));
+    if (!start) {
+      start = Date.now();
+      window.localStorage.setItem(timerKey, String(start));
+    }
+
+    setTimeUp(false);
+    const tick = () => {
+      const elapsed = (Date.now() - start) / 1000;
+      const nextSeconds = Math.max(0, Math.ceil(ELIMINATION_SECONDS - elapsed));
+      setSeconds(nextSeconds);
+      if (nextSeconds <= 0) {
+        window.localStorage.removeItem(timerKey);
+        handleTimeUpRef.current();
+      }
+    };
+
+    tick();
+    const t = window.setInterval(tick, 250);
+    return () => window.clearInterval(t);
+  }, [playerId, currentQuestion, activeMission, existing, modal.open, correctModalOpen, submitting]);
+
+  function chooseAnswer(option: string) {
+    if (!currentQuestion || !activeMission?.isOpen || existing || timeUp || submitting) return;
+    completeMission(option);
+  }
+
+  if (isLeaving) {
+    return (
+      <EliminationShell>
+        <section className="quizStatusCard">
+          <p className="quizStatusMessage">正在跳转...</p>
+        </section>
+      </EliminationShell>
+    );
+  }
+
+  if (stateLoading || playerId === undefined || existingLoading) {
+    return (
+      <EliminationShell>
+        <section className="quizStatusCard">
+          <p className="quizStatusMessage">游戏加载中，请耐心等待</p>
+        </section>
+      </EliminationShell>
+    );
+  }
+
+  if (!questions.length) {
+    return (
+      <EliminationShell>
+        <section className="quizStatusCard">
+          <p className="quizStatusMessage">{questions.loading ? "题库加载中，请稍候" : `题库正在重新加载：${questions.error || "暂无题目"}`}</p>
+        </section>
+      </EliminationShell>
+    );
+  }
+
+  if (!eliminationIsOpen && !existing) {
+    return (
+      <EliminationShell>
+        <section className="quizStatusCard">
+          <p className="quizStatusMessage">守卫者之夜尚未开放</p>
+        </section>
+        <button className="quizBackButton" type="button" onClick={goLobby}>
+          返回活动大厅
+        </button>
+      </EliminationShell>
+    );
+  }
+
+  if (!modal.open && !correctModalOpen && initialMissionIndex !== null && (!activeMission || !currentQuestion || activeMission.answered || !activeMission.isOpen)) {
+    return (
+      <EliminationShell>
+        <section className="quizStatusCard">
+          <p className="quizStatusMessage">
+            {!activeMission
+              ? "该 Mission 不存在"
+              : activeMission.answered
+                ? "该 Mission 已完成"
+                : !activeMission.isOpen
+                  ? "该 Mission 尚未开放"
+                  : "该 Mission 暂无题目"}
+          </p>
+        </section>
+        <button className="quizBackButton" type="button" onClick={() => router.replace("/game/elimination")}>
+          返回 Mission 选择
+        </button>
+      </EliminationShell>
+    );
+  }
+
+  if (activeMission && currentQuestion) {
+    return (
+      <EliminationShell hideNavActions>
+        <div className="quizPlayHeader">
+          <h2>{activeMission.missionName}</h2>
+          <p>题目1/1</p>
+        </div>
+
+        {!existing && activeMission.isOpen && (
+          <div className="quizTimer">
+            <div className="quizTimerMeta">
+              <span>答题倒计时</span>
+              <span className="quizTimerClock">{timeUp ? "时间到" : `${seconds}s`}</span>
+            </div>
+            {!timeUp && (
+              <div className="quizTimerTrack">
+                <span style={{ width: `${(seconds / ELIMINATION_SECONDS) * 100}%` }} />
+              </div>
+            )}
+          </div>
+        )}
+
+        <section className="quizQuestionCard">
+          <h3>{currentQuestion.title}</h3>
+          <div className="quizOptions">
+            {currentQuestion.options?.map((option) => (
+              <button
+                className={selectedAnswer === option ? "selected" : ""}
+                disabled={Boolean(existing) || !activeMission.isOpen || timeUp || submitting}
+                key={option}
+                type="button"
+                onClick={() => chooseAnswer(option)}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="quizHintCard">
+          <b>已完成 {completedCount}/{ELIMINATION_MISSION_COUNT}</b>
+          <span>{message || (submitting ? "正在提交最终成绩..." : "选择答案后返回 Mission 选择")}</span>
+        </section>
+
+        <button className="quizBackButton" type="button" onClick={() => router.replace("/game/elimination")}>
+          返回 Mission 选择
+        </button>
+
+        <ResultModal
+          open={resultModalOpen}
+          gameName="守卫者之夜"
+          roundScore={resultRoundScore}
+          totalScore={resultTotalScore}
+          rank={resultRank}
+          eliminationModalStyle="standard"
+          onBackLobby={goRanking}
+          buttonText="查看最终成绩"
+        />
+
+        <CorrectAnswerModal
+          open={correctModalOpen}
+          isCorrect={correctModalIsCorrect}
+          isTimeout={correctModalIsTimeout}
+          onNext={handleCorrectModalNext}
+        />
+      </EliminationShell>
+    );
+  }
+
+  return (
+    <EliminationShell hideNavActions={resultModalOpen}>
+      <div className="quizBanner">
+        <div className="quizBannerText">
+          <Image
+            alt="守卫者之夜"
+            className="quizBannerTitle"
+            height={20}
+            src="/image/source/elimination/elimination-title.png"
+            width={212}
+          />
+          <p>Mission总进度已完成{completedCount}/{ELIMINATION_MISSION_COUNT}</p>
+        </div>
+        <GameBannerIcon
+          className="quizBannerLogo"
+          src="/image/source/lobby/game-elimination.png"
+          width={64}
+          height={78}
+          left={17}
+          offsetY={9}
+          containerSize={96}
+          reflectionHeight={76}
+          reflectionOverlap={12}
+        />
+      </div>
+
+      {existing && (
+        <section className="quizStatusCard" style={{ flex: "initial", minHeight: 96, marginBottom: 16 }}>
+          <p className="quizStatusMessage">该游戏已完成，本关得分 {existing.score}，不能重复提交。</p>
+        </section>
+      )}
+
+      <section className="quizSectorCard">
+        {missions.map((mission) => {
+          const status = existing || mission.answered ? "已完成" : mission.isOpen ? "可答题" : "未开放";
+          return (
+            <div className="quizSectorRow" key={mission.index}>
+              <div className="quizSectorInfo">
+                <b>{mission.missionName}</b>
+                <div className="quizSectorMeta">
+                  <span>状态：{status}</span>
+                </div>
+              </div>
+              {existing || mission.answered ? (
+                <button className="quizSectorAction quizSectorAction--ghost" disabled type="button">
+                  已完成
+                </button>
+              ) : mission.isOpen && mission.question ? (
+                <button className="quizSectorAction quizSectorAction--primary" type="button" onClick={() => startMission(mission.index)}>
+                  进入答题
+                </button>
+              ) : (
+                <button className="quizSectorAction quizSectorAction--ghost" disabled type="button">
+                  等待主持人开启
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </section>
+
+      {allMissionsAnswered && !existing && !modal.open && (
+        <button className="quizBackButton" disabled={submitting} type="button" onClick={() => submitFinal(answers)}>
+          {submitting ? "提交中..." : "提交最终成绩"}
+        </button>
+      )}
+
+      <button className="quizBackButton" type="button" onClick={goLobby}>
+        返回活动大厅
+      </button>
+
+      <ResultModal
+        open={resultModalOpen}
+        gameName="守卫者之夜"
+        roundScore={resultRoundScore}
+        totalScore={resultTotalScore}
+        rank={resultRank}
+        eliminationModalStyle="standard"
+        onBackLobby={goRanking}
+        buttonText="查看最终成绩"
+      />
+    </EliminationShell>
+  );
+}

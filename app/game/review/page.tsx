@@ -128,9 +128,9 @@ function ReviewQuizBlock({ results, questions }: { results: GameResult[]; questi
         const sectorIdx = result.quizSessionIndex ?? 0;
         const sectorName = result.sectorName || `Sector ${sectorIdx + 1}`;
         const sectorQuestions = questions
-          .filter((q) => (q.quizSessionIndex ?? Math.max(0, Math.floor((Math.max(1, q.order) - 1) / 2))) === sectorIdx)
+          .filter((q) => (q.quizSessionIndex ?? Math.max(0, Math.max(1, q.order) - 1)) === sectorIdx)
           .sort((a, b) => a.order - b.order)
-          .slice(0, 2);
+          .slice(0, 1);
 
         return { result, sectorName, sectorQuestions };
       });

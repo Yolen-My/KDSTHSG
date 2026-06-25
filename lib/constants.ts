@@ -20,8 +20,8 @@ export const GAME_DISPLAY_NAMES: Record<GameKey, string> = {
 export const GAMES: Game[] = [
   { id: "game-bingo", key: "bingo", name: GAME_DISPLAY_NAMES.bingo, maxScore: 100, isOpen: false, order: 1, bingoScored: false, bingoPhase: "open" },
   { id: "game-quiz", key: "quiz", name: GAME_DISPLAY_NAMES.quiz, maxScore: 100, isOpen: false, order: 2, quizCurrentGroup: 0, quizOpenGroups: [] },
-  { id: "game-story", key: "story", name: GAME_DISPLAY_NAMES.story, maxScore: 100, isOpen: false, order: 3 },
-  { id: "game-elimination", key: "elimination", name: GAME_DISPLAY_NAMES.elimination, maxScore: 200, isOpen: false, order: 4 }
+  { id: "game-story", key: "story", name: GAME_DISPLAY_NAMES.story, maxScore: 100, isOpen: false, order: 3, quizOpenGroups: [] },
+  { id: "game-elimination", key: "elimination", name: GAME_DISPLAY_NAMES.elimination, maxScore: 200, isOpen: false, order: 4, quizOpenGroups: [] }
 ];
 
 export const QUESTIONS: Question[] = [];

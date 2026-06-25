@@ -8,6 +8,8 @@ import { useAdminActions, useAppState } from "@/hooks/use-game-data";
 import type { GameKey } from "@/types";
 
 const QUIZ_SECTOR_COUNT = 5;
+const ELIMINATION_MISSION_COUNT = 8;
+const STORY_GROUP_COUNT = 2;
 
 function getQuizSessionIndex(question: any): number {
   if (Number.isInteger(question.quizSessionIndex)) {
@@ -18,6 +20,14 @@ function getQuizSessionIndex(question: any): number {
 
 function getSectorName(index: number, questions: any[]): string {
   return questions.find((question) => question.sectorName)?.sectorName || `Sector ${index + 1}`;
+}
+
+function getMissionName(index: number): string {
+  return `Mission ${index + 1}`;
+}
+
+function getGroupName(index: number): string {
+  return `Group ${index + 1}`;
 }
 
 export default function AdminControlPage() {
@@ -45,6 +55,10 @@ export default function AdminControlPage() {
 
   const quizGame = state.games.find((game) => game.key === "quiz");
   const quizOpenGroups = quizGame?.quizOpenGroups || [];
+  const eliminationGame = state.games.find((game) => game.key === "elimination");
+  const eliminationOpenMissions = eliminationGame?.quizOpenGroups || [];
+  const storyGame = state.games.find((game) => game.key === "story");
+  const storyOpenGroups = storyGame?.quizOpenGroups || [];
 
   const quizSectors = useMemo(() => {
     const activeQuizQuestions = state.questions
@@ -76,6 +90,46 @@ export default function AdminControlPage() {
       };
     });
   }, [quizOpenGroups, state.gameResults, state.questions]);
+
+  const eliminationMissions = useMemo(() => {
+    const activeQuestions = state.questions
+      .filter((question) => question.gameKey === "elimination" && question.isActive === true)
+      .sort((a, b) => a.order - b.order)
+      .slice(0, ELIMINATION_MISSION_COUNT);
+    const completedPlayers = new Set(
+      state.gameResults
+        .filter((result) => result.gameKey === "elimination")
+        .map((result) => result.player)
+    );
+
+    return Array.from({ length: ELIMINATION_MISSION_COUNT }, (_, index) => ({
+      index,
+      missionName: getMissionName(index),
+      questions: activeQuestions[index] ? [activeQuestions[index]] : [],
+      isOpen: eliminationOpenMissions.includes(index),
+      completedCount: completedPlayers.size
+    }));
+  }, [eliminationOpenMissions, state.gameResults, state.questions]);
+
+  const storyGroups = useMemo(() => {
+    const activeQuestions = state.questions
+      .filter((question) => question.gameKey === "story" && question.isActive === true)
+      .sort((a, b) => a.order - b.order)
+      .slice(0, STORY_GROUP_COUNT);
+    const completedPlayers = new Set(
+      state.gameResults
+        .filter((result) => result.gameKey === "story")
+        .map((result) => result.player)
+    );
+
+    return Array.from({ length: STORY_GROUP_COUNT }, (_, index) => ({
+      index,
+      groupName: getGroupName(index),
+      questions: activeQuestions[index] ? [activeQuestions[index]] : [],
+      isOpen: storyOpenGroups.includes(index),
+      completedCount: completedPlayers.size
+    }));
+  }, [storyOpenGroups, state.gameResults, state.questions]);
 
   async function refreshOnce() {
     await refresh();
@@ -122,6 +176,46 @@ export default function AdminControlPage() {
     try {
       await closeQuizGroup(index);
       setExportText(`已关闭 Sector ${index + 1}`);
+      await refreshOnce();
+    } catch (error) {
+      setExportText(error instanceof Error ? `关闭失败：${error.message}` : "关闭失败");
+    }
+  }
+
+  async function handleOpenEliminationMission(index: number) {
+    try {
+      await openQuizGroup(index, "elimination");
+      setExportText(`已开启 Mission ${index + 1}`);
+      await refreshOnce();
+    } catch (error) {
+      setExportText(error instanceof Error ? `开启失败：${error.message}` : "开启失败");
+    }
+  }
+
+  async function handleCloseEliminationMission(index: number) {
+    try {
+      await closeQuizGroup(index, "elimination");
+      setExportText(`已关闭 Mission ${index + 1}`);
+      await refreshOnce();
+    } catch (error) {
+      setExportText(error instanceof Error ? `关闭失败：${error.message}` : "关闭失败");
+    }
+  }
+
+  async function handleOpenStoryGroup(index: number) {
+    try {
+      await openQuizGroup(index, "story");
+      setExportText(`已开启 Group ${index + 1}`);
+      await refreshOnce();
+    } catch (error) {
+      setExportText(error instanceof Error ? `开启失败：${error.message}` : "开启失败");
+    }
+  }
+
+  async function handleCloseStoryGroup(index: number) {
+    try {
+      await closeQuizGroup(index, "story");
+      setExportText(`已关闭 Group ${index + 1}`);
       await refreshOnce();
     } catch (error) {
       setExportText(error instanceof Error ? `关闭失败：${error.message}` : "关闭失败");
@@ -254,6 +348,114 @@ export default function AdminControlPage() {
                     onClick={() => handleCloseQuizSector(sector.index)}
                   >
                     关闭此 Sector
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="sectionBlock">
+        <h2>狼人悍跳 控制</h2>
+        <div className="adminList" style={{ marginTop: 16 }}>
+          {storyGroups.map((group) => (
+            <div key={group.index} style={{ marginBottom: 16 }}>
+              <div className="adminRow" style={{ justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <b>{group.groupName}</b>
+                  <span>当前状态：{group.isOpen ? "已开启" : "未开启"} / 已完成人数：{group.completedCount}</span>
+                </div>
+              </div>
+
+              {group.questions.length > 0 && (
+                <div style={{ padding: "12px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
+                  {group.questions.map((question) => (
+                    <div key={question.id} style={{ padding: 8, borderRadius: 4, background: "rgba(64, 216, 138, 0.08)", border: "1px solid rgba(64, 216, 138, 0.15)" }}>
+                      <span style={{ fontSize: "14px", fontWeight: 600 }}>题目：</span>
+                      <span style={{ fontSize: "14px", color: "var(--ink)" }}>{question.title}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {group.questions.length === 0 && (
+                <div style={{ padding: "12px 16px", color: "var(--ink)" }}>
+                  <span>暂无题目，请检查 questions 数据是否设置 gameKey=story 且 isActive=true。</span>
+                </div>
+              )}
+
+              <div className="adminRow" style={{ justifyContent: "flex-end", alignItems: "center" }}>
+                <div className="pageActions" style={{ marginTop: 0 }}>
+                  <button
+                    className="primaryButton smallButton"
+                    type="button"
+                    disabled={group.isOpen}
+                    onClick={() => handleOpenStoryGroup(group.index)}
+                  >
+                    开启此 Group
+                  </button>
+                  <button
+                    className="secondaryButton smallButton"
+                    type="button"
+                    disabled={!group.isOpen}
+                    onClick={() => handleCloseStoryGroup(group.index)}
+                  >
+                    关闭此 Group
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="sectionBlock">
+        <h2>守卫者之夜 控制</h2>
+        <div className="adminList" style={{ marginTop: 16 }}>
+          {eliminationMissions.map((mission) => (
+            <div key={mission.index} style={{ marginBottom: 16 }}>
+              <div className="adminRow" style={{ justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <b>{mission.missionName}</b>
+                  <span>当前状态：{mission.isOpen ? "已开启" : "未开启"} / 已完成人数：{mission.completedCount}</span>
+                </div>
+              </div>
+
+              {mission.questions.length > 0 && (
+                <div style={{ padding: "12px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
+                  {mission.questions.map((question) => (
+                    <div key={question.id} style={{ padding: 8, borderRadius: 4, background: "rgba(64, 216, 138, 0.08)", border: "1px solid rgba(64, 216, 138, 0.15)" }}>
+                      <span style={{ fontSize: "14px", fontWeight: 600 }}>题目：</span>
+                      <span style={{ fontSize: "14px", color: "var(--ink)" }}>{question.title}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {mission.questions.length === 0 && (
+                <div style={{ padding: "12px 16px", color: "var(--ink)" }}>
+                  <span>暂无题目，请检查 questions 数据是否设置 gameKey=elimination 且 isActive=true。</span>
+                </div>
+              )}
+
+              <div className="adminRow" style={{ justifyContent: "flex-end", alignItems: "center" }}>
+                <div className="pageActions" style={{ marginTop: 0 }}>
+                  <button
+                    className="primaryButton smallButton"
+                    type="button"
+                    disabled={mission.isOpen}
+                    onClick={() => handleOpenEliminationMission(mission.index)}
+                  >
+                    开启此 Mission
+                  </button>
+                  <button
+                    className="secondaryButton smallButton"
+                    type="button"
+                    disabled={!mission.isOpen}
+                    onClick={() => handleCloseEliminationMission(mission.index)}
+                  >
+                    关闭此 Mission
                   </button>
                 </div>
               </div>
