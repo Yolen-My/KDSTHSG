@@ -1,4 +1,7 @@
+"use client";
+
 import type { OfficeAverageItem } from "@/types";
+import { useI18n } from "@/lib/i18n";
 
 type OfficeAverageTableProps = {
   data: OfficeAverageItem[];
@@ -6,6 +9,7 @@ type OfficeAverageTableProps = {
 };
 
 export default function OfficeAverageTable({ data, variant = "default" }: OfficeAverageTableProps) {
+  const { t } = useI18n();
   if (variant === "ranking") {
     return (
       <div className="rankingList">
@@ -14,7 +18,7 @@ export default function OfficeAverageTable({ data, variant = "default" }: Office
             <span className="rankingRankCircle">{item.rank}</span>
             <div className="rankingRowInfo">
               <b>{item.office}</b>
-              <small>{item.playerCount}人</small>
+              <small>{item.playerCount}{t("common.person")}</small>
             </div>
             <strong>{item.averageScore}</strong>
           </div>
@@ -29,7 +33,7 @@ export default function OfficeAverageTable({ data, variant = "default" }: Office
         <div className="tableRow" key={item.office}>
           <span>#{item.rank}</span>
           <b>{item.office}</b>
-          <small>{item.playerCount} 人</small>
+          <small>{item.playerCount} {t("common.person")}</small>
           <strong>{item.averageScore}</strong>
         </div>
       ))}

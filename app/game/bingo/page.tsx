@@ -13,6 +13,8 @@ import { getPlayerRank } from "@/lib/ranking";
 import { calculateBingoSelection, getBingoTargetWords } from "@/lib/bingo-scoring";
 import { getGameResult } from "@/lib/storage";
 import { useCurrentPlayer, useQuestions, useSubmitGameResult, useAppState } from "@/hooks/use-game-data";
+import { useI18n } from "@/lib/i18n";
+import { localizedWord } from "@/lib/i18n/question";
 import type { Question } from "@/types";
 import type { ReactNode } from "react";
 
@@ -28,8 +30,9 @@ function getBingoTimeoutKey(playerId?: string | null): string {
 }
 
 function BingoShell({ children, hideNavActions = false, hideNav = false }: { children: ReactNode; hideNavActions?: boolean; hideNav?: boolean }) {
+  const { t } = useI18n();
   return (
-    <Layout title="预言家验词" hideHeader>
+    <Layout title={t("game.bingo")} hideHeader>
       <section className="bingoPage">
         <PageBackground />
 
@@ -44,9 +47,9 @@ function BingoShell({ children, hideNavActions = false, hideNav = false }: { chi
                   fill="white"
                 />
               </svg>
-              活动大厅
+              {t("common.lobby")}
             </Link>
-            <h1>预言家验词</h1>
+            <h1>{t("game.bingo")}</h1>
             <Link className="bingoNavLink" href="/ranking">
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="11" viewBox="0 0 12 11" fill="none" aria-hidden="true">
                 <path
@@ -55,7 +58,7 @@ function BingoShell({ children, hideNavActions = false, hideNav = false }: { chi
                   fill="white"
                 />
               </svg>
-              排行榜
+              {t("common.ranking")}
             </Link>
           </header>
           )}
@@ -65,11 +68,11 @@ function BingoShell({ children, hideNavActions = false, hideNav = false }: { chi
               <Image
                 className="bingoBannerTitle"
                 src="/image/source/bingo/bingo-title.png"
-                alt="预言家验词"
+                alt={t("game.bingo")}
                 width={246}
                 height={20}
               />
-              <p>猜对词语，完成 Bingo</p>
+              <p>{t("bingo.bannerSub")}</p>
             </div>
             <GameBannerIcon
               className="bingoBannerLogo"
@@ -91,6 +94,7 @@ function BingoShell({ children, hideNavActions = false, hideNav = false }: { chi
 
 export default function BingoPage() {
   const router = useRouter();
+  const { t, locale } = useI18n();
   const { player, playerId, refresh } = useCurrentPlayer();
   const { state } = useAppState();
   const questions = useQuestions("bingo");
@@ -295,7 +299,7 @@ export default function BingoPage() {
     return (
       <BingoShell>
         <section className="bingoMainCard bingoMainCard--status">
-          <p className="bingoStatusMessage">正在跳转...</p>
+          <p className="bingoStatusMessage">{t("common.redirecting")}</p>
         </section>
       </BingoShell>
     );
@@ -306,9 +310,9 @@ export default function BingoPage() {
     return (
       <BingoShell>
         <section className="bingoMainCard bingoMainCard--status">
-          <p className="bingoStatusMessage">Bingo 已结束</p>
+          <p className="bingoStatusMessage">{t("bingo.finished")}</p>
           <button className="bingoSubmitButton" type="button" onClick={goLobby}>
-            回到大厅
+            {t("common.backLobby")}
           </button>
         </section>
       </BingoShell>
@@ -320,9 +324,9 @@ export default function BingoPage() {
     return (
       <BingoShell>
         <section className="bingoMainCard bingoMainCard--status">
-          <p className="bingoStatusMessage">Bingo 已结束</p>
+          <p className="bingoStatusMessage">{t("bingo.finished")}</p>
           <button className="bingoSubmitButton" type="button" onClick={goLobby}>
-            回到大厅
+            {t("common.backLobby")}
           </button>
         </section>
       </BingoShell>
@@ -334,7 +338,7 @@ export default function BingoPage() {
     return (
       <BingoShell>
         <section className="bingoMainCard bingoMainCard--status">
-          <p className="bingoStatusMessage">游戏加载中，请耐心等待</p>
+          <p className="bingoStatusMessage">{t("common.gameLoading")}</p>
         </section>
       </BingoShell>
     );
@@ -344,7 +348,7 @@ export default function BingoPage() {
     return (
       <BingoShell>
         <section className="bingoMainCard bingoMainCard--status">
-          <p className="bingoStatusMessage">{questions.loading ? "题库加载中，请稍候" : `题库正在重新加载：${questions.error || "暂无题目"}`}</p>
+          <p className="bingoStatusMessage">{questions.loading ? t("common.questionLoading") : t("common.questionReloading", { error: questions.error || t("common.noQuestion") })}</p>
         </section>
       </BingoShell>
     );
@@ -372,7 +376,7 @@ export default function BingoPage() {
   async function handleSubmit(autoSubmit = false) {
     if (!playerId || submitting) return;
     if (!autoSubmit && !timeUp && selectedWords.length !== 9) {
-      setMessage("请从 30 个词中选择 9 个组成 Bingo 宫格");
+      setMessage(t("bingo.needNineWords"));
       return;
     }
     setSubmitting(true);
@@ -396,7 +400,7 @@ export default function BingoPage() {
         setWaitingModal(true);
       }
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "提交失败");
+      setMessage(error instanceof Error ? error.message : t("common.submitFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -405,12 +409,12 @@ export default function BingoPage() {
   // 保持 ref 指向最新 handleSubmit，供倒计时 useEffect 调用
   handleSubmitRef.current = handleSubmit;
 
-  const statusHint = message || (timeUp && !submitting ? "正在自动提交..." : "请从词库中选择9个词组成 Bingo 宫格");
+  const statusHint = message || (timeUp && !submitting ? t("bingo.autoSubmitting") : t("bingo.hint"));
 
   return (
     <BingoShell hideNavActions={canInteract} hideNav={modal.open || waitingModal || isWaitingForScore}>
       {bingoPhase === "auto_score" && !hasCompletedBingo && (
-        <p className="bingoPhaseNotice">Boss 发言已完成，提交后系统将自动判分。</p>
+        <p className="bingoPhaseNotice">{t("bingo.phaseNotice")}</p>
       )}
 
       <section className="bingoMainCard">
@@ -426,7 +430,7 @@ export default function BingoPage() {
             </span>
           )}
           {timeUp && (
-            <span className="bingoTimer bingoTimer--up">时间到</span>
+            <span className="bingoTimer bingoTimer--up">{t("bingo.timeUp")}</span>
           )}
         </div>
         {canInteract && !timeUp && (
@@ -448,7 +452,7 @@ export default function BingoPage() {
               type="button"
               onClick={() => toggleQuestion(question)}
             >
-              {question.title}
+              {localizedWord(questions, question.title, locale)}
             </button>
           ))}
         </div>
@@ -457,7 +461,7 @@ export default function BingoPage() {
           <div className="bingoGrid">
             {Array.from({ length: 9 }).map((_, index) => (
               <div className={selectedWords[index] ? "lit" : ""} key={index}>
-                <span>{selectedWords[index] || ""}</span>
+                <span>{selectedWords[index] ? localizedWord(questions, selectedWords[index], locale) : ""}</span>
               </div>
             ))}
           </div>
@@ -470,18 +474,18 @@ export default function BingoPage() {
         disabled={!canInteract || selectedWords.length !== 9}
         onClick={() => handleSubmit()}
       >
-        提交
+        {t("common.submit")}
       </button>
 
       <ResultModal
         open={modal.open}
-        gameName="预言家验词"
+        gameName={t("game.bingo")}
         roundScore={modal.score}
         totalScore={modal.total}
         rank={modal.rank}
         onBackLobby={goLobby}
       />
-      <WaitingModal open={(waitingModal || isWaitingForScore) && !modal.open} gameName="预言家验词" timeout={timeUp || localStorage.getItem(timeoutKey) === "1"} />
+      <WaitingModal open={(waitingModal || isWaitingForScore) && !modal.open} gameName={t("game.bingo")} timeout={timeUp || localStorage.getItem(timeoutKey) === "1"} />
     </BingoShell>
   );
 }

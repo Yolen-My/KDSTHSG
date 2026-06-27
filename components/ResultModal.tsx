@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useI18n } from "@/lib/i18n";
 
 const RESULT_TITLE_IMAGES: Record<
   string,
@@ -56,6 +57,7 @@ export default function ResultModal({
   eliminationModalStyle = "auto",
   hideScore = false
 }: ResultModalProps) {
+  const { t } = useI18n();
   if (!open) return null;
 
   const handleClick = onClose || onBackLobby;
@@ -100,10 +102,10 @@ export default function ResultModal({
           <div className="resultModalHeader">
             {isElimination ? (
               <>
-                <span className="resultModalEyebrow">游戏完成</span>
+                <span className="resultModalEyebrow">{t("modal.gameCompleted")}</span>
                 {showEliminationStatus ? (
                   <h2 className="resultModalEliminationTitle">
-                    {resolvedEliminationStyle === "wrong" ? "遗憾淘汰，请坐下" : "恭喜答对，保持站立"}
+                    {resolvedEliminationStyle === "wrong" ? t("modal.eliminationWrong") : t("modal.eliminationCorrect")}
                   </h2>
                 ) : eliminationTitleImage ? (
                   <Image
@@ -125,12 +127,12 @@ export default function ResultModal({
               </>
             ) : isEliminated ? (
               <>
-                <span className="resultModalEyebrow">游戏结束</span>
-                <h2 className="resultModalTitle">遗憾淘汰，请坐下</h2>
+                <span className="resultModalEyebrow">{t("modal.gameOver")}</span>
+                <h2 className="resultModalTitle">{t("modal.eliminationWrong")}</h2>
               </>
             ) : (
               <>
-                <span className="resultModalEyebrow">游戏完成</span>
+                <span className="resultModalEyebrow">{t("modal.gameCompleted")}</span>
                 {titleImage ? (
                   <Image
                     alt={gameName}
@@ -150,14 +152,14 @@ export default function ResultModal({
             <div className="resultModalScore">{roundScore}</div>
             {!hideScore && (!isEliminated || isElimination) && (
               <p className="resultModalStats">
-                累计积分 {totalScore} 当前排名 <span className="resultModalRank">{rank || "-"}</span>
+                {t("modal.stats", { total: totalScore })}<span className="resultModalRank">{rank || "-"}</span>
               </p>
             )}
           </div>
 
           <div className="resultModalFooter">
             <button className="resultModalButton" type="button" onClick={handleClick}>
-              {buttonText || "回到大厅"}
+              {buttonText || t("modal.backLobby")}
             </button>
           </div>
         </div>

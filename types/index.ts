@@ -36,7 +36,9 @@ export type Question = {
   gameKey: GameKey;
   type: "word" | "single" | "boolean" | "story";
   title: string;
+  titleEn?: string;
   options?: string[];
+  optionsEn?: string[];
   correctAnswer: string | string[];
   score: number;
   order: number;

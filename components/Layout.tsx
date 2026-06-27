@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { useI18n } from "@/lib/i18n";
 
 type LayoutProps = {
   title: string;
@@ -11,6 +14,7 @@ type LayoutProps = {
 };
 
 export default function Layout({ title, eyebrow = "ANNUAL GAME", children, rightSlot, hideLeftButton = false, hideHeader = false }: LayoutProps) {
+  const { t } = useI18n();
   return (
     <main className="mobilePage">
       {!hideHeader && (
@@ -37,7 +41,7 @@ export default function Layout({ title, eyebrow = "ANNUAL GAME", children, right
                   <path d="M9 9V7c0-1.1.9-2 2-2h2c1.1 0 2 .9 2 2v2" />
                   <path d="M12 11v10" />
                 </svg>
-                排行榜
+                {t("common.ranking")}
               </Link>
             )}
           </div>

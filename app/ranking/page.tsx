@@ -7,8 +7,10 @@ import OfficeAverageTable from "@/components/OfficeAverageTable";
 import OfficeTop3Panel from "@/components/OfficeTop3Panel";
 import RankingTable from "@/components/RankingTable";
 import { useCurrentPlayer, useRanking } from "@/hooks/use-game-data";
+import { useI18n } from "@/lib/i18n";
 
 export default function RankingPage() {
+  const { t } = useI18n();
   const { playerId } = useCurrentPlayer();
   const { ranking } = useRanking(playerId, 4000);
 
@@ -18,7 +20,7 @@ export default function RankingPage() {
   const isInTop10 = rank > 0 && rank <= 10;
 
   return (
-    <Layout title="排行榜" hideHeader>
+    <Layout title={t("common.ranking")} hideHeader>
       <section className="rankingPage">
         <div className="rankingPageBg" aria-hidden="true">
           <Image
@@ -41,16 +43,16 @@ export default function RankingPage() {
                   fill="white"
                 />
               </svg>
-              活动大厅
+              {t("common.lobby")}
             </Link>
-            <h1>排行榜</h1>
+            <h1>{t("common.ranking")}</h1>
             <Link className="rankingNavLink" href="/game/review">
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="11" viewBox="0 0 12 11" fill="none" aria-hidden="true">
                 <path opacity="0.9" d="M1.5 1C0.67 1 0 1.67 0 2.5V10L6 8L12 10V2.5C12 1.67 11.33 1 10.5 1C9.67 1 9 1.67 9 2.5V7.25L3 5.25V2.5C3 1.67 2.33 1 1.5 1Z" stroke="white" strokeWidth="1" strokeLinejoin="round" />
                 <path opacity="0.9" d="M3 5.25V8.75" stroke="white" strokeWidth="1" strokeLinecap="round" />
                 <path opacity="0.9" d="M9 7.25V8.75" stroke="white" strokeWidth="1" strokeLinecap="round" />
               </svg>
-              温故知新
+              {t("common.review")}
             </Link>
           </header>
 
@@ -91,9 +93,9 @@ export default function RankingPage() {
               </div>
               <h2 className="rankingProfileName">{player.name}</h2>
               <span className="rankingOfficeBadge">{player.office}</span>
-              <p className="rankingProfileStatus">{isInTop10 ? `第 ${rank} 名` : "未上榜"}</p>
+              <p className="rankingProfileStatus">{isInTop10 ? t("ranking.rankNo", { rank }) : t("ranking.notRanked")}</p>
               <div className="rankingProfileScore">
-                <span>TOTAL SCORE</span>
+                <span>{t("ranking.totalScore")}</span>
                 <b>{player.totalScore}</b>
               </div>
             </section>
@@ -101,7 +103,7 @@ export default function RankingPage() {
 
           <section className="rankingSection">
             <div className="rankingSectionHeader">
-              <h2>总排行榜</h2>
+              <h2>{t("ranking.totalRanking")}</h2>
               <Image
                 className="rankingTop10Watermark"
                 src="/image/source/ranking/top10-watermark.png"
@@ -115,12 +117,12 @@ export default function RankingPage() {
           </section>
 
           <section className="rankingSection">
-            <h2>地区平均分排行榜</h2>
+            <h2>{t("ranking.officeAverage")}</h2>
             <OfficeAverageTable data={ranking.officeAverage} variant="ranking" />
           </section>
 
           <section className="rankingSection">
-            <h2>各地区 TOP3</h2>
+            <h2>{t("ranking.officeTop3")}</h2>
             <OfficeTop3Panel data={ranking.officeTop3} variant="ranking" />
           </section>
         </div>

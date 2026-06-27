@@ -1,7 +1,10 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import type { CSSProperties } from "react";
 import type { Game, GameKey } from "@/types";
+import { useI18n } from "@/lib/i18n";
 
 type GameCardProps = {
   game: Game;
@@ -27,11 +30,11 @@ const GAME_ICONS: Record<GameKey, IconConfig> = {
   elimination: { src: "/image/source/lobby/game-elimination.png", width: 64, height: 78, right: 22, offsetY: 5 }
 };
 
-const DISPLAY_NAMES: Record<GameKey, string> = {
-  bingo: "预言家验词",
-  quiz: "猎人快答",
-  story: "狼人悍跳",
-  elimination: "守卫者之夜"
+const DISPLAY_NAME_KEY: Record<GameKey, string> = {
+  bingo: "game.bingo",
+  quiz: "game.quiz",
+  story: "game.story",
+  elimination: "game.elimination"
 };
 
 function getStatusBadgeClass(status: string, canEnter: boolean): string {
@@ -39,6 +42,18 @@ function getStatusBadgeClass(status: string, canEnter: boolean): string {
   if (!canEnter || status === "等待开启") return "lobbyGameBadge lobbyGameBadge--locked";
   return "lobbyGameBadge";
 }
+
+// 将内部稳定的中文状态标识映射为翻译键，仅用于展示，不影响逻辑判断。
+const STATUS_I18N_KEY: Record<string, string> = {
+  "已完成": "common.completed",
+  "已结束": "common.finished",
+  "未开放": "common.notOpen",
+  "等待开启": "common.waitingOpen",
+  "已开启": "common.opened",
+  "继续答题": "common.continueAnswer",
+  "可答题": "common.canAnswer",
+  "等待 Boss 发言": "lobby.statusWaitingBoss"
+};
 
 function hasBeenControlled(game: Game): boolean {
   return Boolean(game.created && game.updated && game.created !== game.updated);
@@ -52,6 +67,7 @@ export default function GameCard({
   statusOverride,
   allowEnterOverride
 }: GameCardProps) {
+  const { t } = useI18n();
   const href = `/game/${game.key}`;
   const icon = GAME_ICONS[game.key];
 
@@ -113,10 +129,10 @@ export default function GameCard({
 
   const cardBody = (
     <div className="lobbyGameCard">
-      <h3>{DISPLAY_NAMES[game.key]}</h3>
+      <h3>{t(DISPLAY_NAME_KEY[game.key])}</h3>
       <div className="lobbyGameCardMeta">
-        <p>{subtitle || `满分 ${game.maxScore}分`}</p>
-        <span className={getStatusBadgeClass(status, canEnter)}>{status}</span>
+        <p>{subtitle || t("lobby.maxScore", { score: game.maxScore })}</p>
+        <span className={getStatusBadgeClass(status, canEnter)}>{STATUS_I18N_KEY[status] ? t(STATUS_I18N_KEY[status]) : status}</span>
       </div>
     </div>
   );

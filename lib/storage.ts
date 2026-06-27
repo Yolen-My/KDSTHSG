@@ -58,6 +58,7 @@ function normalizeQuestion(question: Question): Question {
   const normalizedQuestion: Question = {
     ...question,
     options: Array.isArray(question.options) ? question.options.map((option) => normalizeAnswerValue(option)) : question.options,
+    optionsEn: Array.isArray(question.optionsEn) ? question.optionsEn.map((option) => normalizeAnswerValue(option)) : question.optionsEn,
     correctAnswer: normalizeAnswerValue(question.correctAnswer)
   };
   if (normalizedQuestion.gameKey !== "quiz") return normalizedQuestion;

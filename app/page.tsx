@@ -1,4 +1,9 @@
+"use client";
+
+import { useI18n } from "@/lib/i18n";
+
 export default function Home() {
+  const { t } = useI18n();
   return (
     <main className="landingPage">
       <section className="landingHero">
@@ -6,16 +11,16 @@ export default function Home() {
         <span className="eyebrow">ANNUAL GAME </span>
         <h1>
           HSG
-          <span>年会互动游戏系统</span>
+          <span>{t("landing.title")}</span>
         </h1>
-        <p>手机端四关游戏、自动判分、防重复提交、实时排行榜、大屏和简易后台控制。</p>
+        <p>{t("landing.desc")}</p>
         <a className="primaryButton landingButton" href="/register">
-          开始参与
+          {t("landing.start")}
         </a>
         <div className="landingLinks">
-          <a href="/screen">大屏演示</a>
-          <a href="/admin-control">后台控制</a>
-          <a href="/ranking">排行榜</a>
+          <a href="/screen">{t("landing.screen")}</a>
+          <a href="/admin-control">{t("landing.admin")}</a>
+          <a href="/ranking">{t("landing.ranking")}</a>
         </div>
       </section>
     </main>

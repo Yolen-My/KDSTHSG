@@ -12,6 +12,8 @@ import CorrectAnswerModal from "@/components/CorrectAnswerModal";
 import { calculateStoryScore } from "@/lib/scoring";
 import { getGameResult } from "@/lib/storage";
 import { useAppState, useCurrentPlayer, useQuestions, useRanking, useSubmitGameResult } from "@/hooks/use-game-data";
+import { useI18n } from "@/lib/i18n";
+import { localizedTitle, localizedOptionLabel } from "@/lib/i18n/question";
 import type { Question } from "@/types";
 
 const STORY_SECONDS = 10;
@@ -55,6 +57,7 @@ function hasAnswer(answers: Record<string, string>, question?: Question): boolea
 }
 
 function StoryNav({ hideActions = false }: { hideActions?: boolean }) {
+  const { t } = useI18n();
   return (
     <header className="quizNav">
       {hideActions ? <span /> : (
@@ -66,12 +69,11 @@ function StoryNav({ hideActions = false }: { hideActions?: boolean }) {
             fill="white"
           />
         </svg>
-          活动大厅
+          {t("common.lobby")}
         </Link>
       )}
-      <h1>狼人悍跳</h1>
-      {hideActions ? <span /> : (
-        <Link className="quizNavLink" href="/ranking">
+      <h1>{t("game.story")}</h1>
+      {hideActions ? <span /> : (        <Link className="quizNavLink" href="/ranking">
         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="11" viewBox="0 0 12 11" fill="none" aria-hidden="true">
           <path
             opacity="0.9"
@@ -79,16 +81,17 @@ function StoryNav({ hideActions = false }: { hideActions?: boolean }) {
             fill="white"
           />
         </svg>
-          排行榜
+          {t("common.ranking")}
         </Link>
       )}
-    </header>
-  );
+      </header>
+    );
 }
 
 function StoryShell({ children, hideNavActions = false }: { children: ReactNode; hideNavActions?: boolean }) {
+    const { t } = useI18n();
   return (
-    <Layout title="狼人悍跳" hideHeader>
+    <Layout title={t("game.story")} hideHeader>
       <section className="quizPage">
         <PageBackground />
         <div className="quizPageContent">
@@ -102,6 +105,7 @@ function StoryShell({ children, hideNavActions = false }: { children: ReactNode;
 
 export default function StoryClient({ initialGroupIndex = null }: { initialGroupIndex?: number | null }) {
   const router = useRouter();
+  const { t, locale } = useI18n();
   const { playerId, refresh: refreshPlayer, player } = useCurrentPlayer();
   const { state, refresh: refreshState, loading: stateLoading } = useAppState();
   const { ranking } = useRanking(playerId);
@@ -238,7 +242,7 @@ export default function StoryClient({ initialGroupIndex = null }: { initialGroup
       setExisting(outcome.result);
       setModal({ open: true, score: outcome.result.score, total: outcome.player.totalScore, rank: outcome.rank });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "提交失败";
+      const errorMessage = error instanceof Error ? error.message : t("common.submitFailed");
       if (errorMessage.includes("已完成") && playerId) {
         const completedResult = await getGameResult(playerId, "story");
         if (completedResult) {
@@ -345,7 +349,7 @@ export default function StoryClient({ initialGroupIndex = null }: { initialGroup
     return (
       <StoryShell>
         <section className="quizStatusCard">
-          <p className="quizStatusMessage">正在跳转...</p>
+          <p className="quizStatusMessage">{t("common.redirecting")}</p>
         </section>
       </StoryShell>
     );
@@ -355,7 +359,7 @@ export default function StoryClient({ initialGroupIndex = null }: { initialGroup
     return (
       <StoryShell>
         <section className="quizStatusCard">
-          <p className="quizStatusMessage">游戏加载中，请耐心等待</p>
+          <p className="quizStatusMessage">{t("common.gameLoading")}</p>
         </section>
       </StoryShell>
     );
@@ -365,7 +369,7 @@ export default function StoryClient({ initialGroupIndex = null }: { initialGroup
     return (
       <StoryShell>
         <section className="quizStatusCard">
-          <p className="quizStatusMessage">{questions.loading ? "题库加载中，请稍候" : `题库正在重新加载：${questions.error || "暂无题目"}`}</p>
+          <p className="quizStatusMessage">{questions.loading ? t("common.questionLoading") : t("common.questionReloading", { error: questions.error || t("common.noQuestion") })}</p>
         </section>
       </StoryShell>
     );
@@ -375,10 +379,10 @@ export default function StoryClient({ initialGroupIndex = null }: { initialGroup
     return (
       <StoryShell>
         <section className="quizStatusCard">
-          <p className="quizStatusMessage">狼人悍跳尚未开放</p>
+          <p className="quizStatusMessage">{t("story.notOpen")}</p>
         </section>
         <button className="quizBackButton" type="button" onClick={goLobby}>
-          返回活动大厅
+          {t("common.backToLobby")}
         </button>
       </StoryShell>
     );
@@ -390,16 +394,16 @@ export default function StoryClient({ initialGroupIndex = null }: { initialGroup
         <section className="quizStatusCard">
           <p className="quizStatusMessage">
             {!activeGroup
-              ? "该 Group 不存在"
+              ? t("story.groupNotExist")
               : activeGroup.answered
-                ? "该 Group 已完成"
+                ? t("story.groupCompleted")
                 : !activeGroup.isOpen
-                  ? "该 Group 尚未开放"
-                  : "该 Group 暂无题目"}
+                  ? t("story.groupNotOpen")
+                  : t("story.groupNoQuestion")}
           </p>
         </section>
         <button className="quizBackButton" type="button" onClick={() => router.replace("/game/story")}>
-          返回 Group 选择
+          {t("story.backToGroup")}
         </button>
       </StoryShell>
     );
@@ -410,14 +414,14 @@ export default function StoryClient({ initialGroupIndex = null }: { initialGroup
       <StoryShell hideNavActions>
         <div className="quizPlayHeader">
           <h2>{activeGroup.groupName}</h2>
-          <p>题目1/1</p>
+          <p>{t("story.questionOneOfOne")}</p>
         </div>
 
         {!existing && activeGroup.isOpen && (
           <div className="quizTimer">
             <div className="quizTimerMeta">
-              <span>答题倒计时</span>
-              <span className="quizTimerClock">{timeUp ? "时间到" : `${seconds}s`}</span>
+              <span>{t("story.countdown")}</span>
+              <span className="quizTimerClock">{timeUp ? t("story.timeUp") : `${seconds}s`}</span>
             </div>
             {!timeUp && (
               <div className="quizTimerTrack">
@@ -428,9 +432,9 @@ export default function StoryClient({ initialGroupIndex = null }: { initialGroup
         )}
 
         <section className="quizQuestionCard">
-          <h3>{currentQuestion.title}</h3>
+          <h3>{localizedTitle(currentQuestion, locale)}</h3>
           <div className="storyOptions">
-            {currentQuestion.options?.map((option) => (
+            {currentQuestion.options?.map((option, index) => (
               <button
                 className={selectedAnswer === option ? "selected" : ""}
                 disabled={Boolean(existing) || !activeGroup.isOpen || timeUp || submitting}
@@ -438,29 +442,29 @@ export default function StoryClient({ initialGroupIndex = null }: { initialGroup
                 type="button"
                 onClick={() => chooseAnswer(option)}
               >
-                {option}
+                {localizedOptionLabel(currentQuestion, index, locale)}
               </button>
             ))}
           </div>
         </section>
 
         <section className="quizHintCard">
-          <b>已完成 {completedCount}/{STORY_GROUP_COUNT}</b>
-          <span>{message || (submitting ? "正在提交最终成绩..." : "选择答案后返回 Group 选择")}</span>
+          <b>{t("story.progress", { completed: completedCount, total: STORY_GROUP_COUNT })}</b>
+          <span>{message || (submitting ? t("story.submittingFinal") : t("story.chooseToReturn"))}</span>
         </section>
 
         <button className="quizBackButton" type="button" onClick={() => router.replace("/game/story")}>
-          返回 Group 选择
+          {t("story.backToGroup")}
         </button>
 
         <ResultModal
           open={resultModalOpen}
-          gameName="狼人悍跳"
+          gameName={t("game.story")}
           roundScore={resultRoundScore}
           totalScore={resultTotalScore}
           rank={resultRank}
           onBackLobby={goLobby}
-          buttonText="返回大厅"
+          buttonText={t("story.backLobby")}
         />
 
         <CorrectAnswerModal
@@ -484,7 +488,7 @@ export default function StoryClient({ initialGroupIndex = null }: { initialGroup
             src="/image/source/story/story-title.png"
             width={244}
           />
-          <p>Group总进度已完成{completedCount}/{STORY_GROUP_COUNT}</p>
+          <p>{t("story.bannerProgress", { completed: completedCount, total: STORY_GROUP_COUNT })}</p>
         </div>
         <GameBannerIcon
           className="quizBannerLogo"
@@ -501,32 +505,32 @@ export default function StoryClient({ initialGroupIndex = null }: { initialGroup
 
       {existing && (
         <section className="quizStatusCard" style={{ flex: "initial", minHeight: 96, marginBottom: 16 }}>
-          <p className="quizStatusMessage">该游戏已完成，本关得分 {existing.score}，不能重复提交。</p>
+          <p className="quizStatusMessage">{t("story.alreadyDone", { score: existing.score })}</p>
         </section>
       )}
 
       <section className="quizSectorCard">
         {groups.map((group) => {
-          const status = existing || group.answered ? "已完成" : group.isOpen ? "可答题" : "未开放";
+          const status = existing || group.answered ? t("common.completed") : group.isOpen ? t("common.canAnswer") : t("common.notOpen");
           return (
             <div className="quizSectorRow" key={group.index}>
               <div className="quizSectorInfo">
                 <b>{group.groupName}</b>
                 <div className="quizSectorMeta">
-                  <span>状态：{status}</span>
+                  <span>{t("common.statusPrefix")}{status}</span>
                 </div>
               </div>
               {existing || group.answered ? (
                 <button className="quizSectorAction quizSectorAction--ghost" disabled type="button">
-                  已完成
+                  {t("common.completed")}
                 </button>
               ) : group.isOpen && group.question ? (
                 <button className="quizSectorAction quizSectorAction--primary" type="button" onClick={() => startGroup(group.index)}>
-                  进入答题
+                  {t("common.enterAnswer")}
                 </button>
               ) : (
                 <button className="quizSectorAction quizSectorAction--ghost" disabled type="button">
-                  等待主持人开启
+                  {t("common.waitingHost")}
                 </button>
               )}
             </div>
@@ -536,22 +540,22 @@ export default function StoryClient({ initialGroupIndex = null }: { initialGroup
 
       {allGroupsAnswered && !existing && !modal.open && (
         <button className="quizBackButton" disabled={submitting} type="button" onClick={() => submitFinal(answers)}>
-          {submitting ? "提交中..." : "提交最终成绩"}
+          {submitting ? t("common.submitting") : t("story.submitFinal")}
         </button>
       )}
 
       <button className="quizBackButton" type="button" onClick={goLobby}>
-        返回活动大厅
+        {t("common.backToLobby")}
       </button>
 
       <ResultModal
         open={resultModalOpen}
-        gameName="狼人悍跳"
+        gameName={t("game.story")}
         roundScore={resultRoundScore}
         totalScore={resultTotalScore}
         rank={resultRank}
         onBackLobby={goLobby}
-        buttonText="返回大厅"
+        buttonText={t("story.backLobby")}
       />
     </StoryShell>
   );

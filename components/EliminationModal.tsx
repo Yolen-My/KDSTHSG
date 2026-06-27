@@ -1,6 +1,7 @@
 "use client";
 
 import ResultModal from "@/components/ResultModal";
+import { useI18n } from "@/lib/i18n";
 
 type EliminationModalProps = {
   open: boolean;
@@ -19,15 +20,16 @@ export default function EliminationModal({
   onNext,
   hideScore = false
 }: EliminationModalProps) {
+  const { t } = useI18n();
   return (
     <ResultModal
       open={open}
-      gameName="守卫者之夜"
+      gameName={t("game.elimination")}
       roundScore={roundScore}
       totalScore={totalScore}
       rank={rank}
       eliminationModalStyle="correct"
-      buttonText="下一题"
+      buttonText={t("modal.nextQuestion")}
       onClose={onNext}
       onBackLobby={() => onNext?.()}
       hideScore={hideScore}

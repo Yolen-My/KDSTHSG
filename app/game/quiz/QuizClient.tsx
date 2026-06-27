@@ -9,6 +9,8 @@ import Layout from "@/components/Layout";
 import PageBackground from "@/components/PageBackground";
 import ResultModal from "@/components/ResultModal";
 import { useAppState, useCurrentPlayer, useQuestions, useSubmitGameResult } from "@/hooks/use-game-data";
+import { useI18n } from "@/lib/i18n";
+import { localizedTitle, localizedOptionLabel } from "@/lib/i18n/question";
 import type { Question } from "@/types";
 
 const TOTAL_GROUPS = 5;
@@ -53,6 +55,7 @@ function isCorrectAnswer(question: Question, answer: string | undefined): boolea
 }
 
 function QuizNav({ hideActions = false }: { hideActions?: boolean }) {
+  const { t } = useI18n();
   return (
     <header className="quizNav">
       {hideActions ? <span /> : <Link className="quizNavLink" href="/lobby">
@@ -63,9 +66,9 @@ function QuizNav({ hideActions = false }: { hideActions?: boolean }) {
             fill="white"
           />
         </svg>
-        活动大厅
+        {t("common.lobby")}
       </Link>}
-      <h1>猎人快答</h1>
+      <h1>{t("game.quiz")}</h1>
       {hideActions ? <span /> : <Link className="quizNavLink" href="/ranking">
         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="11" viewBox="0 0 12 11" fill="none" aria-hidden="true">
           <path
@@ -74,15 +77,16 @@ function QuizNav({ hideActions = false }: { hideActions?: boolean }) {
             fill="white"
           />
         </svg>
-        排行榜
+        {t("common.ranking")}
       </Link>}
     </header>
   );
 }
 
 function QuizShell({ children, hideNavActions = false }: { children: ReactNode; hideNavActions?: boolean }) {
+  const { t } = useI18n();
   return (
-    <Layout title="猎人快答" hideHeader>
+    <Layout title={t("game.quiz")} hideHeader>
       <section className="quizPage">
         <PageBackground />
         <div className="quizPageContent">
@@ -96,6 +100,7 @@ function QuizShell({ children, hideNavActions = false }: { children: ReactNode; 
 
 export default function QuizClient({ initialSectorIndex = null }: { initialSectorIndex?: number | null }) {
   const router = useRouter();
+  const { t, locale } = useI18n();
   const { playerId, refresh: refreshPlayer } = useCurrentPlayer();
   const { state, refresh: refreshState, loading: stateLoading } = useAppState();
   const questions = useQuestions("quiz");
@@ -202,7 +207,7 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
   function goNext() {
     if (!currentQuestion || !activeSector) return;
     if (!selectedAnswer) {
-      setMessage("请先选择本题答案");
+      setMessage(t("quiz.selectFirst"));
       return;
     }
     if (currentQuestionIndex < activeSector.questions.length - 1) {
@@ -250,7 +255,7 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
         completedAll
       });
     } catch (error) {
-      const errMsg = error instanceof Error ? error.message : "提交失败";
+      const errMsg = error instanceof Error ? error.message : t("common.submitFailed");
       setMessage(errMsg);
       try {
         await refreshState();
@@ -274,7 +279,7 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
     return (
       <QuizShell>
         <section className="quizStatusCard">
-          <p className="quizStatusMessage">正在跳转...</p>
+          <p className="quizStatusMessage">{t("common.redirecting")}</p>
         </section>
       </QuizShell>
     );
@@ -284,7 +289,7 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
     return (
       <QuizShell>
         <section className="quizStatusCard">
-          <p className="quizStatusMessage">正在同步 Quiz 状态...</p>
+          <p className="quizStatusMessage">{t("quiz.syncing")}</p>
         </section>
       </QuizShell>
     );
@@ -294,10 +299,10 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
     return (
       <QuizShell>
         <section className="quizStatusCard">
-          <p className="quizStatusMessage">Quiz 尚未开放</p>
+          <p className="quizStatusMessage">{t("quiz.notOpen")}</p>
         </section>
         <button className="quizBackButton" type="button" onClick={goLobby}>
-          返回活动大厅
+          {t("common.backToLobby")}
         </button>
       </QuizShell>
     );
@@ -307,7 +312,7 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
     return (
       <QuizShell>
         <section className="quizStatusCard">
-          <p className="quizStatusMessage">{questions.loading ? "题库加载中，请稍候" : `题库正在重新加载：${questions.error || "暂无题目"}`}</p>
+          <p className="quizStatusMessage">{questions.loading ? t("common.questionLoading") : t("common.questionReloading", { error: questions.error || t("common.noQuestion") })}</p>
         </section>
       </QuizShell>
     );
@@ -319,16 +324,16 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
         <section className="quizStatusCard">
           <p className="quizStatusMessage">
             {!activeSector
-              ? "该 Quiz 板块不存在"
+              ? t("quiz.sectorNotExist")
               : activeSector.result
-                ? "该 Quiz 板块已完成"
+                ? t("quiz.sectorCompleted")
                 : !activeSector.isOpen
-                  ? "该 Quiz 板块尚未开放"
-                  : "该 Quiz 板块暂无题目"}
+                  ? t("quiz.sectorNotOpen")
+                  : t("quiz.sectorNoQuestion")}
           </p>
         </section>
         <button className="quizBackButton" type="button" onClick={() => router.replace("/game/quiz")}>
-          返回 Quiz 板块选择
+          {t("quiz.backToSector")}
         </button>
       </QuizShell>
     );
@@ -336,17 +341,17 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
 
   if (activeSector && currentQuestion) {
     const isLastQuestion = currentQuestionIndex === activeSector.questions.length - 1;
-    const submitLabel = submitting ? "提交中..." : isLastQuestion ? "提交本组" : "继续";
+    const submitLabel = submitting ? t("common.submitting") : isLastQuestion ? t("quiz.submitGroup") : t("quiz.continue");
 
     return (
       <QuizShell hideNavActions>
         <div className="quizPlayHeader">
           <h2>{activeSector.sectorName}</h2>
-          <p>题目{currentQuestionIndex + 1}/{activeSector.questions.length}</p>
+          <p>{t("quiz.questionCount", { current: currentQuestionIndex + 1, total: activeSector.questions.length })}</p>
         </div>
 
         <section className="quizQuestionCard">
-          <h3>{currentQuestion.title}</h3>
+          <h3>{localizedTitle(currentQuestion, locale)}</h3>
           <div className="quizOptions">
             {currentQuestion.options?.map((option, index) => (
               <button
@@ -356,15 +361,15 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
                 type="button"
                 onClick={() => chooseAnswer(option)}
               >
-                {String.fromCharCode(65 + index)}. {option}
+                {String.fromCharCode(65 + index)}. {localizedOptionLabel(currentQuestion, index, locale)}
               </button>
             ))}
           </div>
         </section>
 
         <section className="quizHintCard">
-          <b>本组已选择 {answeredCount}/{activeSector.questions.length}</b>
-          <span>{message || "选择答案后继续"}</span>
+          <b>{t("quiz.selectedCount", { answered: answeredCount, total: activeSector.questions.length })}</b>
+          <span>{message || t("quiz.chooseToContinue")}</span>
         </section>
 
         <button
@@ -378,11 +383,11 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
 
         <ResultModal
           open={modal.open}
-          gameName={modal.completedAll ? "猎人快答" : `${activeSector.sectorName} 已完成\n您该轮的得分`}
+          gameName={modal.completedAll ? "猎人快答" : t("quiz.sectorDoneTitle", { name: activeSector.sectorName })}
           roundScore={modal.completedAll ? modal.quizTotalScore : modal.roundScore}
           totalScore={modal.totalScore}
           rank={modal.rank}
-          buttonText={modal.completedAll ? "返回大厅" : "返回上一页"}
+          buttonText={modal.completedAll ? t("common.backLobby") : t("quiz.backPrev")}
           onBackLobby={goLobby}
           onClose={modal.completedAll ? undefined : closeModalAndRefresh}
           hideScore={!modal.completedAll}
@@ -396,13 +401,13 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
       <div className="quizBanner">
         <div className="quizBannerText">
           <Image
-            alt="猎人快答"
+            alt={t("game.quiz")}
             className="quizBannerTitle"
             height={20}
             src="/image/source/quiz/quiz-title.png"
             width={242}
           />
-          <p>Quiz总进度已完成{completedCount}/{TOTAL_GROUPS}</p>
+          <p>{t("quiz.bannerProgress", { completed: completedCount, total: TOTAL_GROUPS })}</p>
         </div>
         <GameBannerIcon
           className="quizBannerLogo"
@@ -419,26 +424,26 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
 
       <section className="quizSectorCard">
         {quizSectors.map((sector) => {
-          const status = sector.result ? "已完成" : sector.isOpen ? "可答题" : "未开放";
+          const status = sector.result ? t("common.completed") : sector.isOpen ? t("common.canAnswer") : t("common.notOpen");
           return (
             <div className="quizSectorRow" key={sector.index}>
               <div className="quizSectorInfo">
                 <b>{getSectorDisplayName(sector.index)}</b>
                 <div className="quizSectorMeta">
-                  <span>状态：{status}</span>
+                  <span>{t("common.statusPrefix")}{status}</span>
                 </div>
               </div>
               {sector.result ? (
                 <button className="quizSectorAction quizSectorAction--ghost" disabled type="button">
-                  已完成
+                  {t("common.completed")}
                 </button>
               ) : sector.isOpen ? (
                 <button className="quizSectorAction quizSectorAction--primary" type="button" onClick={() => startSector(sector.index)}>
-                  进入答题
+                  {t("common.enterAnswer")}
                 </button>
               ) : (
                 <button className="quizSectorAction quizSectorAction--ghost" disabled type="button">
-                  等待主持人开启
+                  {t("common.waitingHost")}
                 </button>
               )}
             </div>
@@ -447,7 +452,7 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
       </section>
 
       <button className="quizBackButton" type="button" onClick={goLobby}>
-        返回活动大厅
+        {t("common.backToLobby")}
       </button>
     </QuizShell>
   );

@@ -12,6 +12,8 @@ import CorrectAnswerModal from "@/components/CorrectAnswerModal";
 import { calculateEliminationScore } from "@/lib/scoring";
 import { getGameResult } from "@/lib/storage";
 import { useAppState, useCurrentPlayer, useQuestions, useRanking, useSubmitGameResult } from "@/hooks/use-game-data";
+import { useI18n } from "@/lib/i18n";
+import { localizedTitle, localizedOptionLabel } from "@/lib/i18n/question";
 import type { Question } from "@/types";
 
 const ELIMINATION_SECONDS = 10;
@@ -55,6 +57,7 @@ function hasAnswer(answers: Record<string, string>, question?: Question): boolea
 }
 
 function EliminationNav({ hideActions = false }: { hideActions?: boolean }) {
+  const { t } = useI18n();
   return (
     <header className="quizNav">
       {hideActions ? <span /> : (
@@ -66,12 +69,10 @@ function EliminationNav({ hideActions = false }: { hideActions?: boolean }) {
             fill="white"
           />
         </svg>
-          活动大厅
+          {t("common.lobby")}
         </Link>
       )}
-      <h1>守卫者之夜</h1>
-      {hideActions ? <span /> : (
-        <Link className="quizNavLink" href="/ranking">
+      <h1>{t("game.elimination")}</h1>      {hideActions ? <span /> : (        <Link className="quizNavLink" href="/ranking">
         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="11" viewBox="0 0 12 11" fill="none" aria-hidden="true">
           <path
             opacity="0.9"
@@ -79,7 +80,7 @@ function EliminationNav({ hideActions = false }: { hideActions?: boolean }) {
             fill="white"
           />
         </svg>
-          排行榜
+          {t("common.ranking")}
         </Link>
       )}
     </header>
@@ -87,8 +88,9 @@ function EliminationNav({ hideActions = false }: { hideActions?: boolean }) {
 }
 
 function EliminationShell({ children, hideNavActions = false }: { children: ReactNode; hideNavActions?: boolean }) {
+  const { t } = useI18n();
   return (
-    <Layout title="守卫者之夜" hideHeader>
+    <Layout title={t("game.elimination")} hideHeader>
       <section className="quizPage">
         <PageBackground />
         <div className="quizPageContent">
@@ -102,6 +104,7 @@ function EliminationShell({ children, hideNavActions = false }: { children: Reac
 
 export default function EliminationClient({ initialMissionIndex = null }: { initialMissionIndex?: number | null }) {
   const router = useRouter();
+  const { t, locale } = useI18n();
   const { playerId, refresh: refreshPlayer, player } = useCurrentPlayer();
   const { state, refresh: refreshState, loading: stateLoading } = useAppState();
   const { ranking } = useRanking(playerId);
@@ -247,7 +250,7 @@ export default function EliminationClient({ initialMissionIndex = null }: { init
       setExisting(outcome.result);
       setModal({ open: true, score: outcome.result.score, total: outcome.player.totalScore, rank: outcome.rank });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "提交失败";
+      const errorMessage = error instanceof Error ? error.message : t("common.submitFailed");
       if (errorMessage.includes("已完成") && playerId) {
         const completedResult = await getGameResult(playerId, "elimination");
         if (completedResult) {
@@ -354,7 +357,7 @@ export default function EliminationClient({ initialMissionIndex = null }: { init
     return (
       <EliminationShell>
         <section className="quizStatusCard">
-          <p className="quizStatusMessage">正在跳转...</p>
+          <p className="quizStatusMessage">{t("common.redirecting")}</p>
         </section>
       </EliminationShell>
     );
@@ -364,7 +367,7 @@ export default function EliminationClient({ initialMissionIndex = null }: { init
     return (
       <EliminationShell>
         <section className="quizStatusCard">
-          <p className="quizStatusMessage">游戏加载中，请耐心等待</p>
+          <p className="quizStatusMessage">{t("common.gameLoading")}</p>
         </section>
       </EliminationShell>
     );
@@ -374,7 +377,7 @@ export default function EliminationClient({ initialMissionIndex = null }: { init
     return (
       <EliminationShell>
         <section className="quizStatusCard">
-          <p className="quizStatusMessage">{questions.loading ? "题库加载中，请稍候" : `题库正在重新加载：${questions.error || "暂无题目"}`}</p>
+          <p className="quizStatusMessage">{questions.loading ? t("common.questionLoading") : t("common.questionReloading", { error: questions.error || t("common.noQuestion") })}</p>
         </section>
       </EliminationShell>
     );
@@ -384,10 +387,10 @@ export default function EliminationClient({ initialMissionIndex = null }: { init
     return (
       <EliminationShell>
         <section className="quizStatusCard">
-          <p className="quizStatusMessage">守卫者之夜尚未开放</p>
+          <p className="quizStatusMessage">{t("elimination.notOpen")}</p>
         </section>
         <button className="quizBackButton" type="button" onClick={goLobby}>
-          返回活动大厅
+          {t("common.backToLobby")}
         </button>
       </EliminationShell>
     );
@@ -399,16 +402,16 @@ export default function EliminationClient({ initialMissionIndex = null }: { init
         <section className="quizStatusCard">
           <p className="quizStatusMessage">
             {!activeMission
-              ? "该 Mission 不存在"
+              ? t("elimination.missionNotExist")
               : activeMission.answered
-                ? "该 Mission 已完成"
+                ? t("elimination.missionCompleted")
                 : !activeMission.isOpen
-                  ? "该 Mission 尚未开放"
-                  : "该 Mission 暂无题目"}
+                  ? t("elimination.missionNotOpen")
+                  : t("elimination.missionNoQuestion")}
           </p>
         </section>
         <button className="quizBackButton" type="button" onClick={() => router.replace("/game/elimination")}>
-          返回 Mission 选择
+          {t("elimination.backToMission")}
         </button>
       </EliminationShell>
     );
@@ -419,14 +422,14 @@ export default function EliminationClient({ initialMissionIndex = null }: { init
       <EliminationShell hideNavActions>
         <div className="quizPlayHeader">
           <h2>{activeMission.missionName}</h2>
-          <p>题目1/1</p>
+          <p>{t("elimination.questionOneOfOne")}</p>
         </div>
 
         {!existing && activeMission.isOpen && (
           <div className="quizTimer">
             <div className="quizTimerMeta">
-              <span>答题倒计时</span>
-              <span className="quizTimerClock">{timeUp ? "时间到" : `${seconds}s`}</span>
+              <span>{t("elimination.countdown")}</span>
+              <span className="quizTimerClock">{timeUp ? t("elimination.timeUp") : `${seconds}s`}</span>
             </div>
             {!timeUp && (
               <div className="quizTimerTrack">
@@ -437,9 +440,9 @@ export default function EliminationClient({ initialMissionIndex = null }: { init
         )}
 
         <section className="quizQuestionCard">
-          <h3>{currentQuestion.title}</h3>
+          <h3>{localizedTitle(currentQuestion, locale)}</h3>
           <div className="quizOptions">
-            {currentQuestion.options?.map((option) => (
+            {currentQuestion.options?.map((option, index) => (
               <button
                 className={selectedAnswer === option ? "selected" : ""}
                 disabled={Boolean(existing) || !activeMission.isOpen || timeUp || submitting}
@@ -447,30 +450,30 @@ export default function EliminationClient({ initialMissionIndex = null }: { init
                 type="button"
                 onClick={() => chooseAnswer(option)}
               >
-                {option}
+                {localizedOptionLabel(currentQuestion, index, locale)}
               </button>
             ))}
           </div>
         </section>
 
         <section className="quizHintCard">
-          <b>已完成 {completedCount}/{ELIMINATION_MISSION_COUNT}</b>
-          <span>{message || (submitting ? "正在提交最终成绩..." : "选择答案后返回 Mission 选择")}</span>
+          <b>{t("elimination.progress", { completed: completedCount, total: ELIMINATION_MISSION_COUNT })}</b>
+          <span>{message || (submitting ? t("elimination.submittingFinal") : t("elimination.chooseToReturn"))}</span>
         </section>
 
         <button className="quizBackButton" type="button" onClick={() => router.replace("/game/elimination")}>
-          返回 Mission 选择
+          {t("elimination.backToMission")}
         </button>
 
         <ResultModal
           open={resultModalOpen}
-          gameName="守卫者之夜"
+          gameName={t("game.elimination")}
           roundScore={resultRoundScore}
           totalScore={resultTotalScore}
           rank={resultRank}
           eliminationModalStyle="standard"
           onBackLobby={goRanking}
-          buttonText="查看最终成绩"
+          buttonText={t("elimination.viewFinalScore")}
         />
 
         <CorrectAnswerModal
@@ -494,7 +497,7 @@ export default function EliminationClient({ initialMissionIndex = null }: { init
             src="/image/source/elimination/elimination-title.png"
             width={212}
           />
-          <p>Mission总进度已完成{completedCount}/{ELIMINATION_MISSION_COUNT}</p>
+          <p>{t("elimination.bannerProgress", { completed: completedCount, total: ELIMINATION_MISSION_COUNT })}</p>
         </div>
         <GameBannerIcon
           className="quizBannerLogo"
@@ -511,32 +514,32 @@ export default function EliminationClient({ initialMissionIndex = null }: { init
 
       {existing && (
         <section className="quizStatusCard" style={{ flex: "initial", minHeight: 96, marginBottom: 16 }}>
-          <p className="quizStatusMessage">该游戏已完成，本关得分 {existing.score}，不能重复提交。</p>
+          <p className="quizStatusMessage">{t("elimination.alreadyDone", { score: existing.score })}</p>
         </section>
       )}
 
       <section className="quizSectorCard">
         {missions.map((mission) => {
-          const status = existing || mission.answered ? "已完成" : mission.isOpen ? "可答题" : "未开放";
+          const status = existing || mission.answered ? t("common.completed") : mission.isOpen ? t("common.canAnswer") : t("common.notOpen");
           return (
             <div className="quizSectorRow" key={mission.index}>
               <div className="quizSectorInfo">
                 <b>{mission.missionName}</b>
                 <div className="quizSectorMeta">
-                  <span>状态：{status}</span>
+                  <span>{t("common.statusPrefix")}{status}</span>
                 </div>
               </div>
               {existing || mission.answered ? (
                 <button className="quizSectorAction quizSectorAction--ghost" disabled type="button">
-                  已完成
+                  {t("common.completed")}
                 </button>
               ) : mission.isOpen && mission.question ? (
                 <button className="quizSectorAction quizSectorAction--primary" type="button" onClick={() => startMission(mission.index)}>
-                  进入答题
+                  {t("common.enterAnswer")}
                 </button>
               ) : (
                 <button className="quizSectorAction quizSectorAction--ghost" disabled type="button">
-                  等待主持人开启
+                  {t("common.waitingHost")}
                 </button>
               )}
             </div>
@@ -546,23 +549,23 @@ export default function EliminationClient({ initialMissionIndex = null }: { init
 
       {allMissionsAnswered && !existing && !modal.open && (
         <button className="quizBackButton" disabled={submitting} type="button" onClick={() => submitFinal(answers)}>
-          {submitting ? "提交中..." : "提交最终成绩"}
+          {submitting ? t("common.submitting") : t("elimination.submitFinal")}
         </button>
       )}
 
       <button className="quizBackButton" type="button" onClick={goLobby}>
-        返回活动大厅
+        {t("common.backToLobby")}
       </button>
 
       <ResultModal
         open={resultModalOpen}
-        gameName="守卫者之夜"
+        gameName={t("game.elimination")}
         roundScore={resultRoundScore}
         totalScore={resultTotalScore}
         rank={resultRank}
         eliminationModalStyle="standard"
         onBackLobby={goRanking}
-        buttonText="查看最终成绩"
+        buttonText={t("elimination.viewFinalScore")}
       />
     </EliminationShell>
   );

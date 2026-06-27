@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import type { RankingItem } from "@/types";
+import { useI18n } from "@/lib/i18n";
 
 type RankingTableProps = {
   data: RankingItem[];
@@ -7,9 +10,9 @@ type RankingTableProps = {
   variant?: "default" | "ranking";
 };
 
-function formatCompletedTime(completedAt?: string) {
-  if (!completedAt) return "未完成";
-  return new Date(completedAt).toLocaleTimeString("zh-CN", {
+function formatCompletedTime(completedAt: string | undefined, notCompleted: string, locale: string) {
+  if (!completedAt) return notCompleted;
+  return new Date(completedAt).toLocaleTimeString(locale === "en" ? "en-US" : "zh-CN", {
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
@@ -43,6 +46,7 @@ function RankingRankBadge({ rank }: { rank: number }) {
 }
 
 export default function RankingTable({ data, currentPlayerId, variant = "default" }: RankingTableProps) {
+  const { t, locale } = useI18n();
   if (variant === "ranking") {
     return (
       <div className="rankingList">
@@ -55,7 +59,7 @@ export default function RankingTable({ data, currentPlayerId, variant = "default
             <div className="rankingRowInfo">
               <b>{item.name}</b>
               <small>{item.office}</small>
-              <small>完成时间：{formatCompletedTime(item.completedAt)}</small>
+              <small>{t("ranking.completedTime")}{formatCompletedTime(item.completedAt, t("ranking.notCompleted"), locale)}</small>
             </div>
             <strong>{item.totalScore}</strong>
           </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useI18n } from "@/lib/i18n";
 
 type WaitingModalProps = {
   open: boolean;
@@ -9,13 +10,12 @@ type WaitingModalProps = {
 };
 
 export default function WaitingModal({ open, gameName, timeout = false }: WaitingModalProps) {
+  const { t } = useI18n();
   if (!open) return null;
 
   const showTitleImage = /bingo/i.test(gameName);
-  const eyebrowText = timeout ? "已超时" : "已提交";
-  const waitingText = timeout
-    ? "很遗憾已超时，请继续认真听讲，演讲结束后，查看结果"
-    : "感谢提交，认真听讲时刻到了，演讲结束后，会揭幕结果";
+  const eyebrowText = timeout ? t("modal.timeoutEyebrow") : t("modal.submittedEyebrow");
+  const waitingText = timeout ? t("modal.waitingTimeout") : t("modal.waitingSubmitted");
 
   return (
     <div className="modalMask">

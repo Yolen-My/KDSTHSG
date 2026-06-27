@@ -9,9 +9,11 @@ import PageBackground from "@/components/PageBackground";
 import ScorePanel from "@/components/ScorePanel";
 import { restoreCurrentPlayerFromLocal } from "@/lib/storage";
 import { useCurrentPlayer, useLobbySnapshot } from "@/hooks/use-game-data";
+import { useI18n } from "@/lib/i18n";
 
 export default function LobbyPage() {
   const router = useRouter();
+  const { t } = useI18n();
   const { player, playerId } = useCurrentPlayer();
   const { snapshot } = useLobbySnapshot(playerId);
 
@@ -29,11 +31,11 @@ export default function LobbyPage() {
 
   if (!player || !snapshot) {
     return (
-      <Layout title="活动大厅" hideHeader>
+      <Layout title={t("common.lobby")} hideHeader>
         <section className="lobbyPage">
           <PageBackground />
           <div className="lobbyPageContent">
-            <p className="lobbyLoading">正在读取身份...</p>
+            <p className="lobbyLoading">{t("common.loadingIdentity")}</p>
           </div>
         </section>
       </Layout>
@@ -68,7 +70,7 @@ export default function LobbyPage() {
   };
 
   return (
-    <Layout title="活动大厅" hideHeader>
+    <Layout title={t("common.lobby")} hideHeader>
       <section className="lobbyPage">
         <PageBackground />
 
@@ -82,9 +84,9 @@ export default function LobbyPage() {
                 <path opacity="0.9" d="M3 5.25V8.75" stroke="white" strokeWidth="1" strokeLinecap="round" />
                 <path opacity="0.9" d="M9 7.25V8.75" stroke="white" strokeWidth="1" strokeLinecap="round" />
               </svg>
-              温故知新
+              {t("common.review")}
             </Link>
-            <h1>活动大厅</h1>
+            <h1>{t("common.lobby")}</h1>
             <Link className="lobbyNavLink" href="/ranking">
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="11" viewBox="0 0 12 11" fill="none" aria-hidden="true">
                 <path
@@ -93,12 +95,12 @@ export default function LobbyPage() {
                   fill="white"
                 />
               </svg>
-              排行榜
+              {t("common.ranking")}
             </Link>
           </header>
 
           <section className="lobbyProfile">
-            <span className="lobbyProfileLabel">PLAYER</span>
+            <span className="lobbyProfileLabel">{t("lobby.player")}</span>
             <div className="lobbyProfileRow">
               <h2>{player.name}</h2>
             </div>
