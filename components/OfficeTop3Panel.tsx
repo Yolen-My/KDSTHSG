@@ -6,6 +6,7 @@ import type { OfficeTop3Group } from "@/types";
 type OfficeTop3PanelProps = {
   data: OfficeTop3Group[];
   variant?: "default" | "ranking";
+  bilingual?: boolean;
 };
 
 function formatTime(completedAt: string) {
@@ -17,17 +18,21 @@ function formatTime(completedAt: string) {
   });
 }
 
-export default function OfficeTop3Panel({ data, variant = "default" }: OfficeTop3PanelProps) {
+export default function OfficeTop3Panel({ data, variant = "default", bilingual = false }: OfficeTop3PanelProps) {
   const t = useTranslations();
   const completedLabel = (completedAt?: string) =>
-    t("table.completedTime", { time: completedAt ? formatTime(completedAt) : t("table.notCompleted") });
+    bilingual
+      ? `${t("screen.completionLabel")} ${completedAt ? formatTime(completedAt) : t("screen.notStarted")}`
+      : t("table.completedTime", { time: completedAt ? formatTime(completedAt) : t("table.notCompleted") });
+  const groupHeader = (office: string) =>
+    bilingual ? `${office}${t("screen.top3Suffix")}` : t("table.officeTop3Header", { office });
 
   if (variant === "ranking") {
     return (
       <div className="rankingOfficeTopList">
         {data.map((group) => (
           <section className="rankingOfficeGroup" key={group.office}>
-            <div className="rankingOfficeGroupHeader">{t("table.officeTop3Header", { office: group.office })}</div>
+            <div className="rankingOfficeGroupHeader">{groupHeader(group.office)}</div>
             {group.players.map((player) => (
               <div className="rankingRow compact" key={player.playerId}>
                 <span className="rankingRankCircle">{player.rank}</span>

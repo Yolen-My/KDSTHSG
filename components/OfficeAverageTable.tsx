@@ -6,10 +6,13 @@ import type { OfficeAverageItem } from "@/types";
 type OfficeAverageTableProps = {
   data: OfficeAverageItem[];
   variant?: "default" | "ranking";
+  bilingual?: boolean;
 };
 
-export default function OfficeAverageTable({ data, variant = "default" }: OfficeAverageTableProps) {
+export default function OfficeAverageTable({ data, variant = "default", bilingual = false }: OfficeAverageTableProps) {
   const t = useTranslations();
+  const peopleLabel = (count: number) =>
+    bilingual ? `${count}${t("screen.participantsSuffix")}` : t("table.peopleCount", { count });
   if (variant === "ranking") {
     return (
       <div className="rankingList">
@@ -18,7 +21,7 @@ export default function OfficeAverageTable({ data, variant = "default" }: Office
             <span className="rankingRankCircle">{item.rank}</span>
             <div className="rankingRowInfo">
               <b>{item.office}</b>
-              <small>{t("table.peopleCount", { count: item.playerCount })}</small>
+              <small>{peopleLabel(item.playerCount)}</small>
             </div>
             <strong>{item.averageScore}</strong>
           </div>

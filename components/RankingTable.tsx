@@ -8,6 +8,7 @@ type RankingTableProps = {
   data: RankingItem[];
   currentPlayerId?: string;
   variant?: "default" | "ranking";
+  bilingual?: boolean;
 };
 
 function formatTime(completedAt: string) {
@@ -44,10 +45,12 @@ function RankingRankBadge({ rank }: { rank: number }) {
   return <span className="rankingRankCircle">{rank}</span>;
 }
 
-export default function RankingTable({ data, currentPlayerId, variant = "default" }: RankingTableProps) {
+export default function RankingTable({ data, currentPlayerId, variant = "default", bilingual = false }: RankingTableProps) {
   const t = useTranslations();
   const completedLabel = (completedAt?: string) =>
-    t("table.completedTime", { time: completedAt ? formatTime(completedAt) : t("table.notCompleted") });
+    bilingual
+      ? `${t("screen.completionLabel")} ${completedAt ? formatTime(completedAt) : t("screen.notStarted")}`
+      : t("table.completedTime", { time: completedAt ? formatTime(completedAt) : t("table.notCompleted") });
 
   if (variant === "ranking") {
     return (

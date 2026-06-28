@@ -2240,6 +2240,31 @@ button:disabled {
   white-space: nowrap;
 }
 
+.screenQrText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.screenQrTextEn {
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.screenPage .screenPanel h2.screenPanelTitle {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.15;
+}
+
+.screenPanelTitleEn {
+  font-size: 18px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
+}
+
 .screenLoading {
   display: grid;
   place-items: center;

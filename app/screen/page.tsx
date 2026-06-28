@@ -68,7 +68,10 @@ export default function ScreenPage() {
                     priority
                   />
                 </div>
-                <p className="screenQrText">{t("screen.scanText")}</p>
+                <p className="screenQrText">
+                  <span>{t("screen.scanZh")}</span>
+                  <span className="screenQrTextEn">{t("screen.scanEn")}</span>
+                </p>
               </div>
             </div>
           </div>
@@ -79,14 +82,17 @@ export default function ScreenPage() {
           <div className="screenLoading">
             <div className="loadingSpinner">
               <div className="spinner"></div>
-              <p>{t("common.loading")}</p>
+              <p>{t("screen.loading")}</p>
             </div>
           </div>
         ) : (
           <section className="screenGrid">
             <section className="screenPanel top10Panel">
               <div className="screenPanelHeader">
-                <h2>{t("screen.totalRanking")}</h2>
+                <h2 className="screenPanelTitle">
+                  <span>{t("screen.overallZh")}</span>
+                  <span className="screenPanelTitleEn">{t("screen.overallEn")}</span>
+                </h2>
                 <Image
                   className="screenTop10Watermark"
                   src="/image/source/ranking/top10-watermark.png"
@@ -96,18 +102,24 @@ export default function ScreenPage() {
                   aria-hidden="true"
                 />
               </div>
-              <RankingTable data={ranking.top10 || []} variant="ranking" />
+              <RankingTable data={ranking.top10 || []} variant="ranking" bilingual />
             </section>
 
             <div className="screenSideColumn">
               <section className="screenPanel">
-                <h2>{t("screen.officeAverage")}</h2>
-                <OfficeAverageTable data={ranking.officeAverage || []} variant="ranking" />
+                <h2 className="screenPanelTitle">
+                  <span>{t("screen.avgZh")}</span>
+                  <span className="screenPanelTitleEn">{t("screen.avgEn")}</span>
+                </h2>
+                <OfficeAverageTable data={ranking.officeAverage || []} variant="ranking" bilingual />
               </section>
 
               <section className="screenPanel">
-                <h2>{t("screen.officeTop3")}</h2>
-                <OfficeTop3Panel data={ranking.officeTop3 || []} variant="ranking" />
+                <h2 className="screenPanelTitle">
+                  <span>{t("screen.top3Zh")}</span>
+                  <span className="screenPanelTitleEn">{t("screen.top3En")}</span>
+                </h2>
+                <OfficeTop3Panel data={ranking.officeTop3 || []} variant="ranking" bilingual />
               </section>
             </div>
           </section>

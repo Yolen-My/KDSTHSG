@@ -103,13 +103,22 @@
     "officeTop3": "Office TOP3"
   },
   "screen": {
-    "title": "Interactive Game Hall",
-    "participants": "joined",
-    "scanText": "Scan with WeChat to join",
-    "qrAlt": "Scan the QR code to join",
-    "totalRanking": "Overall Ranking",
-    "officeAverage": "Office Average Ranking",
-    "officeTop3": "Office TOP3"
+    "title": "互动游戏大厅Live Game Hub",
+    "participants": "人参与Participants",
+    "scanZh": "微信扫一扫参加游戏",
+    "scanEn": "Scan to Join The Game",
+    "qrAlt": "微信扫码参加游戏 Scan to Join The Game",
+    "loading": "加载中 Loading...",
+    "overallZh": "总排行榜",
+    "overallEn": "Overall Leaderboard",
+    "avgZh": "地区平均分排行榜",
+    "avgEn": "Regional Average Score Leaderboard",
+    "top3Zh": "各地区TOP3",
+    "top3En": "Regional TOP 3",
+    "completionLabel": "完成时间 Completion Time:",
+    "notStarted": "未完成 Not Started",
+    "participantsSuffix": "人Participants",
+    "top3Suffix": " TOP 3"
   },
   "review": {
     "empty": "No completed games yet",
