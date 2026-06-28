@@ -2,16 +2,25 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import type { CSSProperties } from "react";
 import type { Game, GameKey } from "@/types";
-import { useI18n } from "@/lib/i18n";
+
+export type GameStatusKey =
+  | "done"
+  | "open"
+  | "closed"
+  | "notOpen"
+  | "waitingBoss"
+  | "waitingOpen"
+  | "continueQuiz";
 
 type GameCardProps = {
   game: Game;
   completed: boolean;
   bingoPending?: boolean;
   subtitle?: string;
-  statusOverride?: string;
+  statusKeyOverride?: GameStatusKey;
   allowEnterOverride?: boolean;
 };
 
@@ -30,30 +39,11 @@ const GAME_ICONS: Record<GameKey, IconConfig> = {
   elimination: { src: "/image/source/lobby/game-elimination.png", width: 64, height: 78, right: 22, offsetY: 5 }
 };
 
-const DISPLAY_NAME_KEY: Record<GameKey, string> = {
-  bingo: "game.bingo",
-  quiz: "game.quiz",
-  story: "game.story",
-  elimination: "game.elimination"
-};
-
-function getStatusBadgeClass(status: string, canEnter: boolean): string {
-  if (status === "已完成" || status === "已结束") return "lobbyGameBadge lobbyGameBadge--done";
-  if (!canEnter || status === "等待开启") return "lobbyGameBadge lobbyGameBadge--locked";
+function getStatusBadgeClass(statusKey: GameStatusKey, canEnter: boolean): string {
+  if (statusKey === "done" || statusKey === "closed") return "lobbyGameBadge lobbyGameBadge--done";
+  if (!canEnter || statusKey === "waitingOpen") return "lobbyGameBadge lobbyGameBadge--locked";
   return "lobbyGameBadge";
 }
-
-// 将内部稳定的中文状态标识映射为翻译键，仅用于展示，不影响逻辑判断。
-const STATUS_I18N_KEY: Record<string, string> = {
-  "已完成": "common.completed",
-  "已结束": "common.finished",
-  "未开放": "common.notOpen",
-  "等待开启": "common.waitingOpen",
-  "已开启": "common.opened",
-  "继续答题": "common.continueAnswer",
-  "可答题": "common.canAnswer",
-  "等待 Boss 发言": "lobby.statusWaitingBoss"
-};
 
 function hasBeenControlled(game: Game): boolean {
   return Boolean(game.created && game.updated && game.created !== game.updated);
@@ -64,60 +54,61 @@ export default function GameCard({
   completed,
   bingoPending = false,
   subtitle,
-  statusOverride,
+  statusKeyOverride,
   allowEnterOverride
 }: GameCardProps) {
-  const { t } = useI18n();
+  const t = useTranslations();
   const href = `/game/${game.key}`;
   const icon = GAME_ICONS[game.key];
 
-  let status: string;
+  let statusKey: GameStatusKey;
   let canEnter: boolean;
 
-  if (statusOverride) {
-    status = statusOverride;
+  if (statusKeyOverride) {
+    statusKey = statusKeyOverride;
     canEnter = Boolean(allowEnterOverride);
   } else if (game.key === "bingo") {
     const phase = game.bingoPhase || "open";
     const controlled = hasBeenControlled(game);
     if (completed) {
-      status = "已完成";
+      statusKey = "done";
       canEnter = false;
     } else if (bingoPending) {
-      status = "等待 Boss 发言";
+      statusKey = "waitingBoss";
       canEnter = true;
     } else if (phase === "open" && game.isOpen) {
-      status = "已开启";
+      statusKey = "open";
       canEnter = true;
     } else if (phase === "auto_score") {
       if (bingoPending) {
-        status = "等待 Boss 发言";
+        statusKey = "waitingBoss";
         canEnter = true;
       } else {
-        status = "已结束";
+        statusKey = "closed";
         canEnter = false;
       }
     } else if (phase === "closed") {
-      status = "已结束";
+      statusKey = "closed";
       canEnter = false;
     } else {
-      status = controlled ? "已结束" : "未开放";
+      statusKey = controlled ? "closed" : "notOpen";
       canEnter = false;
     }
   } else {
     const controlled = hasBeenControlled(game);
     if (completed) {
-      status = "已完成";
+      statusKey = "done";
       canEnter = false;
     } else if (game.isOpen) {
-      status = "已开启";
+      statusKey = "open";
       canEnter = true;
     } else {
-      status = controlled ? "已结束" : "未开放";
+      statusKey = controlled ? "closed" : "notOpen";
       canEnter = false;
     }
   }
 
+  const status = t(`status.${statusKey}`);
   const iconLeft = 104 - icon.width - icon.right;
 
   const iconStyle = {
@@ -129,10 +120,10 @@ export default function GameCard({
 
   const cardBody = (
     <div className="lobbyGameCard">
-      <h3>{t(DISPLAY_NAME_KEY[game.key])}</h3>
+      <h3>{t(`game.name.${game.key}`)}</h3>
       <div className="lobbyGameCardMeta">
         <p>{subtitle || t("lobby.maxScore", { score: game.maxScore })}</p>
-        <span className={getStatusBadgeClass(status, canEnter)}>{STATUS_I18N_KEY[status] ? t(STATUS_I18N_KEY[status]) : status}</span>
+        <span className={getStatusBadgeClass(statusKey, canEnter)}>{status}</span>
       </div>
     </div>
   );

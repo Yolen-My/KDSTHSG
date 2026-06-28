@@ -1,6 +1,6 @@
 "use client";
 
-import { useI18n } from "@/lib/i18n";
+import { useTranslations } from "next-intl";
 
 type ScorePanelProps = {
   totalScore: number;
@@ -8,15 +8,15 @@ type ScorePanelProps = {
 };
 
 export default function ScorePanel({ totalScore, rank }: ScorePanelProps) {
-  const { t } = useI18n();
+  const t = useTranslations();
   return (
     <section className="lobbyScoreGrid">
       <div>
-        <span>{t("lobby.cumulativeScore")}</span>
+        <span>{t("scorePanel.totalPoints")}</span>
         <b>{totalScore}</b>
       </div>
       <div>
-        <span>{t("lobby.currentRank")}</span>
+        <span>{t("scorePanel.currentRank")}</span>
         <b>{rank || "-"}</b>
       </div>
     </section>

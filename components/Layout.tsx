@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
-import { useI18n } from "@/lib/i18n";
 
 type LayoutProps = {
   title: string;
@@ -14,7 +14,7 @@ type LayoutProps = {
 };
 
 export default function Layout({ title, eyebrow = "ANNUAL GAME", children, rightSlot, hideLeftButton = false, hideHeader = false }: LayoutProps) {
-  const { t } = useI18n();
+  const t = useTranslations();
   return (
     <main className="mobilePage">
       {!hideHeader && (

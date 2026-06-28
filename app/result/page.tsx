@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 import Layout from "@/components/Layout";
 import OfficeAverageTable from "@/components/OfficeAverageTable";
@@ -9,11 +10,10 @@ import OfficeTop3Panel from "@/components/OfficeTop3Panel";
 import RankingTable from "@/components/RankingTable";
 import { GAME_ORDER } from "@/lib/constants";
 import { useCurrentPlayer, useLobbySnapshot, useRanking } from "@/hooks/use-game-data";
-import { useI18n } from "@/lib/i18n";
 
 export default function ResultPage() {
   const router = useRouter();
-  const { t } = useI18n();
+  const t = useTranslations();
   const { player, playerId, loading: playerLoading } = useCurrentPlayer();
   const { snapshot, loading: snapshotLoading } = useLobbySnapshot(playerId);
   const { ranking, loading: rankingLoading } = useRanking(playerId, 1500);
@@ -35,18 +35,18 @@ export default function ResultPage() {
 
   if (!currentPlayer) {
     return (
-      <Layout title={t("result.pageTitle")} eyebrow="RESULT">
-        <section className="statusBanner">{isLoading ? t("result.loadingScore") : t("result.notFound")}</section>
+      <Layout title={t("result.title")} eyebrow="RESULT">
+        <section className="statusBanner">{isLoading ? t("result.loadingResult") : t("result.notFound")}</section>
       </Layout>
     );
   }
 
   return (
-    <Layout title={t("result.pageTitle")} eyebrow="RESULT" rightSlot={<Link href="/ranking">{t("result.ranking")}</Link>}>
+    <Layout title={t("result.title")} eyebrow="RESULT" rightSlot={<Link href="/ranking">{t("result.rankingShort")}</Link>}>
       <section className="profileCard resultHero" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '24px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
           <div>
-            <span className="eyebrow">{t("result.totalScore")}</span>
+            <span className="eyebrow">TOTAL SCORE</span>
             <h2 style={{ fontSize: '48px', margin: '8px 0' }}>{currentPlayer.totalScore}</h2>
           </div>
           <strong style={{ fontSize: '32px' }}>#{currentRank || "-"}</strong>
@@ -62,9 +62,9 @@ export default function ResultPage() {
 
       {ranking.context?.distanceToTop10 !== null && ranking.context?.distanceToTop10 !== undefined && (
         <section className="statusPanel">
-          <b>{t("result.distanceToTop10", { score: ranking.context.distanceToTop10 })}</b>
+          <b>{t("result.gapToTop10", { gap: ranking.context.distanceToTop10 })}</b>
           <span>
-            {t("result.previousPlayer", { name: ranking.context.previousPlayer?.name || "-", gap: ranking.context.distanceToPrevious || 0 })}
+            {t("result.prevPlayer", { name: ranking.context.previousPlayer?.name || "-", gap: ranking.context.distanceToPrevious || 0 })}
           </span>
         </section>
       )}

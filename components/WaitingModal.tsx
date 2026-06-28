@@ -1,21 +1,23 @@
 "use client";
 
 import Image from "next/image";
-import { useI18n } from "@/lib/i18n";
+import { useTranslations } from "next-intl";
+import type { GameKey } from "@/types";
 
 type WaitingModalProps = {
   open: boolean;
   gameName: string;
+  gameKey?: GameKey;
   timeout?: boolean;
 };
 
-export default function WaitingModal({ open, gameName, timeout = false }: WaitingModalProps) {
-  const { t } = useI18n();
+export default function WaitingModal({ open, gameName, gameKey, timeout = false }: WaitingModalProps) {
+  const t = useTranslations();
   if (!open) return null;
 
-  const showTitleImage = /bingo/i.test(gameName);
-  const eyebrowText = timeout ? t("modal.timeoutEyebrow") : t("modal.submittedEyebrow");
-  const waitingText = timeout ? t("modal.waitingTimeout") : t("modal.waitingSubmitted");
+  const showTitleImage = gameKey === "bingo";
+  const eyebrowText = timeout ? t("waitingModal.timeoutEyebrow") : t("waitingModal.submittedEyebrow");
+  const waitingText = timeout ? t("waitingModal.timeoutText") : t("waitingModal.submittedText");
 
   return (
     <div className="modalMask">

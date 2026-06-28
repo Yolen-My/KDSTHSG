@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import GameBannerIcon from "@/components/GameBannerIcon";
 import Layout from "@/components/Layout";
@@ -13,8 +14,6 @@ import { getPlayerRank } from "@/lib/ranking";
 import { calculateBingoSelection, getBingoTargetWords } from "@/lib/bingo-scoring";
 import { getGameResult } from "@/lib/storage";
 import { useCurrentPlayer, useQuestions, useSubmitGameResult, useAppState } from "@/hooks/use-game-data";
-import { useI18n } from "@/lib/i18n";
-import { localizedWord } from "@/lib/i18n/question";
 import type { Question } from "@/types";
 import type { ReactNode } from "react";
 
@@ -30,9 +29,9 @@ function getBingoTimeoutKey(playerId?: string | null): string {
 }
 
 function BingoShell({ children, hideNavActions = false, hideNav = false }: { children: ReactNode; hideNavActions?: boolean; hideNav?: boolean }) {
-  const { t } = useI18n();
+  const t = useTranslations();
   return (
-    <Layout title={t("game.bingo")} hideHeader>
+    <Layout title={t("game.name.bingo")} hideHeader>
       <section className="bingoPage">
         <PageBackground />
 
@@ -49,7 +48,7 @@ function BingoShell({ children, hideNavActions = false, hideNav = false }: { chi
               </svg>
               {t("common.lobby")}
             </Link>
-            <h1>{t("game.bingo")}</h1>
+            <h1>{t("game.name.bingo")}</h1>
             <Link className="bingoNavLink" href="/ranking">
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="11" viewBox="0 0 12 11" fill="none" aria-hidden="true">
                 <path
@@ -68,11 +67,11 @@ function BingoShell({ children, hideNavActions = false, hideNav = false }: { chi
               <Image
                 className="bingoBannerTitle"
                 src="/image/source/bingo/bingo-title.png"
-                alt={t("game.bingo")}
+                alt={t("game.name.bingo")}
                 width={246}
                 height={20}
               />
-              <p>{t("bingo.bannerSub")}</p>
+              <p>{t("bingo.subtitle")}</p>
             </div>
             <GameBannerIcon
               className="bingoBannerLogo"
@@ -94,7 +93,7 @@ function BingoShell({ children, hideNavActions = false, hideNav = false }: { chi
 
 export default function BingoPage() {
   const router = useRouter();
-  const { t, locale } = useI18n();
+  const t = useTranslations();
   const { player, playerId, refresh } = useCurrentPlayer();
   const { state } = useAppState();
   const questions = useQuestions("bingo");
@@ -310,9 +309,9 @@ export default function BingoPage() {
     return (
       <BingoShell>
         <section className="bingoMainCard bingoMainCard--status">
-          <p className="bingoStatusMessage">{t("bingo.finished")}</p>
+          <p className="bingoStatusMessage">{t("bingo.ended")}</p>
           <button className="bingoSubmitButton" type="button" onClick={goLobby}>
-            {t("common.backLobby")}
+            {t("common.backToLobbyShort")}
           </button>
         </section>
       </BingoShell>
@@ -324,9 +323,9 @@ export default function BingoPage() {
     return (
       <BingoShell>
         <section className="bingoMainCard bingoMainCard--status">
-          <p className="bingoStatusMessage">{t("bingo.finished")}</p>
+          <p className="bingoStatusMessage">{t("bingo.ended")}</p>
           <button className="bingoSubmitButton" type="button" onClick={goLobby}>
-            {t("common.backLobby")}
+            {t("common.backToLobbyShort")}
           </button>
         </section>
       </BingoShell>
@@ -348,7 +347,7 @@ export default function BingoPage() {
     return (
       <BingoShell>
         <section className="bingoMainCard bingoMainCard--status">
-          <p className="bingoStatusMessage">{questions.loading ? t("common.questionLoading") : t("common.questionReloading", { error: questions.error || t("common.noQuestion") })}</p>
+          <p className="bingoStatusMessage">{questions.loading ? t("common.questionsLoading") : t("common.questionsReloading", { error: questions.error || t("common.noQuestions") })}</p>
         </section>
       </BingoShell>
     );
@@ -376,7 +375,7 @@ export default function BingoPage() {
   async function handleSubmit(autoSubmit = false) {
     if (!playerId || submitting) return;
     if (!autoSubmit && !timeUp && selectedWords.length !== 9) {
-      setMessage(t("bingo.needNineWords"));
+      setMessage(t("bingo.pickNine"));
       return;
     }
     setSubmitting(true);
@@ -430,7 +429,7 @@ export default function BingoPage() {
             </span>
           )}
           {timeUp && (
-            <span className="bingoTimer bingoTimer--up">{t("bingo.timeUp")}</span>
+            <span className="bingoTimer bingoTimer--up">{t("common.timeUp")}</span>
           )}
         </div>
         {canInteract && !timeUp && (
@@ -452,7 +451,7 @@ export default function BingoPage() {
               type="button"
               onClick={() => toggleQuestion(question)}
             >
-              {localizedWord(questions, question.title, locale)}
+              {question.title}
             </button>
           ))}
         </div>
@@ -461,7 +460,7 @@ export default function BingoPage() {
           <div className="bingoGrid">
             {Array.from({ length: 9 }).map((_, index) => (
               <div className={selectedWords[index] ? "lit" : ""} key={index}>
-                <span>{selectedWords[index] ? localizedWord(questions, selectedWords[index], locale) : ""}</span>
+                <span>{selectedWords[index] || ""}</span>
               </div>
             ))}
           </div>
@@ -479,13 +478,14 @@ export default function BingoPage() {
 
       <ResultModal
         open={modal.open}
-        gameName={t("game.bingo")}
+        gameKey="bingo"
+        gameName={t("game.name.bingo")}
         roundScore={modal.score}
         totalScore={modal.total}
         rank={modal.rank}
         onBackLobby={goLobby}
       />
-      <WaitingModal open={(waitingModal || isWaitingForScore) && !modal.open} gameName={t("game.bingo")} timeout={timeUp || localStorage.getItem(timeoutKey) === "1"} />
+      <WaitingModal open={(waitingModal || isWaitingForScore) && !modal.open} gameKey="bingo" gameName={t("game.name.bingo")} timeout={timeUp || localStorage.getItem(timeoutKey) === "1"} />
     </BingoShell>
   );
 }

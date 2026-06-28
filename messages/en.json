@@ -1,0 +1,212 @@
+{
+  "common": {
+    "ranking": "Ranking",
+    "lobby": "Lobby",
+    "review": "Review",
+    "backToLobby": "Back to Lobby",
+    "backToLobbyShort": "Back to Lobby",
+    "backToLobbyAlt": "Back to Lobby",
+    "submit": "Submit",
+    "submitting": "Submitting...",
+    "submitFailed": "Submission failed",
+    "continue": "Continue",
+    "nextQuestion": "Next",
+    "loading": "Loading...",
+    "redirecting": "Redirecting...",
+    "loadingIdentity": "Loading your profile...",
+    "gameLoading": "Loading the game, please wait...",
+    "questionsLoading": "Loading questions, please wait...",
+    "questionsReloading": "Reloading questions: {error}",
+    "noQuestions": "No questions yet",
+    "waitForHost": "Waiting for the host to open",
+    "enterAnswer": "Start",
+    "completed": "Completed",
+    "available": "Available",
+    "notOpen": "Not open",
+    "statusLabel": "Status: {status}",
+    "timeUp": "Time's up",
+    "countdownLabel": "Countdown",
+    "countdown": "Countdown",
+    "gameNotOpen": "{game} is not open yet",
+    "questionOf": "Question {current}/{total}",
+    "completedOf": "Completed {completed}/{total}",
+    "alreadyDone": "This game is completed (score {score}). You cannot submit again.",
+    "submitFinal": "Submit Final Score",
+    "submittingFinal": "Submitting final score...",
+    "seconds": "{seconds}s"
+  },
+  "game": {
+    "name": {
+      "bingo": "Word Guess",
+      "quiz": "Speed Answer",
+      "story": "True or False",
+      "elimination": "Quiz Round"
+    }
+  },
+  "status": {
+    "done": "Completed",
+    "open": "Open",
+    "closed": "Ended",
+    "notOpen": "Not open",
+    "waitingBoss": "Waiting for Boss",
+    "waitingOpen": "Waiting to open",
+    "continueQuiz": "Continue"
+  },
+  "home": {
+    "brandTitle": "Annual Game System",
+    "desc": "Four mobile rounds with auto-scoring, duplicate-submission guard, live leaderboard, big screen and a simple admin console.",
+    "start": "Start",
+    "screenDemo": "Live Screen",
+    "adminControl": "Admin Console"
+  },
+  "register": {
+    "name": "Name",
+    "namePlaceholder": "Enter your name",
+    "phone": "Phone",
+    "phonePlaceholder": "Enter your phone number",
+    "officePlaceholder": "Please choose office",
+    "officeNotFound": "No matching office",
+    "confirm": "Enter",
+    "processing": "Processing...",
+    "invalidName": "Please enter a valid name",
+    "phoneRequired": "Phone number is required",
+    "registerFailed": "Registration failed",
+    "welcomeBack": "Welcome back, restoring your info...",
+    "registerSuccess": "Registered, entering the lobby...",
+    "office": {
+      "beijing": "Beijing",
+      "shanghai": "Shanghai",
+      "hkOthers": "Hong Kong & Others"
+    }
+  },
+  "lobby": {
+    "progress": "Progress {completed}/{total}",
+    "maxScore": "Max {score} pts"
+  },
+  "ranking": {
+    "rankNo": "No. {rank}",
+    "notRanked": "Unranked",
+    "totalRanking": "Overall Ranking",
+    "officeAverage": "Office Average Ranking",
+    "officeTop3": "Office TOP3"
+  },
+  "result": {
+    "title": "Final Result",
+    "loadingResult": "Loading your result...",
+    "notFound": "Player not found, please register again.",
+    "rankingShort": "Ranking",
+    "missingGames": "{count} game(s) not completed. Showing scores for completed rounds only.",
+    "gapToTop10": "{gap} points to TOP10",
+    "prevPlayer": "Player ahead: {name}, gap {gap} points.",
+    "top10": "Overall TOP10",
+    "officeAverage": "Office Average",
+    "officeTop3": "Office TOP3"
+  },
+  "screen": {
+    "title": "互动游戏大厅Live Game Hub",
+    "participants": "人参与Participants",
+    "scanZh": "微信扫一扫参加游戏",
+    "scanEn": "Scan to Join The Game",
+    "qrAlt": "微信扫码参加游戏 Scan to Join The Game",
+    "loading": "加载中 Loading...",
+    "overallZh": "总排行榜",
+    "overallEn": "Overall Leaderboard",
+    "avgZh": "地区平均分排行榜",
+    "avgEn": "Regional Average Score Leaderboard",
+    "top3Zh": "各地区TOP3",
+    "top3En": "Regional TOP 3",
+    "completionLabel": "完成时间 Completion Time:",
+    "notStarted": "未完成 Not completed",
+    "participantsSuffix": "人Participants",
+    "top3Suffix": " TOP 3"
+  },
+  "review": {
+    "empty": "No completed games yet",
+    "score": "Score: ",
+    "correctTargets": "{count} correct target words",
+    "correctAnswer": "Correct answer: ",
+    "yourAnswer": "Your answer: ",
+    "notAnswered": "Not answered",
+    "total": "Total: ",
+    "sectorScore": "Score {score} / 20"
+  },
+  "bingo": {
+    "subtitle": "Match the words to complete Bingo",
+    "hint": "Pick 9 words to form the Bingo grid",
+    "pickNine": "Pick 9 words to form the Bingo grid",
+    "autoSubmitting": "Auto-submitting...",
+    "phaseNotice": "The Boss has finished speaking. Submitting will auto-score.",
+    "ended": "Bingo has ended"
+  },
+  "quiz": {
+    "bannerProgress": "Quiz progress {completed}/{total}",
+    "syncing": "Syncing quiz status...",
+    "notOpen": "Quiz is not open yet",
+    "sectorNotExist": "This quiz sector does not exist",
+    "sectorDone": "This quiz sector is completed",
+    "sectorNotOpen": "This quiz sector is not open yet",
+    "sectorNoQuestions": "This quiz sector has no questions",
+    "backToSectors": "Back to sector selection",
+    "chooseFirst": "Please select an answer first",
+    "selectedOfTotal": "Selected {answered}/{total}",
+    "chooseToContinue": "Select an answer to continue",
+    "submitGroup": "Submit Group",
+    "sectorComplete": "{sector} completed\nYour score this round",
+    "backPrev": "Back"
+  },
+  "story": {
+    "bannerProgress": "Group progress {completed}/{total}",
+    "groupNotExist": "This group does not exist",
+    "groupDone": "This group is completed",
+    "groupNotOpen": "This group is not open yet",
+    "groupNoQuestions": "This group has no questions",
+    "backToGroups": "Back to group selection",
+    "chooseToReturn": "Select an answer to return to group selection"
+  },
+  "elimination": {
+    "bannerProgress": "Mission progress {completed}/{total}",
+    "missionNotExist": "This mission does not exist",
+    "missionDone": "This mission is completed",
+    "missionNotOpen": "This mission is not open yet",
+    "missionNoQuestions": "This mission has no questions",
+    "backToMissions": "Back to mission selection",
+    "chooseToReturn": "Select an answer to return to mission selection",
+    "viewFinal": "View Final Result"
+  },
+  "resultModal": {
+    "eyebrowComplete": "Game Completed",
+    "eyebrowOver": "Game Over",
+    "eliminated": "Eliminated, please sit down",
+    "survived": "Correct! Stay standing",
+    "stats": "Total {total} · Rank <r>{rank}</r>"
+  },
+  "correctAnswerModal": {
+    "timeout": "Time's up",
+    "correct": "Correct!",
+    "wrong": "Wrong answer"
+  },
+  "waitingModal": {
+    "timeoutEyebrow": "Timed out",
+    "submittedEyebrow": "Submitted",
+    "timeoutText": "Time's up. Please keep listening; results will be shown after the speech.",
+    "submittedText": "Thanks for submitting. Time to listen carefully; results will be revealed after the speech."
+  },
+  "quizStartModal": {
+    "eyebrow": "Get Ready",
+    "line1": "5 sectors, 1 question each",
+    "line2": "20 points per question, 100 points total",
+    "start": "Start"
+  },
+  "scorePanel": {
+    "totalPoints": "Total Score",
+    "currentRank": "Overall Rank"
+  },
+  "table": {
+    "notCompleted": "Not completed",
+    "completedTime": "Completed: {time}",
+    "peopleCount": "{count} people",
+    "peopleCountSpaced": "{count} people",
+    "officeTop3Header": "{office} TOP3",
+    "officeTop3HeaderSpaced": "{office} TOP3"
+  }
+}

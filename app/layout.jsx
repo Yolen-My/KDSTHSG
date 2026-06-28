@@ -1,5 +1,5 @@
 import "./globals.css";
-import { LocaleProvider } from "@/lib/i18n";
+import LanguageProvider from "@/components/LanguageProvider";
 
 export const metadata = {
   title: "Offsite Games",
@@ -10,7 +10,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="zh-CN">
       <body>
-        <LocaleProvider>{children}</LocaleProvider>
+        <LanguageProvider>{children}</LanguageProvider>
       </body>
     </html>
   );

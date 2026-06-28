@@ -1,16 +1,16 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import type { OfficeTop3Group } from "@/types";
-import { useI18n } from "@/lib/i18n";
 
 type OfficeTop3PanelProps = {
   data: OfficeTop3Group[];
   variant?: "default" | "ranking";
+  bilingual?: boolean;
 };
 
-function formatCompletedTime(completedAt: string | undefined, notCompleted: string, locale: string) {
-  if (!completedAt) return notCompleted;
-  return new Date(completedAt).toLocaleTimeString(locale === "en" ? "en-US" : "zh-CN", {
+function formatTime(completedAt: string) {
+  return new Date(completedAt).toLocaleTimeString("zh-CN", {
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
@@ -18,20 +18,27 @@ function formatCompletedTime(completedAt: string | undefined, notCompleted: stri
   });
 }
 
-export default function OfficeTop3Panel({ data, variant = "default" }: OfficeTop3PanelProps) {
-  const { t, locale } = useI18n();
+export default function OfficeTop3Panel({ data, variant = "default", bilingual = false }: OfficeTop3PanelProps) {
+  const t = useTranslations();
+  const completedLabel = (completedAt?: string) =>
+    bilingual
+      ? `${t("screen.completionLabel")} ${completedAt ? formatTime(completedAt) : t("screen.notStarted")}`
+      : t("table.completedTime", { time: completedAt ? formatTime(completedAt) : t("table.notCompleted") });
+  const groupHeader = (office: string) =>
+    bilingual ? `${office}${t("screen.top3Suffix")}` : t("table.officeTop3Header", { office });
+
   if (variant === "ranking") {
     return (
       <div className="rankingOfficeTopList">
         {data.map((group) => (
           <section className="rankingOfficeGroup" key={group.office}>
-            <div className="rankingOfficeGroupHeader">{group.office} {t("ranking.officeTop3Suffix")}</div>
+            <div className="rankingOfficeGroupHeader">{groupHeader(group.office)}</div>
             {group.players.map((player) => (
               <div className="rankingRow compact" key={player.playerId}>
                 <span className="rankingRankCircle">{player.rank}</span>
                 <div className="rankingRowInfo">
                   <b>{player.name}</b>
-                  <small>{t("ranking.completedTime")}{formatCompletedTime(player.completedAt, t("ranking.notCompleted"), locale)}</small>
+                  <small>{completedLabel(player.completedAt)}</small>
                 </div>
                 <strong>{player.totalScore}</strong>
               </div>
@@ -46,7 +53,7 @@ export default function OfficeTop3Panel({ data, variant = "default" }: OfficeTop
     <div className="officeTopGrid">
       {data.map((group) => (
         <section className="demoCard" key={group.office}>
-          <h3>{group.office} {t("ranking.officeTop3Suffix")}</h3>
+          <h3>{t("table.officeTop3HeaderSpaced", { office: group.office })}</h3>
           {group.players.map((player) => (
             <div className="miniRank" key={player.playerId}>
               <span>#{player.rank}</span>

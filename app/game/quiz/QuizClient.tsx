@@ -3,14 +3,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import GameBannerIcon from "@/components/GameBannerIcon";
 import Layout from "@/components/Layout";
 import PageBackground from "@/components/PageBackground";
 import ResultModal from "@/components/ResultModal";
 import { useAppState, useCurrentPlayer, useQuestions, useSubmitGameResult } from "@/hooks/use-game-data";
-import { useI18n } from "@/lib/i18n";
-import { localizedTitle, localizedOptionLabel } from "@/lib/i18n/question";
 import type { Question } from "@/types";
 
 const TOTAL_GROUPS = 5;
@@ -55,7 +54,7 @@ function isCorrectAnswer(question: Question, answer: string | undefined): boolea
 }
 
 function QuizNav({ hideActions = false }: { hideActions?: boolean }) {
-  const { t } = useI18n();
+  const t = useTranslations();
   return (
     <header className="quizNav">
       {hideActions ? <span /> : <Link className="quizNavLink" href="/lobby">
@@ -68,7 +67,7 @@ function QuizNav({ hideActions = false }: { hideActions?: boolean }) {
         </svg>
         {t("common.lobby")}
       </Link>}
-      <h1>{t("game.quiz")}</h1>
+      <h1>{t("game.name.quiz")}</h1>
       {hideActions ? <span /> : <Link className="quizNavLink" href="/ranking">
         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="11" viewBox="0 0 12 11" fill="none" aria-hidden="true">
           <path
@@ -84,9 +83,9 @@ function QuizNav({ hideActions = false }: { hideActions?: boolean }) {
 }
 
 function QuizShell({ children, hideNavActions = false }: { children: ReactNode; hideNavActions?: boolean }) {
-  const { t } = useI18n();
+  const t = useTranslations();
   return (
-    <Layout title={t("game.quiz")} hideHeader>
+    <Layout title={t("game.name.quiz")} hideHeader>
       <section className="quizPage">
         <PageBackground />
         <div className="quizPageContent">
@@ -100,7 +99,7 @@ function QuizShell({ children, hideNavActions = false }: { children: ReactNode; 
 
 export default function QuizClient({ initialSectorIndex = null }: { initialSectorIndex?: number | null }) {
   const router = useRouter();
-  const { t, locale } = useI18n();
+  const t = useTranslations();
   const { playerId, refresh: refreshPlayer } = useCurrentPlayer();
   const { state, refresh: refreshState, loading: stateLoading } = useAppState();
   const questions = useQuestions("quiz");
@@ -207,7 +206,7 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
   function goNext() {
     if (!currentQuestion || !activeSector) return;
     if (!selectedAnswer) {
-      setMessage(t("quiz.selectFirst"));
+      setMessage(t("quiz.chooseFirst"));
       return;
     }
     if (currentQuestionIndex < activeSector.questions.length - 1) {
@@ -312,7 +311,7 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
     return (
       <QuizShell>
         <section className="quizStatusCard">
-          <p className="quizStatusMessage">{questions.loading ? t("common.questionLoading") : t("common.questionReloading", { error: questions.error || t("common.noQuestion") })}</p>
+          <p className="quizStatusMessage">{questions.loading ? t("common.questionsLoading") : t("common.questionsReloading", { error: questions.error || t("common.noQuestions") })}</p>
         </section>
       </QuizShell>
     );
@@ -326,14 +325,14 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
             {!activeSector
               ? t("quiz.sectorNotExist")
               : activeSector.result
-                ? t("quiz.sectorCompleted")
+                ? t("quiz.sectorDone")
                 : !activeSector.isOpen
                   ? t("quiz.sectorNotOpen")
-                  : t("quiz.sectorNoQuestion")}
+                  : t("quiz.sectorNoQuestions")}
           </p>
         </section>
         <button className="quizBackButton" type="button" onClick={() => router.replace("/game/quiz")}>
-          {t("quiz.backToSector")}
+          {t("quiz.backToSectors")}
         </button>
       </QuizShell>
     );
@@ -341,17 +340,17 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
 
   if (activeSector && currentQuestion) {
     const isLastQuestion = currentQuestionIndex === activeSector.questions.length - 1;
-    const submitLabel = submitting ? t("common.submitting") : isLastQuestion ? t("quiz.submitGroup") : t("quiz.continue");
+    const submitLabel = submitting ? t("common.submitting") : isLastQuestion ? t("quiz.submitGroup") : t("common.continue");
 
     return (
       <QuizShell hideNavActions>
         <div className="quizPlayHeader">
           <h2>{activeSector.sectorName}</h2>
-          <p>{t("quiz.questionCount", { current: currentQuestionIndex + 1, total: activeSector.questions.length })}</p>
+          <p>{t("common.questionOf", { current: currentQuestionIndex + 1, total: activeSector.questions.length })}</p>
         </div>
 
         <section className="quizQuestionCard">
-          <h3>{localizedTitle(currentQuestion, locale)}</h3>
+          <h3>{currentQuestion.title}</h3>
           <div className="quizOptions">
             {currentQuestion.options?.map((option, index) => (
               <button
@@ -361,14 +360,14 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
                 type="button"
                 onClick={() => chooseAnswer(option)}
               >
-                {String.fromCharCode(65 + index)}. {localizedOptionLabel(currentQuestion, index, locale)}
+                {String.fromCharCode(65 + index)}. {option}
               </button>
             ))}
           </div>
         </section>
 
         <section className="quizHintCard">
-          <b>{t("quiz.selectedCount", { answered: answeredCount, total: activeSector.questions.length })}</b>
+          <b>{t("quiz.selectedOfTotal", { answered: answeredCount, total: activeSector.questions.length })}</b>
           <span>{message || t("quiz.chooseToContinue")}</span>
         </section>
 
@@ -383,11 +382,12 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
 
         <ResultModal
           open={modal.open}
-          gameName={modal.completedAll ? "猎人快答" : t("quiz.sectorDoneTitle", { name: activeSector.sectorName })}
+          gameKey={modal.completedAll ? "quiz" : undefined}
+          gameName={modal.completedAll ? t("game.name.quiz") : t("quiz.sectorComplete", { sector: activeSector.sectorName })}
           roundScore={modal.completedAll ? modal.quizTotalScore : modal.roundScore}
           totalScore={modal.totalScore}
           rank={modal.rank}
-          buttonText={modal.completedAll ? t("common.backLobby") : t("quiz.backPrev")}
+          buttonText={modal.completedAll ? t("common.backToLobbyAlt") : t("quiz.backPrev")}
           onBackLobby={goLobby}
           onClose={modal.completedAll ? undefined : closeModalAndRefresh}
           hideScore={!modal.completedAll}
@@ -401,7 +401,7 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
       <div className="quizBanner">
         <div className="quizBannerText">
           <Image
-            alt={t("game.quiz")}
+            alt={t("game.name.quiz")}
             className="quizBannerTitle"
             height={20}
             src="/image/source/quiz/quiz-title.png"
@@ -424,13 +424,13 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
 
       <section className="quizSectorCard">
         {quizSectors.map((sector) => {
-          const status = sector.result ? t("common.completed") : sector.isOpen ? t("common.canAnswer") : t("common.notOpen");
+          const status = sector.result ? t("common.completed") : sector.isOpen ? t("common.available") : t("common.notOpen");
           return (
             <div className="quizSectorRow" key={sector.index}>
               <div className="quizSectorInfo">
                 <b>{getSectorDisplayName(sector.index)}</b>
                 <div className="quizSectorMeta">
-                  <span>{t("common.statusPrefix")}{status}</span>
+                  <span>{t("common.statusLabel", { status })}</span>
                 </div>
               </div>
               {sector.result ? (
@@ -443,7 +443,7 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
                 </button>
               ) : (
                 <button className="quizSectorAction quizSectorAction--ghost" disabled type="button">
-                  {t("common.waitingHost")}
+                  {t("common.waitForHost")}
                 </button>
               )}
             </div>

@@ -1,3 +1,7 @@
+"use client";
+
+import { useTranslations } from "next-intl";
+
 type CountdownProps = {
   seconds: number;
   total: number;
@@ -6,6 +10,7 @@ type CountdownProps = {
 };
 
 export default function Countdown({ seconds, total, currentIndex, totalQuestions }: CountdownProps) {
+  const t = useTranslations();
   const percent = total > 0 ? Math.max(0, Math.min(100, (seconds / total) * 100)) : 0;
   return (
     <div className="countdown">
@@ -13,7 +18,7 @@ export default function Countdown({ seconds, total, currentIndex, totalQuestions
         {currentIndex !== undefined && totalQuestions !== undefined ? (
           <span style={{ color: 'var(--ink)', fontWeight: 'bold' }}>{currentIndex + 1}/{totalQuestions}</span>
         ) : (
-          <span>倒计时</span>
+          <span>{t("common.countdown")}</span>
         )}
         <b style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="2">

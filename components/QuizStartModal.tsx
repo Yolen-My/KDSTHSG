@@ -1,6 +1,6 @@
 "use client";
 
-import { useI18n } from "@/lib/i18n";
+import { useTranslations } from "next-intl";
 
 type QuizStartModalProps = {
   open: boolean;
@@ -8,7 +8,7 @@ type QuizStartModalProps = {
 };
 
 export default function QuizStartModal({ open, onStart }: QuizStartModalProps) {
-  const { t } = useI18n();
+  const t = useTranslations();
   if (!open) return null;
 
   return (
@@ -17,18 +17,18 @@ export default function QuizStartModal({ open, onStart }: QuizStartModalProps) {
         <div className="resultModalGlow" aria-hidden="true" />
         <div className="resultModalBody">
           <div className="resultModalHeader">
-            <span className="resultModalEyebrow">{t("quiz.startEyebrow")}</span>
-            <h2 className="resultModalTitle">{t("game.quiz")}</h2>
+            <span className="resultModalEyebrow">{t("quizStartModal.eyebrow")}</span>
+            <h2 className="resultModalTitle">{t("game.name.quiz")}</h2>
           </div>
 
           <div className="resultModalMain">
-            <p className="resultModalWaiting">{t("quiz.startInfo1")}</p>
-            <p className="resultModalWaiting">{t("quiz.startInfo2")}</p>
+            <p className="resultModalWaiting">{t("quizStartModal.line1")}</p>
+            <p className="resultModalWaiting">{t("quizStartModal.line2")}</p>
           </div>
 
           <div className="resultModalFooter">
             <button className="resultModalButton" type="button" onClick={onStart}>
-              {t("quiz.startButton")}
+              {t("quizStartModal.start")}
             </button>
           </div>
         </div>

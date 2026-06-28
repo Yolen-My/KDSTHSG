@@ -2,21 +2,13 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo } from "react";
 import Layout from "@/components/Layout";
 import PageBackground from "@/components/PageBackground";
 import { getGameResult, getQuestions } from "@/lib/storage";
 import { useCurrentPlayer, useAppState } from "@/hooks/use-game-data";
-import { useI18n } from "@/lib/i18n";
-import { localizedTitle, localizedOptionLabel, localizedWord, localizedAnswerText } from "@/lib/i18n/question";
 import type { GameKey, GameResult, Question } from "@/types";
-
-const GAME_LABEL_KEY: Record<GameKey, string> = {
-  bingo: "game.bingo",
-  quiz: "game.quiz",
-  story: "game.story",
-  elimination: "game.elimination"
-};
 
 const GAME_ORDER: GameKey[] = ["bingo", "quiz", "story", "elimination"];
 
@@ -34,7 +26,7 @@ function isCorrectAnswer(question: Question, userAnswer: unknown): boolean {
 /* ─── sub-components ─── */
 
 function ReviewBingoBlock({ result, questions }: { result: GameResult; questions: Question[] }) {
-  const { t, locale } = useI18n();
+  const t = useTranslations();
   const answers = result.answers as { selectedWords?: string[]; targetWords?: string[]; correctCount?: number };
   const selectedWords: string[] = answers.selectedWords || [];
   const targetWords: string[] = answers.targetWords || [];
@@ -53,7 +45,7 @@ function ReviewBingoBlock({ result, questions }: { result: GameResult; questions
           const isTarget = targetWords.includes(word);
           return (
             <div className={`reviewBingoCell${isTarget ? " reviewBingoCell--correct" : " reviewBingoCell--wrong"}`} key={i}>
-              {word ? localizedWord(questions, word, locale) : ""}
+              {word}
             </div>
           );
         })}
@@ -65,7 +57,7 @@ function ReviewBingoBlock({ result, questions }: { result: GameResult; questions
           const hit = selectedWords.includes(word);
           return (
             <span className={`reviewBingoTargetWord${hit ? " reviewBingoTargetWord--hit" : " reviewBingoTargetWord--miss"}`} key={word}>
-              {localizedWord(questions, word, locale)}
+              {word}
             </span>
           );
         })}
@@ -79,14 +71,14 @@ function ReviewQuestion({ question, userAnswer, needsLetterPrefix }: {
   userAnswer: unknown;
   needsLetterPrefix: boolean;
 }) {
-  const { t, locale } = useI18n();
+  const t = useTranslations();
   const answer = userAnswer != null ? String(userAnswer) : null;
   const isCorrect = isCorrectAnswer(question, userAnswer);
   const isChoice = question.type === "single" || question.type === "boolean" || question.type === "story";
 
   return (
     <div className={`reviewQuestion${isCorrect ? " reviewQuestion--correct" : " reviewQuestion--wrong"}`}>
-      <div className="reviewQuestionTitle">{localizedTitle(question, locale)}</div>
+      <div className="reviewQuestionTitle">{question.title}</div>
 
       {isChoice && question.options ? (
         <div className="reviewOptions">
@@ -104,7 +96,7 @@ function ReviewQuestion({ question, userAnswer, needsLetterPrefix }: {
 
             return (
               <div className={cls} key={idx}>
-                {prefix}{localizedOptionLabel(question, idx, locale)}
+                {prefix}{option}
               </div>
             );
           })}
@@ -112,12 +104,10 @@ function ReviewQuestion({ question, userAnswer, needsLetterPrefix }: {
       ) : (
         <div className="reviewTextAnswers">
           <div className={`reviewTextAnswer${isCorrect ? " reviewTextAnswer--correct" : " reviewTextAnswer--wrong"}`}>
-            {t("review.yourAnswer")}{answer ? localizedAnswerText(question, answer, locale) : t("review.notAnswered")}
+            {t("review.yourAnswer")}{answer || t("review.notAnswered")}
           </div>
           <div className="reviewTextAnswer reviewTextAnswer--right">
-            {t("review.rightAnswer")}{Array.isArray(question.correctAnswer)
-              ? question.correctAnswer.map((a) => localizedAnswerText(question, a, locale)).join(locale === "en" ? ", " : "、")
-              : localizedAnswerText(question, question.correctAnswer, locale)}
+            {t("review.correctAnswer")}{Array.isArray(question.correctAnswer) ? question.correctAnswer.join("、") : question.correctAnswer}
           </div>
         </div>
       )}
@@ -126,7 +116,7 @@ function ReviewQuestion({ question, userAnswer, needsLetterPrefix }: {
 }
 
 function ReviewQuizBlock({ results, questions }: { results: GameResult[]; questions: Question[] }) {
-  const { t } = useI18n();
+  const t = useTranslations();
   const sectors = useMemo(() => {
     return results
       .slice()
@@ -170,7 +160,7 @@ function ReviewQuizBlock({ results, questions }: { results: GameResult[]; questi
 }
 
 function ReviewStandardBlock({ result, questions }: { result: GameResult; questions: Question[] }) {
-  const { t } = useI18n();
+  const t = useTranslations();
   const answers = result.answers as Record<string, unknown>;
 
   return (
@@ -197,7 +187,7 @@ function ReviewStandardBlock({ result, questions }: { result: GameResult; questi
 
 export default function ReviewPage() {
   const router = useRouter();
-  const { t } = useI18n();
+  const t = useTranslations();
   const { playerId, player } = useCurrentPlayer();
   const { state } = useAppState(4000);
 
@@ -246,7 +236,7 @@ export default function ReviewPage() {
         <section className="reviewPage">
           <PageBackground />
           <div className="reviewPageContent">
-            <p className="reviewLoading">{t("review.loadingIdentity")}</p>
+            <p className="reviewLoading">{t("common.loadingIdentity")}</p>
           </div>
         </section>
       </Layout>
@@ -285,7 +275,7 @@ export default function ReviewPage() {
               return (
                 <div className="reviewBlock" key={key}>
                   <div className="reviewBlockHeader">
-                    <span className="reviewBlockTitle">{t(GAME_LABEL_KEY[key])}</span>
+                    <span className="reviewBlockTitle">{t(`game.name.${key}`)}</span>
                   </div>
 
                   {key === "bingo" ? (

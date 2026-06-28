@@ -2,22 +2,23 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import Layout from "@/components/Layout";
+import LanguageToggle from "@/components/LanguageToggle";
 import PageBackground from "@/components/PageBackground";
 import { registerPlayer, restoreCurrentPlayerFromLocal } from "@/lib/storage";
-import { useI18n } from "@/lib/i18n";
 
 const DEFAULT_TEAM = "Alpha";
 const OFFICE_OPTIONS = [
-  { label: "Beijing", value: "Beijing" },
-  { label: "Shanghai", value: "Shanghai" },
-  { label: "Hong Kong & Others", value: "Hong Kong & Others" }
-];
+  { value: "Beijing", labelKey: "beijing" },
+  { value: "Shanghai", labelKey: "shanghai" },
+  { value: "Hong Kong & Others", labelKey: "hkOthers" }
+] as const;
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { t, locale, setLocale } = useI18n();
+  const t = useTranslations();
   const [form, setForm] = useState({ name: "", phone: "", office: "", team: DEFAULT_TEAM });
   const [message, setMessage] = useState("");
   const [officeQuery, setOfficeQuery] = useState("");
@@ -27,11 +28,16 @@ export default function RegisterPage() {
   const [isComposing, setIsComposing] = useState(false);
   const officeDropdownRef = useRef<HTMLDivElement>(null);
 
+  const officeOptions = useMemo(
+    () => OFFICE_OPTIONS.map((office) => ({ value: office.value, label: t(`register.office.${office.labelKey}`) })),
+    [t]
+  );
+
   const filteredOffices = useMemo(() => {
     const query = officeQuery.trim().toLowerCase();
-    if (!query || OFFICE_OPTIONS.some((office) => office.label === officeQuery)) return OFFICE_OPTIONS;
-    return OFFICE_OPTIONS.filter((office) => office.label.toLowerCase().includes(query));
-  }, [officeQuery]);
+    if (!query || officeOptions.some((office) => office.label === officeQuery)) return officeOptions;
+    return officeOptions.filter((office) => office.label.toLowerCase().includes(query));
+  }, [officeQuery, officeOptions]);
 
   useEffect(() => {
     let active = true;
@@ -61,7 +67,7 @@ export default function RegisterPage() {
       setForm((current) => ({ ...current, [field]: value }));
       return;
     }
-    
+
     let processedValue = value;
     if (field === "name") {
       processedValue = value.replace(/[^\p{L}\s]/gu, "").replace(/\s+/g, " ");
@@ -103,7 +109,7 @@ export default function RegisterPage() {
       return;
     }
     if (!form.phone) {
-      setMessage(t("register.emptyPhone"));
+      setMessage(t("register.phoneRequired"));
       setIsSubmitting(false);
       return;
     }
@@ -186,7 +192,7 @@ export default function RegisterPage() {
             </label>
 
             <div className="registerField registerField--office" ref={officeDropdownRef}>
-              <span>{t("register.office")}</span>
+              <span>OFFICE</span>
               <div className="registerSelectWrap">
                 <input
                   value={officeQuery}
@@ -200,7 +206,7 @@ export default function RegisterPage() {
                   onChange={(event) => {
                     const value = event.target.value;
                     setOfficeQuery(value);
-                    updateField("office", OFFICE_OPTIONS.find((office) => office.label === value)?.value || "");
+                    updateField("office", officeOptions.find((office) => office.label === value)?.value || "");
                     setOfficeOpen(true);
                   }}
                 />
@@ -226,17 +232,11 @@ export default function RegisterPage() {
             {message && <p className="registerMessage">{message}</p>}
 
             <button className="registerSubmit" type="submit" disabled={isSubmitting}>
-              {isSubmitting ? t("register.submitting") : t("register.submit")}
+              {isSubmitting ? t("register.processing") : t("register.confirm")}
             </button>
           </form>
 
-          <button
-            type="button"
-            className="localeSwitchNew"
-            onClick={() => setLocale(locale === "zh" ? "en" : "zh")}
-          >
-            {locale === "zh" ? "English" : "中文"}
-          </button>
+          <LanguageToggle />
 
           <Image
             className="registerLogo"

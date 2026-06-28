@@ -1,18 +1,18 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import type { RankingItem } from "@/types";
-import { useI18n } from "@/lib/i18n";
 
 type RankingTableProps = {
   data: RankingItem[];
   currentPlayerId?: string;
   variant?: "default" | "ranking";
+  bilingual?: boolean;
 };
 
-function formatCompletedTime(completedAt: string | undefined, notCompleted: string, locale: string) {
-  if (!completedAt) return notCompleted;
-  return new Date(completedAt).toLocaleTimeString(locale === "en" ? "en-US" : "zh-CN", {
+function formatTime(completedAt: string) {
+  return new Date(completedAt).toLocaleTimeString("zh-CN", {
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
@@ -45,8 +45,13 @@ function RankingRankBadge({ rank }: { rank: number }) {
   return <span className="rankingRankCircle">{rank}</span>;
 }
 
-export default function RankingTable({ data, currentPlayerId, variant = "default" }: RankingTableProps) {
-  const { t, locale } = useI18n();
+export default function RankingTable({ data, currentPlayerId, variant = "default", bilingual = false }: RankingTableProps) {
+  const t = useTranslations();
+  const completedLabel = (completedAt?: string) =>
+    bilingual
+      ? `${t("screen.completionLabel")} ${completedAt ? formatTime(completedAt) : t("screen.notStarted")}`
+      : t("table.completedTime", { time: completedAt ? formatTime(completedAt) : t("table.notCompleted") });
+
   if (variant === "ranking") {
     return (
       <div className="rankingList">
@@ -59,7 +64,7 @@ export default function RankingTable({ data, currentPlayerId, variant = "default
             <div className="rankingRowInfo">
               <b>{item.name}</b>
               <small>{item.office}</small>
-              <small>{t("ranking.completedTime")}{formatCompletedTime(item.completedAt, t("ranking.notCompleted"), locale)}</small>
+              <small>{completedLabel(item.completedAt)}</small>
             </div>
             <strong>{item.totalScore}</strong>
           </div>

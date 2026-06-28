@@ -1,7 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import ResultModal from "@/components/ResultModal";
-import { useI18n } from "@/lib/i18n";
 
 type EliminationModalProps = {
   open: boolean;
@@ -20,16 +20,17 @@ export default function EliminationModal({
   onNext,
   hideScore = false
 }: EliminationModalProps) {
-  const { t } = useI18n();
+  const t = useTranslations();
   return (
     <ResultModal
       open={open}
-      gameName={t("game.elimination")}
+      gameKey="elimination"
+      gameName={t("game.name.elimination")}
       roundScore={roundScore}
       totalScore={totalScore}
       rank={rank}
       eliminationModalStyle="correct"
-      buttonText={t("modal.nextQuestion")}
+      buttonText={t("common.nextQuestion")}
       onClose={onNext}
       onBackLobby={() => onNext?.()}
       hideScore={hideScore}

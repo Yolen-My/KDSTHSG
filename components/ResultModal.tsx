@@ -1,26 +1,27 @@
 "use client";
 
 import Image from "next/image";
-import { useI18n } from "@/lib/i18n";
+import { useTranslations } from "next-intl";
+import type { GameKey } from "@/types";
 
 const RESULT_TITLE_IMAGES: Record<
-  string,
+  GameKey,
   { src: string; width: number; height: number; className?: string }
 > = {
-  "预言家验词": { src: "/image/source/bingo/bingo-title.png", width: 246, height: 20 },
-  "狼人悍跳": {
+  bingo: { src: "/image/source/bingo/bingo-title.png", width: 246, height: 20 },
+  story: {
     src: "/image/source/story/story-title.png",
     width: 244,
     height: 20,
     className: "resultModalTitleImage resultModalTitleImageStory"
   },
-  守卫者之夜: {
+  elimination: {
     src: "/image/source/elimination/modal-title.png",
     width: 212,
     height: 20,
     className: "resultModalTitleImage resultModalTitleImageElimination"
   },
-  "猎人快答": { src: "/image/source/quiz/quiz-title.png", width: 242, height: 20 }
+  quiz: { src: "/image/source/quiz/quiz-title.png", width: 242, height: 20 }
 };
 
 type EliminationModalStyle = "auto" | "standard" | "correct" | "wrong";
@@ -28,6 +29,7 @@ type EliminationModalStyle = "auto" | "standard" | "correct" | "wrong";
 type ResultModalProps = {
   open: boolean;
   gameName: string;
+  gameKey?: GameKey;
   roundScore: number;
   totalScore: number;
   rank: number;
@@ -47,6 +49,7 @@ const ELIMINATION_CORNER_BADGES = {
 export default function ResultModal({
   open,
   gameName,
+  gameKey,
   roundScore,
   totalScore,
   rank,
@@ -57,12 +60,12 @@ export default function ResultModal({
   eliminationModalStyle = "auto",
   hideScore = false
 }: ResultModalProps) {
-  const { t } = useI18n();
+  const t = useTranslations();
   if (!open) return null;
 
   const handleClick = onClose || onBackLobby;
-  const titleImage = RESULT_TITLE_IMAGES[gameName];
-  const isElimination = gameName === "守卫者之夜";
+  const titleImage = gameKey ? RESULT_TITLE_IMAGES[gameKey] : undefined;
+  const isElimination = gameKey === "elimination";
   const resolvedEliminationStyle: Exclude<EliminationModalStyle, "auto"> = isElimination
     ? eliminationModalStyle === "auto"
       ? isEliminated
@@ -78,7 +81,7 @@ export default function ResultModal({
       : showEliminationStatus && resolvedEliminationStyle === "correct"
         ? ELIMINATION_CORNER_BADGES.correct
         : null;
-  const eliminationTitleImage = titleImage ?? RESULT_TITLE_IMAGES["守卫者之夜"];
+  const eliminationTitleImage = titleImage ?? RESULT_TITLE_IMAGES.elimination;
 
   return (
     <div className="modalMask">
@@ -102,10 +105,10 @@ export default function ResultModal({
           <div className="resultModalHeader">
             {isElimination ? (
               <>
-                <span className="resultModalEyebrow">{t("modal.gameCompleted")}</span>
+                <span className="resultModalEyebrow">{t("resultModal.eyebrowComplete")}</span>
                 {showEliminationStatus ? (
                   <h2 className="resultModalEliminationTitle">
-                    {resolvedEliminationStyle === "wrong" ? t("modal.eliminationWrong") : t("modal.eliminationCorrect")}
+                    {resolvedEliminationStyle === "wrong" ? t("resultModal.eliminated") : t("resultModal.survived")}
                   </h2>
                 ) : eliminationTitleImage ? (
                   <Image
@@ -127,12 +130,12 @@ export default function ResultModal({
               </>
             ) : isEliminated ? (
               <>
-                <span className="resultModalEyebrow">{t("modal.gameOver")}</span>
-                <h2 className="resultModalTitle">{t("modal.eliminationWrong")}</h2>
+                <span className="resultModalEyebrow">{t("resultModal.eyebrowOver")}</span>
+                <h2 className="resultModalTitle">{t("resultModal.eliminated")}</h2>
               </>
             ) : (
               <>
-                <span className="resultModalEyebrow">{t("modal.gameCompleted")}</span>
+                <span className="resultModalEyebrow">{t("resultModal.eyebrowComplete")}</span>
                 {titleImage ? (
                   <Image
                     alt={gameName}
@@ -142,7 +145,13 @@ export default function ResultModal({
                     width={titleImage.width}
                   />
                 ) : (
-                  <h2 className="resultModalTitle">{gameName}</h2>
+                  <h2 className="resultModalTitle">
+                    {gameName.includes("\n") ? (
+                      gameName.split("\n").map((line, i) => <span key={i}>{line}</span>)
+                    ) : (
+                      gameName
+                    )}
+                  </h2>
                 )}
               </>
             )}
@@ -152,14 +161,18 @@ export default function ResultModal({
             <div className="resultModalScore">{roundScore}</div>
             {!hideScore && (!isEliminated || isElimination) && (
               <p className="resultModalStats">
-                {t("modal.stats", { total: totalScore })}<span className="resultModalRank">{rank || "-"}</span>
+                {t.rich("resultModal.stats", {
+                  total: totalScore,
+                  rank: rank || "-",
+                  r: (chunks) => <span className="resultModalRank">{chunks}</span>
+                })}
               </p>
             )}
           </div>
 
           <div className="resultModalFooter">
             <button className="resultModalButton" type="button" onClick={handleClick}>
-              {buttonText || t("modal.backLobby")}
+              {buttonText || t("common.backToLobbyShort")}
             </button>
           </div>
         </div>

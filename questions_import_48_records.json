@@ -2,9 +2,12 @@
   {
     "gameKey": "bingo",
     "type": "word",
-    "title": "创新突破",
+    "title": "长期主义",
+    "title_en": "Long-termism",
     "options": [],
-    "correctAnswer": "创新突破",
+    "options_en": [],
+    "correctAnswer": "长期主义",
+    "correctAnswer_en": "Long-termism",
     "score": 10,
     "order": 1,
     "isActive": true
@@ -12,9 +15,12 @@
   {
     "gameKey": "bingo",
     "type": "word",
-    "title": "团队协作",
+    "title": "能源转型",
+    "title_en": "Energy transition",
     "options": [],
-    "correctAnswer": "团队协作",
+    "options_en": [],
+    "correctAnswer": "能源转型",
+    "correctAnswer_en": "Energy transition",
     "score": 10,
     "order": 2,
     "isActive": true
@@ -22,9 +28,12 @@
   {
     "gameKey": "bingo",
     "type": "word",
-    "title": "客户第一",
+    "title": "离岸基金",
+    "title_en": "Offshore fund",
     "options": [],
-    "correctAnswer": "客户第一",
+    "options_en": [],
+    "correctAnswer": "离岸基金",
+    "correctAnswer_en": "Offshore fund",
     "score": 10,
     "order": 3,
     "isActive": true
@@ -32,9 +41,12 @@
   {
     "gameKey": "bingo",
     "type": "word",
-    "title": "专业服务",
+    "title": "产业深度",
+    "title_en": "Industry depth",
     "options": [],
-    "correctAnswer": "专业服务",
+    "options_en": [],
+    "correctAnswer": "产业深度",
+    "correctAnswer_en": "Industry depth",
     "score": 10,
     "order": 4,
     "isActive": true
@@ -42,9 +54,12 @@
   {
     "gameKey": "bingo",
     "type": "word",
-    "title": "高效执行",
+    "title": "AGI路径",
+    "title_en": "AGI path",
     "options": [],
-    "correctAnswer": "高效执行",
+    "options_en": [],
+    "correctAnswer": "AGI路径",
+    "correctAnswer_en": "AGI path",
     "score": 10,
     "order": 5,
     "isActive": true
@@ -52,9 +67,12 @@
   {
     "gameKey": "bingo",
     "type": "word",
-    "title": "携手同行",
+    "title": "出海",
+    "title_en": "Going global",
     "options": [],
-    "correctAnswer": "携手同行",
+    "options_en": [],
+    "correctAnswer": "出海",
+    "correctAnswer_en": "Going global",
     "score": 10,
     "order": 6,
     "isActive": true
@@ -62,9 +80,12 @@
   {
     "gameKey": "bingo",
     "type": "word",
-    "title": "年度目标",
+    "title": "具身智能",
+    "title_en": "Embodied AI",
     "options": [],
-    "correctAnswer": "年度目标",
+    "options_en": [],
+    "correctAnswer": "具身智能",
+    "correctAnswer_en": "Embodied AI",
     "score": 10,
     "order": 7,
     "isActive": true
@@ -72,9 +93,12 @@
   {
     "gameKey": "bingo",
     "type": "word",
-    "title": "卓越交付",
+    "title": "技术奇点",
+    "title_en": "Technological singularity",
     "options": [],
-    "correctAnswer": "卓越交付",
+    "options_en": [],
+    "correctAnswer": "技术奇点",
+    "correctAnswer_en": "Technological singularity",
     "score": 10,
     "order": 8,
     "isActive": true
@@ -82,9 +106,12 @@
   {
     "gameKey": "bingo",
     "type": "word",
-    "title": "积极进取",
+    "title": "生态赋能",
+    "title_en": "Ecosystem empowerment",
     "options": [],
-    "correctAnswer": "积极进取",
+    "options_en": [],
+    "correctAnswer": "生态赋能",
+    "correctAnswer_en": "Ecosystem empowerment",
     "score": 10,
     "order": 9,
     "isActive": true
@@ -92,9 +119,12 @@
   {
     "gameKey": "bingo",
     "type": "word",
-    "title": "责任担当",
+    "title": "投后管理",
+    "title_en": "Portfolio management",
     "options": [],
+    "options_en": [],
     "correctAnswer": "INCORRECT",
+    "correctAnswer_en": "INCORRECT",
     "score": 10,
     "order": 10,
     "isActive": true
@@ -102,9 +132,12 @@
   {
     "gameKey": "bingo",
     "type": "word",
-    "title": "数字化",
+    "title": "AI Agent",
+    "title_en": "AI Agent",
     "options": [],
+    "options_en": [],
     "correctAnswer": "INCORRECT",
+    "correctAnswer_en": "INCORRECT",
     "score": 10,
     "order": 11,
     "isActive": true
@@ -112,9 +145,12 @@
   {
     "gameKey": "bingo",
     "type": "word",
-    "title": "流程优化",
+    "title": "国产替代",
+    "title_en": "Domestic replacement",
     "options": [],
+    "options_en": [],
     "correctAnswer": "INCORRECT",
+    "correctAnswer_en": "INCORRECT",
     "score": 10,
     "order": 12,
     "isActive": true
@@ -122,9 +158,12 @@
   {
     "gameKey": "bingo",
     "type": "word",
-    "title": "品牌力量",
+    "title": "技术变革",
+    "title_en": "Technological revolution",
     "options": [],
+    "options_en": [],
     "correctAnswer": "INCORRECT",
+    "correctAnswer_en": "INCORRECT",
     "score": 10,
     "order": 13,
     "isActive": true
@@ -132,9 +171,12 @@
   {
     "gameKey": "bingo",
     "type": "word",
-    "title": "服务升级",
+    "title": "地缘政治",
+    "title_en": "Geopolitics",
     "options": [],
+    "options_en": [],
     "correctAnswer": "INCORRECT",
+    "correctAnswer_en": "INCORRECT",
     "score": 10,
     "order": 14,
     "isActive": true
@@ -142,9 +184,12 @@
   {
     "gameKey": "bingo",
     "type": "word",
-    "title": "同心聚力",
+    "title": "合伙人文化",
+    "title_en": "Partnership culture",
     "options": [],
+    "options_en": [],
     "correctAnswer": "INCORRECT",
+    "correctAnswer_en": "INCORRECT",
     "score": 10,
     "order": 15,
     "isActive": true
@@ -152,9 +197,12 @@
   {
     "gameKey": "bingo",
     "type": "word",
-    "title": "奋勇争先",
+    "title": "AIDC",
+    "title_en": "AIDC",
     "options": [],
+    "options_en": [],
     "correctAnswer": "INCORRECT",
+    "correctAnswer_en": "INCORRECT",
     "score": 10,
     "order": 16,
     "isActive": true
@@ -162,9 +210,12 @@
   {
     "gameKey": "bingo",
     "type": "word",
-    "title": "荣耀时刻",
+    "title": "算力",
+    "title_en": "Computing power",
     "options": [],
+    "options_en": [],
     "correctAnswer": "INCORRECT",
+    "correctAnswer_en": "INCORRECT",
     "score": 10,
     "order": 17,
     "isActive": true
@@ -172,9 +223,12 @@
   {
     "gameKey": "bingo",
     "type": "word",
-    "title": "年度关键词",
+    "title": "格局",
+    "title_en": "Big picture",
     "options": [],
+    "options_en": [],
     "correctAnswer": "INCORRECT",
+    "correctAnswer_en": "INCORRECT",
     "score": 10,
     "order": 18,
     "isActive": true
@@ -182,9 +236,12 @@
   {
     "gameKey": "bingo",
     "type": "word",
-    "title": "幸福职场",
+    "title": "挑战",
+    "title_en": "Challenge",
     "options": [],
+    "options_en": [],
     "correctAnswer": "INCORRECT",
+    "correctAnswer_en": "INCORRECT",
     "score": 10,
     "order": 19,
     "isActive": true
@@ -192,9 +249,12 @@
   {
     "gameKey": "bingo",
     "type": "word",
-    "title": "成长进步",
+    "title": "竞争力",
+    "title_en": "Competitiveness",
     "options": [],
+    "options_en": [],
     "correctAnswer": "INCORRECT",
+    "correctAnswer_en": "INCORRECT",
     "score": 10,
     "order": 20,
     "isActive": true
@@ -202,9 +262,12 @@
   {
     "gameKey": "bingo",
     "type": "word",
-    "title": "沟通协同",
+    "title": "认知",
+    "title_en": "Insight",
     "options": [],
+    "options_en": [],
     "correctAnswer": "INCORRECT",
+    "correctAnswer_en": "INCORRECT",
     "score": 10,
     "order": 21,
     "isActive": true
@@ -212,9 +275,12 @@
   {
     "gameKey": "bingo",
     "type": "word",
-    "title": "数据驱动",
+    "title": "Mission",
+    "title_en": "Mission",
     "options": [],
+    "options_en": [],
     "correctAnswer": "INCORRECT",
+    "correctAnswer_en": "INCORRECT",
     "score": 10,
     "order": 22,
     "isActive": true
@@ -222,9 +288,12 @@
   {
     "gameKey": "bingo",
     "type": "word",
-    "title": "质量保障",
+    "title": "热爱",
+    "title_en": "Passion",
     "options": [],
+    "options_en": [],
     "correctAnswer": "INCORRECT",
+    "correctAnswer_en": "INCORRECT",
     "score": 10,
     "order": 23,
     "isActive": true
@@ -232,9 +301,12 @@
   {
     "gameKey": "bingo",
     "type": "word",
-    "title": "市场开拓",
+    "title": "价值",
+    "title_en": "Value",
     "options": [],
+    "options_en": [],
     "correctAnswer": "INCORRECT",
+    "correctAnswer_en": "INCORRECT",
     "score": 10,
     "order": 24,
     "isActive": true
@@ -242,9 +314,12 @@
   {
     "gameKey": "bingo",
     "type": "word",
-    "title": "用户体验",
+    "title": "IC",
+    "title_en": "IC",
     "options": [],
+    "options_en": [],
     "correctAnswer": "INCORRECT",
+    "correctAnswer_en": "INCORRECT",
     "score": 10,
     "order": 25,
     "isActive": true
@@ -252,9 +327,12 @@
   {
     "gameKey": "bingo",
     "type": "word",
-    "title": "智慧运营",
+    "title": "经验",
+    "title_en": "Experience",
     "options": [],
+    "options_en": [],
     "correctAnswer": "INCORRECT",
+    "correctAnswer_en": "INCORRECT",
     "score": 10,
     "order": 26,
     "isActive": true
@@ -262,232 +340,370 @@
   {
     "gameKey": "bingo",
     "type": "word",
-    "title": "使命必达",
+    "title": "投入",
+    "title_en": "Dedication",
     "options": [],
+    "options_en": [],
     "correctAnswer": "INCORRECT",
+    "correctAnswer_en": "INCORRECT",
     "score": 10,
     "order": 27,
     "isActive": true
   },
   {
-    "gameKey": "bingo",
-    "type": "word",
-    "title": "活力团队",
-    "options": [],
-    "correctAnswer": "INCORRECT",
-    "score": 10,
-    "order": 28,
-    "isActive": true
-  },
-  {
-    "gameKey": "bingo",
-    "type": "word",
-    "title": "共创未来",
-    "options": [],
-    "correctAnswer": "INCORRECT",
-    "score": 10,
-    "order": 29,
-    "isActive": true
-  },
-  {
-    "gameKey": "bingo",
-    "type": "word",
-    "title": "再创佳绩",
-    "options": [],
-    "correctAnswer": "INCORRECT",
-    "score": 10,
-    "order": 30,
-    "isActive": true
-  },
-  {
     "gameKey": "quiz",
     "type": "single",
-    "title": "本系统推荐的大屏刷新频率是？",
+    "title": "智谱华章的唐杰老师发出了内部信做出判断「2025年必然是Agent的一年」，然后把公司资源聚焦在Coding和Agent。这封内部信是在什么时间后发出的？",
+    "title_en": "Zhipu AI's Prof. Tang Jie issued an internal memo declaring \"2025 will be the Year of the Agent\" and redirected company resources toward Coding and Agent development. When was this memo issued?",
     "options": [
-      "每1秒",
-      "每3秒",
-      "每10秒",
-      "每30秒"
+      "2025年1月 DeepSeek 发布后",
+      "2025年3月 Manus 发布后",
+      "2025年4月 Qwen 3 发布后",
+      "2025年12月的年终复盘内部信"
     ],
-    "correctAnswer": "每3秒",
+    "options_en": [
+      "After DeepSeek's release in Jan 2025",
+      "After Manus's release in Mar 2025",
+      "After Qwen 3's release in Apr 2025",
+      "In the year-end review memo in Dec 2025"
+    ],
+    "correctAnswer": "2025年1月 DeepSeek 发布后",
+    "correctAnswer_en": "After DeepSeek's release in Jan 2025",
     "score": 20,
     "order": 1,
-    "isActive": true
+    "isActive": true,
+    "sectorKey": "sector-1",
+    "sectorName": "Sector 1",
+    "quizSessionIndex": 0
   },
   {
     "gameKey": "quiz",
     "type": "single",
-    "title": "用户注册时用于防重复参赛的核心字段是？",
+    "title": "Xbench 系列工作共发表几篇顶会文章？",
+    "title_en": "How many top-tier conference papers has the Xbench research series published?",
     "options": [
-      "手机号",
-      "头像",
-      "浏览器颜色",
-      "屏幕尺寸"
+      "1篇",
+      "2篇",
+      "3篇",
+      "4篇"
     ],
-    "correctAnswer": "手机号",
+    "options_en": [
+      "1 paper",
+      "2 papers",
+      "3 papers",
+      "4 papers"
+    ],
+    "correctAnswer": "2篇",
+    "correctAnswer_en": "2 papers",
     "score": 20,
     "order": 2,
-    "isActive": true
+    "isActive": true,
+    "sectorKey": "sector-2",
+    "sectorName": "Sector 2",
+    "quizSessionIndex": 1
   },
   {
     "gameKey": "quiz",
     "type": "single",
-    "title": "Quick Quiz 每题分值是多少？",
+    "title": "鸣鸣很忙的新主题店叫什么？",
+    "title_en": "What is the name of Mingming Hen Mang (\"Busy Ming\")'s new themed store?",
     "options": [
-      "5分",
-      "10分",
-      "20分",
-      "30分"
+      "鸣鸣很大",
+      "零食很大",
+      "零食王国",
+      "鸣鸣很小"
     ],
-    "correctAnswer": "20分",
+    "options_en": [
+      "Mingming Hen Da",
+      "Lingshi Hen Da",
+      "Snack Kingdom",
+      "Mingming Hen Xiao"
+    ],
+    "correctAnswer": "零食王国",
+    "correctAnswer_en": "Snack Kingdom",
     "score": 20,
     "order": 3,
-    "isActive": true
+    "isActive": true,
+    "sectorKey": "sector-3",
+    "sectorName": "Sector 3",
+    "quizSessionIndex": 2
   },
   {
     "gameKey": "quiz",
     "type": "single",
-    "title": "本项目默认不强依赖哪种复杂架构？",
+    "title": "全球首款获批上市的脑机接口产品是针对什么适应症？",
+    "title_en": "What indication does the world's first approved brain-computer interface (BCI) product target?",
     "options": [
-      "复杂WebSocket房间系统",
-      "Next.js页面",
-      "PocketBase接口",
-      "SQLite数据库"
+      "渐冻症（ALS）患者语言交流",
+      "瘫痪病人手部功能代偿",
+      "失明患者视觉恢复",
+      "帕金森患者运动控制"
     ],
-    "correctAnswer": "复杂WebSocket房间系统",
+    "options_en": [
+      "Language communication for ALS patients",
+      "Hand function compensation for paralyzed patients",
+      "Vision restoration for blind patients",
+      "Motor control for Parkinson's patients"
+    ],
+    "correctAnswer": "瘫痪病人手部功能代偿",
+    "correctAnswer_en": "Hand function compensation for paralyzed patients",
     "score": 20,
     "order": 4,
-    "isActive": true
+    "isActive": true,
+    "sectorKey": "sector-4",
+    "sectorName": "Sector 4",
+    "quizSessionIndex": 3
   },
   {
     "gameKey": "quiz",
     "type": "single",
-    "title": "活动结束后建议做什么？",
+    "title": "谷歌TPU相比英伟达GPU的优势是什么？",
+    "title_en": "What is Google TPU's advantage over NVIDIA GPUs?",
     "options": [
-      "导出数据复盘",
-      "删除所有代码",
-      "关闭所有题目不备份",
-      "只看大屏不保存"
+      "单芯片算力",
+      "互联带宽",
+      "集群大小",
+      "软件生态兼容性"
     ],
-    "correctAnswer": "导出数据复盘",
+    "options_en": [
+      "Single-chip computing power",
+      "Interconnect bandwidth",
+      "Cluster size",
+      "Software ecosystem compatibility"
+    ],
+    "correctAnswer": "集群大小",
+    "correctAnswer_en": "Cluster size",
     "score": 20,
     "order": 5,
-    "isActive": true
+    "isActive": true,
+    "sectorKey": "sector-5",
+    "sectorName": "Sector 5",
+    "quizSessionIndex": 4
   },
   {
     "gameKey": "story",
-    "type": "boolean",
-    "title": "公司年会互动游戏系统需要支持约500人左右现场参与。",
+    "type": "story",
+    "title": "以下谁在「说谎」？",
+    "title_en": "Who is \"lying\"?",
     "options": [
-      "正确",
-      "错误"
+      "Xing：我做互联网创业时还没有听说过VC这个词",
+      "Sindy：Neil在面试时问我哪个高中毕业的，为什么来香港读大学而不是去欧美？",
+      "Brian：我四岁的女儿现在看到我拉登机箱，就会自动问：这次是跟老板去哪里「卖东西」？"
     ],
-    "correctAnswer": "正确",
-    "score": 30,
+    "options_en": [
+      "Xing: When I started my internet venture, I hadn't even heard of the term \"VC\".",
+      "Sindy: During my interview, Neil asked which high school I graduated from and why I chose to study in Hong Kong instead of the US or Europe.",
+      "Brian: My four-year-old daughter now automatically asks whenever she sees me with my carry-on: \"Where are you going to 'sell things' with your boss this time?\""
+    ],
+    "correctAnswer": "Brian：我四岁的女儿现在看到我拉登机箱，就会自动问：这次是跟老板去哪里「卖东西」？",
+    "correctAnswer_en": "Brian: My four-year-old daughter now automatically asks whenever she sees me with my carry-on: \"Where are you going to 'sell things' with your boss this time?\"",
+    "score": 50,
     "order": 1,
     "isActive": true
   },
   {
     "gameKey": "story",
     "type": "story",
-    "title": "同事A分享了3个故事，请判断哪一个是假故事。",
+    "title": "以下谁在「说谎」？",
+    "title_en": "Who is \"lying\"?",
     "options": [
-      "曾经连续三年担任年会志愿者",
-      "曾在活动现场帮同事找回遗失物品",
-      "曾经独自驾驶火箭参加年会"
+      "Joe：第一次见庆生，就被他把手机抢过去翻相册",
+      "Taro：第一次见Neil是在巴黎一家亚洲风格的酒店",
+      "Tiantian：我手搓了6个app，我家娃是其中一个app的用户"
     ],
-    "correctAnswer": "曾经独自驾驶火箭参加年会",
-    "score": 30,
+    "options_en": [
+      "Joe: The first time I met Qingsheng, he grabbed my phone and started scrolling through my photo album.",
+      "Taro: The first time I met Neil was at an Asian-style hotel in Paris.",
+      "Tiantian: I hand-built 6 apps, and my kid is a user of one of them."
+    ],
+    "correctAnswer": "Tiantian：我手搓了6个app，我家娃是其中一个app的用户",
+    "correctAnswer_en": "Tiantian: I hand-built 6 apps, and my kid is a user of one of them.",
+    "score": 50,
     "order": 2,
-    "isActive": true
-  },
-  {
-    "gameKey": "story",
-    "type": "story",
-    "title": "同事B分享了3个故事，请判断哪一个是假故事。",
-    "options": [
-      "曾在项目上线前通宵排查问题",
-      "曾经主持过部门团建小游戏",
-      "曾在一天内徒手搬完整栋办公楼"
-    ],
-    "correctAnswer": "曾在一天内徒手搬完整栋办公楼",
-    "score": 30,
-    "order": 3,
     "isActive": true
   },
   {
     "gameKey": "elimination",
     "type": "single",
-    "title": "站立淘汰游戏一共有几道题？",
+    "title": "Deal Team 和 Function Team 的人数比最接近以下哪个？",
+    "title_en": "Which ratio best approximates the headcount of Deal Team vs. Function Team?",
     "options": [
-      "3道",
-      "4道",
-      "5道",
-      "10道"
+      "1:1",
+      "1:1.5",
+      "1:1.6",
+      "1:2"
     ],
-    "correctAnswer": "5道",
-    "score": 20,
+    "options_en": [
+      "1:1",
+      "1:1.5",
+      "1:1.6",
+      "1:2"
+    ],
+    "correctAnswer": "1:2",
+    "correctAnswer_en": "1:2",
+    "score": 25,
     "order": 1,
     "isActive": true
   },
   {
     "gameKey": "elimination",
     "type": "single",
-    "title": "站立淘汰每题多少分？",
+    "title": "红杉中国海外的第一个办公室是哪年设立的？",
+    "title_en": "In which year did HongShan China establish its first overseas office?",
     "options": [
-      "10分",
-      "15分",
-      "20分",
-      "30分"
+      "2022",
+      "2023",
+      "2024",
+      "2025"
     ],
-    "correctAnswer": "20分",
-    "score": 20,
+    "options_en": [
+      "2022",
+      "2023",
+      "2024",
+      "2025"
+    ],
+    "correctAnswer": "2023",
+    "correctAnswer_en": "2023",
+    "score": 25,
     "order": 2,
     "isActive": true
   },
   {
     "gameKey": "elimination",
     "type": "single",
-    "title": "四个游戏全部满分时，总分是多少？",
+    "title": "红杉中国目前管理的基金总规模更接近哪个？",
+    "title_en": "Which figure is closest to the total AUM currently managed by HongShan China?",
     "options": [
-      "100分",
-      "200分",
-      "300分",
-      "400分"
+      "500亿美金",
+      "550亿美金",
+      "600亿美金",
+      "650亿美金"
     ],
-    "correctAnswer": "400分",
-    "score": 20,
+    "options_en": [
+      "$50B",
+      "$55B",
+      "$60B",
+      "$65B"
+    ],
+    "correctAnswer": "600亿美金",
+    "correctAnswer_en": "$60B",
+    "score": 25,
     "order": 3,
     "isActive": true
   },
   {
     "gameKey": "elimination",
     "type": "single",
-    "title": "Bingo 游戏满分是多少？",
+    "title": "红杉团队去哪个城市出差最多？",
+    "title_en": "Which city does the HongShan team travel to most frequently for business?",
     "options": [
-      "60分",
-      "90分",
-      "100分",
-      "120分"
+      "上海",
+      "深圳",
+      "北京",
+      "香港"
     ],
-    "correctAnswer": "100分",
-    "score": 20,
+    "options_en": [
+      "Shanghai",
+      "Shenzhen",
+      "Beijing",
+      "Hong Kong"
+    ],
+    "correctAnswer": "上海",
+    "correctAnswer_en": "Shanghai",
+    "score": 25,
     "order": 4,
     "isActive": true
   },
   {
     "gameKey": "elimination",
     "type": "single",
-    "title": "真假故事三题全对是否有额外奖励？",
+    "title": "今天Offsite的AI环节当中，获奖的同事有多少名？",
+    "title_en": "How many colleagues won awards in today's Offsite AI session?",
     "options": [
-      "有，奖励10分",
-      "有，奖励50分",
-      "没有",
-      "只奖励排名"
+      "19",
+      "20",
+      "21",
+      "22"
     ],
-    "correctAnswer": "有，奖励10分",
-    "score": 20,
+    "options_en": [
+      "19",
+      "20",
+      "21",
+      "22"
+    ],
+    "correctAnswer": "20",
+    "correctAnswer_en": "20",
+    "score": 25,
     "order": 5,
+    "isActive": true
+  },
+  {
+    "gameKey": "elimination",
+    "type": "single",
+    "title": "红杉中国团队最大年龄差是多少？",
+    "title_en": "What is the maximum age gap within the HongShan China team?",
+    "options": [
+      "21",
+      "22",
+      "23",
+      "24"
+    ],
+    "options_en": [
+      "21",
+      "22",
+      "23",
+      "24"
+    ],
+    "correctAnswer": "21",
+    "correctAnswer_en": "21",
+    "score": 25,
+    "order": 6,
+    "isActive": true
+  },
+  {
+    "gameKey": "elimination",
+    "type": "single",
+    "title": "红杉中国累计投资的公司数量更接近哪个？",
+    "title_en": "Which number is closest to the total number of companies HongShan China has invested in?",
+    "options": [
+      "1,000",
+      "1,500",
+      "2,000",
+      "2,500"
+    ],
+    "options_en": [
+      "1,000",
+      "1,500",
+      "2,000",
+      "2,500"
+    ],
+    "correctAnswer": "1,000",
+    "correctAnswer_en": "1,000",
+    "score": 25,
+    "order": 7,
+    "isActive": true
+  },
+  {
+    "gameKey": "elimination",
+    "type": "single",
+    "title": "红杉入职5年以上的员工有多少名？",
+    "title_en": "How many HongShan employees have been with the firm for over 5 years?",
+    "options": [
+      "15",
+      "16",
+      "17",
+      "18"
+    ],
+    "options_en": [
+      "15",
+      "16",
+      "17",
+      "18"
+    ],
+    "correctAnswer": "15",
+    "correctAnswer_en": "15",
+    "score": 25,
+    "order": 8,
     "isActive": true
   }
 ]

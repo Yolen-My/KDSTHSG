@@ -2,15 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import Layout from "@/components/Layout";
 import OfficeAverageTable from "@/components/OfficeAverageTable";
 import OfficeTop3Panel from "@/components/OfficeTop3Panel";
 import RankingTable from "@/components/RankingTable";
 import { useCurrentPlayer, useRanking } from "@/hooks/use-game-data";
-import { useI18n } from "@/lib/i18n";
 
 export default function RankingPage() {
-  const { t } = useI18n();
+  const t = useTranslations();
   const { playerId } = useCurrentPlayer();
   const { ranking } = useRanking(playerId, 4000);
 
@@ -95,7 +95,7 @@ export default function RankingPage() {
               <span className="rankingOfficeBadge">{player.office}</span>
               <p className="rankingProfileStatus">{isInTop10 ? t("ranking.rankNo", { rank }) : t("ranking.notRanked")}</p>
               <div className="rankingProfileScore">
-                <span>{t("ranking.totalScore")}</span>
+                <span>TOTAL SCORE</span>
                 <b>{player.totalScore}</b>
               </div>
             </section>

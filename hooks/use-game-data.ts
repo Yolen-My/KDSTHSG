@@ -134,6 +134,13 @@ export function useQuestions(gameKey: GameKey): QuestionsState {
     refresh();
   }, [refresh]);
 
+  // 语言切换后重新拉取，使题目跟随当前语言（ua 头由 pb.beforeSend 注入）。
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.addEventListener("annual-game-locale-change", refresh);
+    return () => window.removeEventListener("annual-game-locale-change", refresh);
+  }, [refresh]);
+
   useEffect(() => {
     if (loading || questions.length > 0) return;
     const timer = window.setTimeout(() => {
