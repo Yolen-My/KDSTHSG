@@ -87,9 +87,9 @@ export const en: Dictionary = {
     notRanked: "Not ranked",
     rankNo: "Rank {rank}",
     totalScore: "TOTAL SCORE",
-    totalRanking: "Overall Ranking",
-    officeAverage: "Office Average Ranking",
-    officeTop3: "Top 3 by Office",
+    totalRanking: "Overall Leaderboard",
+    officeAverage: "Regional Average Score Leaderboard",
+    officeTop3: "Regional Top3",
     officeTop3Suffix: "TOP3",
     completedTime: "Completed: ",
     notCompleted: "Not completed"
@@ -104,9 +104,9 @@ export const en: Dictionary = {
     missingGames: "{count} game(s) not completed. Showing results for completed rounds only.",
     distanceToTop10: "{score} pts to reach TOP10",
     previousPlayer: "Player above you: {name}, {gap} pts behind.",
-    top10: "Overall Ranking TOP10",
-    officeAverage: "Office Average",
-    officeTop3: "Top 3 by Office"
+    top10: "Overall Leaderboard TOP10",
+    officeAverage: "Regional Average Score",
+    officeTop3: "Regional Top3"
   },
 
   bingo: {
@@ -215,8 +215,8 @@ export const en: Dictionary = {
     participantSuffix: " joined",
     qrText: "Scan with WeChat to join",
     loading: "Loading...",
-    totalRanking: "Overall Ranking",
-    officeAverage: "Office Average Ranking",
-    officeTop3: "Top 3 by Office"
+    totalRanking: "Overall Leaderboard",
+    officeAverage: "Regional Average Score Leaderboard",
+    officeTop3: "Regional Top3"
   }
 };

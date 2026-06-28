@@ -1428,7 +1428,8 @@ button:disabled {
 .gameBannerIcon {
   position: relative;
   width: var(--banner-icon-size, 104px);
-  height: var(--banner-icon-height, var(--banner-icon-size, 104px));
+  /* 方案B：容器高度贴合"主图标 + 一小段倒影"，底部裁掉多余倒影，使绿框紧贴倒影 */
+  height: calc(var(--icon-offset-y, 10px) + var(--icon-height, 73px) + 20px);
   overflow: hidden;
   flex-shrink: 0;
   pointer-events: none;
@@ -4137,9 +4138,7 @@ button:disabled {
   }
 
   .lobbyGameCardMeta {
-    grid-template-columns: minmax(0, 1fr);
-    justify-items: start;
-    gap: 5px;
+    gap: 5px 8px;
   }
 
   .lobbyGameBadge {
