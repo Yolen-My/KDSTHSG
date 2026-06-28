@@ -86,9 +86,9 @@
   "ranking": {
     "rankNo": "No. {rank}",
     "notRanked": "Unranked",
-    "totalRanking": "Overall Ranking",
-    "officeAverage": "Office Average Ranking",
-    "officeTop3": "Office TOP3"
+    "totalRanking": "Overall Leaderboard",
+    "officeAverage": "Regional Average Score Leaderboard",
+    "officeTop3": "Regional TOP 3"
   },
   "result": {
     "title": "Final Result",

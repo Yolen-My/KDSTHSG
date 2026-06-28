@@ -163,6 +163,13 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
   const selectedAnswer = currentQuestion ? answers[currentQuestion.id] : "";
   const answeredCount = activeSector ? Object.keys(answers).length : 0;
 
+  // 记录本次会话内猎人快答是否曾被开启：开启后即便所有 Sector 关闭导致 isOpen 回落，
+  // 也应停留在“猎人快答开启后的页面”（Sector 列表），而非回到游戏未开放状态。
+  const [quizWasOpened, setQuizWasOpened] = useState(false);
+  useEffect(() => {
+    if (quizIsOpen) setQuizWasOpened(true);
+  }, [quizIsOpen]);
+
   useEffect(() => {
     if (playerId === null) router.push("/register");
   }, [playerId, router]);
@@ -294,7 +301,7 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
     );
   }
 
-  if (!quizIsOpen) {
+  if (!quizIsOpen && !quizWasOpened) {
     return (
       <QuizShell>
         <section className="quizStatusCard">

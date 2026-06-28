@@ -74,9 +74,9 @@
     "welcomeBack": "欢迎回来，正在恢复您的参赛信息...",
     "registerSuccess": "注册成功，正在进入活动大厅...",
     "office": {
-      "beijing": "北京",
-      "shanghai": "上海",
-      "hkOthers": "香港及其他"
+      "beijing": "Beijing",
+      "shanghai": "Shanghai",
+      "hkOthers": "Hong Kong & Others"
     }
   },
   "lobby": {

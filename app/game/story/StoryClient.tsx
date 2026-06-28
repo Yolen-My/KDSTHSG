@@ -163,6 +163,13 @@ export default function StoryClient({ initialGroupIndex = null }: { initialGroup
   const resultTotalScore = modal.open ? modal.total : player?.totalScore ?? existing?.score ?? 0;
   const resultRank = modal.open ? modal.rank : ranking.context?.rank ?? 0;
 
+  // 记录本次会话内游戏是否曾被开启：开启后即便所有分组关闭导致 isOpen 回落，
+  // 也应停留在“开启后的页面”（分组列表），而非回到游戏未开放状态。
+  const [storyWasOpened, setStoryWasOpened] = useState(false);
+  useEffect(() => {
+    if (storyIsOpen) setStoryWasOpened(true);
+  }, [storyIsOpen]);
+
   useEffect(() => {
     if (playerId === null) router.push("/register");
   }, [playerId, router]);
@@ -375,7 +382,7 @@ export default function StoryClient({ initialGroupIndex = null }: { initialGroup
     );
   }
 
-  if (!storyIsOpen && !existing) {
+  if (!storyIsOpen && !storyWasOpened && !existing) {
     return (
       <StoryShell>
         <section className="quizStatusCard">

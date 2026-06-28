@@ -163,6 +163,13 @@ export default function EliminationClient({ initialMissionIndex = null }: { init
   const resultTotalScore = modal.open ? modal.total : player?.totalScore ?? existing?.score ?? 0;
   const resultRank = modal.open ? modal.rank : ranking.context?.rank ?? 0;
 
+  // 记录本次会话内游戏是否曾被开启：开启后即便所有关卡关闭导致 isOpen 回落，
+  // 也应停留在“开启后的页面”（关卡列表），而非回到游戏未开放状态。
+  const [eliminationWasOpened, setEliminationWasOpened] = useState(false);
+  useEffect(() => {
+    if (eliminationIsOpen) setEliminationWasOpened(true);
+  }, [eliminationIsOpen]);
+
   useEffect(() => {
     if (playerId === null) router.push("/register");
   }, [playerId, router]);
@@ -384,7 +391,7 @@ export default function EliminationClient({ initialMissionIndex = null }: { init
     );
   }
 
-  if (!eliminationIsOpen && !existing) {
+  if (!eliminationIsOpen && !eliminationWasOpened && !existing) {
     return (
       <EliminationShell>
         <section className="quizStatusCard">
