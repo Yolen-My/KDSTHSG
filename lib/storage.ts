@@ -59,7 +59,12 @@ function normalizeQuestion(question: Question): Question {
     ...question,
     options: Array.isArray(question.options) ? question.options.map((option) => normalizeAnswerValue(option)) : question.options,
     optionsEn: Array.isArray(question.optionsEn) ? question.optionsEn.map((option) => normalizeAnswerValue(option)) : question.optionsEn,
-    correctAnswer: normalizeAnswerValue(question.correctAnswer)
+    correctAnswer: normalizeAnswerValue(question.correctAnswer),
+    correctAnswerEn: Array.isArray(question.correctAnswerEn)
+      ? question.correctAnswerEn.map((answer) => normalizeAnswerValue(answer))
+      : question.correctAnswerEn !== undefined
+        ? normalizeAnswerValue(question.correctAnswerEn)
+        : undefined
   };
   if (normalizedQuestion.gameKey !== "quiz") return normalizedQuestion;
   const derivedSessionIndex = getQuizSessionIndexFromOrder(normalizedQuestion.order);

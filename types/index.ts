@@ -37,9 +37,13 @@ export type Question = {
   type: "word" | "single" | "boolean" | "story";
   title: string;
   titleEn?: string;
+  title_en?: string;
   options?: string[];
   optionsEn?: string[];
+  options_en?: string[];
   correctAnswer: string | string[];
+  correctAnswerEn?: string | string[];
+  correctAnswer_en?: string | string[];
   score: number;
   order: number;
   isActive: boolean;

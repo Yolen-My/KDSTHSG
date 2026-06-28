@@ -1,34 +1,59 @@
 import type { Question } from "@/types";
 import type { Locale } from "./locales";
 
-// 题目内容多语言（方案A）：展示用英文，判分仍用规范中文值。
-// 选项按索引与规范 options 对齐，optionsEn[i] 缺失时回退到 options[i]。
+// 题目内容多语言：中文界面使用 title/options/correctAnswer；英文界面使用 titleEn/optionsEn/correctAnswerEn。
+// 数据库字段是 snake_case(title_en/options_en/correctAnswer_en)，在 pb-storage 映射为 camelCase 供前端使用。
 
 export function localizedTitle(question: Question, locale: Locale): string {
   if (locale === "en" && question.titleEn) return question.titleEn;
   return question.title;
 }
 
-// 返回与 question.options 等长的展示标签数组（值仍取规范 options）。
-export function localizedOptionLabel(question: Question, index: number, locale: Locale): string {
-  const canonical = question.options?.[index] ?? "";
-  if (locale === "en" && question.optionsEn && question.optionsEn[index]) {
-    return question.optionsEn[index];
+export function localizedOptions(question: Question, locale: Locale): string[] {
+  if (locale === "en" && Array.isArray(question.optionsEn) && question.optionsEn.length > 0) {
+    return question.optionsEn;
   }
-  return canonical;
+  return question.options || [];
 }
 
-// Bingo 词库：根据规范标题查找其英文展示文本。
-export function localizedWord(questions: Question[], canonicalTitle: string, locale: Locale): string {
-  if (locale !== "en") return canonicalTitle;
-  const match = questions.find((q) => q.title === canonicalTitle);
-  return match?.titleEn || canonicalTitle;
+export function localizedOptionLabel(question: Question, index: number, locale: Locale): string {
+  return localizedOptions(question, locale)[index] ?? "";
 }
 
-// 将规范答案文本映射为展示文本（用于 review 展示正确答案）。
-export function localizedAnswerText(question: Question, canonicalAnswer: string, locale: Locale): string {
-  if (locale !== "en" || !question.options || !question.optionsEn) return canonicalAnswer;
-  const idx = question.options.indexOf(canonicalAnswer);
-  if (idx >= 0 && question.optionsEn[idx]) return question.optionsEn[idx];
-  return canonicalAnswer;
+export function answerValueForLocale(question: Question, index: number, locale: Locale): string {
+  return localizedOptionLabel(question, index, locale);
+}
+
+export function correctAnswerForLocale(question: Question, locale: Locale): string | string[] {
+  if (locale === "en" && question.correctAnswerEn) return question.correctAnswerEn;
+  return question.correctAnswer;
+}
+
+export function isCorrectAnswerForLocale(question: Question, answer: string | undefined, locale: Locale, normalize?: (value: unknown) => string): boolean {
+  if (!answer) return false;
+  const correctAnswer = correctAnswerForLocale(question, locale);
+  if (!normalize) {
+    return Array.isArray(correctAnswer) ? correctAnswer.includes(answer) : correctAnswer === answer;
+  }
+  return Array.isArray(correctAnswer)
+    ? correctAnswer.map(normalize).includes(normalize(answer))
+    : normalize(correctAnswer) === normalize(answer);
+}
+
+// Bingo 词库：根据规范标题或英文标题查找当前语言展示文本。
+export function localizedWord(questions: Question[], word: string, locale: Locale): string {
+  if (locale !== "en") return word;
+  const match = questions.find((q) => q.title === word || q.titleEn === word);
+  return match?.titleEn || word;
+}
+
+export function localizedAnswerText(question: Question, answer: string, locale: Locale): string {
+  if (locale === "en") {
+    if (Array.isArray(question.options) && Array.isArray(question.optionsEn)) {
+      const idx = question.options.indexOf(answer);
+      if (idx >= 0 && question.optionsEn[idx]) return question.optionsEn[idx];
+    }
+    if (question.correctAnswerEn && !Array.isArray(question.correctAnswerEn)) return question.correctAnswerEn;
+  }
+  return answer;
 }

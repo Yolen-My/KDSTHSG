@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { useLocaleSwitch } from "@/components/LanguageProvider";
 import { useEffect, useMemo, useRef, useState } from "react";
 import GameBannerIcon from "@/components/GameBannerIcon";
 import Layout from "@/components/Layout";
@@ -12,6 +13,7 @@ import ResultModal from "@/components/ResultModal";
 import WaitingModal from "@/components/WaitingModal";
 import { getPlayerRank } from "@/lib/ranking";
 import { calculateBingoSelection, getBingoTargetWords } from "@/lib/bingo-scoring";
+import { localizedWord } from "@/lib/i18n/question";
 import { getGameResult } from "@/lib/storage";
 import { useCurrentPlayer, useQuestions, useSubmitGameResult, useAppState } from "@/hooks/use-game-data";
 import type { Question } from "@/types";
@@ -94,6 +96,7 @@ function BingoShell({ children, hideNavActions = false, hideNav = false }: { chi
 export default function BingoPage() {
   const router = useRouter();
   const t = useTranslations();
+  const { locale } = useLocaleSwitch();
   const { player, playerId, refresh } = useCurrentPlayer();
   const { state } = useAppState();
   const questions = useQuestions("bingo");
@@ -105,6 +108,10 @@ export default function BingoPage() {
         .map((id) => questions.find((question) => question.id === id)?.title)
         .filter((title): title is string => Boolean(title)),
     [selectedQuestionIds, questions]
+  );
+  const selectedDisplayWords = useMemo(
+    () => selectedWords.map((word) => localizedWord(questions, word, locale)),
+    [locale, questions, selectedWords]
   );
   const [existing, setExisting] = useState<Awaited<ReturnType<typeof getGameResult>>>(null);
   const [existingLoading, setExistingLoading] = useState(true);
@@ -451,7 +458,7 @@ export default function BingoPage() {
               type="button"
               onClick={() => toggleQuestion(question)}
             >
-              {question.title}
+              {localizedWord(questions, question.title, locale)}
             </button>
           ))}
         </div>
@@ -460,7 +467,7 @@ export default function BingoPage() {
           <div className="bingoGrid">
             {Array.from({ length: 9 }).map((_, index) => (
               <div className={selectedWords[index] ? "lit" : ""} key={index}>
-                <span>{selectedWords[index] || ""}</span>
+                <span>{selectedDisplayWords[index] || ""}</span>
               </div>
             ))}
           </div>

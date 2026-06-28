@@ -61,7 +61,12 @@ function normalizeQuestion(question: Question): Question {
     ...question,
     options: Array.isArray(question.options) ? question.options.map((option) => normalizeAnswerValue(option)) : question.options,
     optionsEn: Array.isArray(question.optionsEn) ? question.optionsEn.map((option) => normalizeAnswerValue(option)) : question.optionsEn,
-    correctAnswer: normalizeAnswerValue(question.correctAnswer)
+    correctAnswer: normalizeAnswerValue(question.correctAnswer),
+    correctAnswerEn: Array.isArray(question.correctAnswerEn)
+      ? question.correctAnswerEn.map((answer) => normalizeAnswerValue(answer))
+      : question.correctAnswerEn !== undefined
+        ? normalizeAnswerValue(question.correctAnswerEn)
+        : undefined
   };
   if (normalizedQuestion.gameKey !== "quiz") return normalizedQuestion;
   const derivedSessionIndex = getQuizSessionIndexFromOrder(normalizedQuestion.order);
@@ -207,10 +212,11 @@ function mapQuestionRecord(record: any): Question {
     gameKey: record.gameKey,
     type: record.type,
     title: record.title,
-    titleEn: record.titleEn || undefined,
+    titleEn: record.titleEn || record.title_en || undefined,
     options: record.options || undefined,
-    optionsEn: record.optionsEn || undefined,
+    optionsEn: record.optionsEn || record.options_en || undefined,
     correctAnswer: record.correctAnswer,
+    correctAnswerEn: record.correctAnswerEn || record.correctAnswer_en || undefined,
     score: record.score || 0,
     order: record.order || 1,
     isActive: record.isActive !== false,

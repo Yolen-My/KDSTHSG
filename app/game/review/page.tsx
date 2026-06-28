@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { useLocaleSwitch } from "@/components/LanguageProvider";
 import { useEffect, useMemo } from "react";
 import Layout from "@/components/Layout";
 import PageBackground from "@/components/PageBackground";
 import { getGameResult, getQuestions } from "@/lib/storage";
+import { correctAnswerForLocale, isCorrectAnswerForLocale, localizedAnswerText, localizedOptionLabel, localizedTitle, localizedWord } from "@/lib/i18n/question";
 import { useCurrentPlayer, useAppState } from "@/hooks/use-game-data";
 import type { GameKey, GameResult, Question } from "@/types";
 
@@ -14,19 +16,16 @@ const GAME_ORDER: GameKey[] = ["bingo", "quiz", "story", "elimination"];
 
 /* ─── helpers ─── */
 
-function isCorrectAnswer(question: Question, userAnswer: unknown): boolean {
+function isCorrectAnswer(question: Question, userAnswer: unknown, locale: "zh" | "en"): boolean {
   if (userAnswer == null) return false;
-  const answer = String(userAnswer);
-  if (Array.isArray(question.correctAnswer)) {
-    return question.correctAnswer.includes(answer);
-  }
-  return question.correctAnswer === answer;
+  return isCorrectAnswerForLocale(question, String(userAnswer), locale);
 }
 
 /* ─── sub-components ─── */
 
 function ReviewBingoBlock({ result, questions }: { result: GameResult; questions: Question[] }) {
   const t = useTranslations();
+  const { locale } = useLocaleSwitch();
   const answers = result.answers as { selectedWords?: string[]; targetWords?: string[]; correctCount?: number };
   const selectedWords: string[] = answers.selectedWords || [];
   const targetWords: string[] = answers.targetWords || [];
@@ -43,9 +42,10 @@ function ReviewBingoBlock({ result, questions }: { result: GameResult; questions
         {Array.from({ length: 9 }).map((_, i) => {
           const word = selectedWords[i] || "";
           const isTarget = targetWords.includes(word);
+          const displayWord = localizedWord(questions, word, locale);
           return (
             <div className={`reviewBingoCell${isTarget ? " reviewBingoCell--correct" : " reviewBingoCell--wrong"}`} key={i}>
-              {word}
+              {displayWord}
             </div>
           );
         })}
@@ -57,7 +57,7 @@ function ReviewBingoBlock({ result, questions }: { result: GameResult; questions
           const hit = selectedWords.includes(word);
           return (
             <span className={`reviewBingoTargetWord${hit ? " reviewBingoTargetWord--hit" : " reviewBingoTargetWord--miss"}`} key={word}>
-              {word}
+              {localizedWord(questions, word, locale)}
             </span>
           );
         })}
@@ -72,22 +72,25 @@ function ReviewQuestion({ question, userAnswer, needsLetterPrefix }: {
   needsLetterPrefix: boolean;
 }) {
   const t = useTranslations();
+  const { locale } = useLocaleSwitch();
   const answer = userAnswer != null ? String(userAnswer) : null;
-  const isCorrect = isCorrectAnswer(question, userAnswer);
+  const isCorrect = isCorrectAnswer(question, userAnswer, locale);
   const isChoice = question.type === "single" || question.type === "boolean" || question.type === "story";
+  const correctAnswer = correctAnswerForLocale(question, locale);
 
   return (
     <div className={`reviewQuestion${isCorrect ? " reviewQuestion--correct" : " reviewQuestion--wrong"}`}>
-      <div className="reviewQuestionTitle">{question.title}</div>
+      <div className="reviewQuestionTitle">{localizedTitle(question, locale)}</div>
 
       {isChoice && question.options ? (
         <div className="reviewOptions">
           {question.options.map((option, idx) => {
             const prefix = needsLetterPrefix ? `${String.fromCharCode(65 + idx)}. ` : "";
-            const isUserChoice = answer === option;
-            const isRightAnswer = Array.isArray(question.correctAnswer)
-              ? question.correctAnswer.includes(option)
-              : question.correctAnswer === option;
+            const optionValue = localizedOptionLabel(question, idx, locale);
+            const isUserChoice = answer === optionValue;
+            const isRightAnswer = Array.isArray(correctAnswer)
+              ? correctAnswer.includes(optionValue)
+              : correctAnswer === optionValue;
 
             let cls = "reviewOption";
             if (isUserChoice && isRightAnswer) cls += " reviewOption--correct";
@@ -96,7 +99,7 @@ function ReviewQuestion({ question, userAnswer, needsLetterPrefix }: {
 
             return (
               <div className={cls} key={idx}>
-                {prefix}{option}
+                {prefix}{localizedOptionLabel(question, idx, locale)}
               </div>
             );
           })}
@@ -107,7 +110,7 @@ function ReviewQuestion({ question, userAnswer, needsLetterPrefix }: {
             {t("review.yourAnswer")}{answer || t("review.notAnswered")}
           </div>
           <div className="reviewTextAnswer reviewTextAnswer--right">
-            {t("review.correctAnswer")}{Array.isArray(question.correctAnswer) ? question.correctAnswer.join("、") : question.correctAnswer}
+            {t("review.correctAnswer")}{Array.isArray(correctAnswer) ? correctAnswer.map((item) => localizedAnswerText(question, item, locale)).join("、") : localizedAnswerText(question, correctAnswer, locale)}
           </div>
         </div>
       )}

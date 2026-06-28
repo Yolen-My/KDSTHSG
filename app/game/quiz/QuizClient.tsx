@@ -4,12 +4,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { useLocaleSwitch } from "@/components/LanguageProvider";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import GameBannerIcon from "@/components/GameBannerIcon";
 import Layout from "@/components/Layout";
 import PageBackground from "@/components/PageBackground";
 import ResultModal from "@/components/ResultModal";
 import { useAppState, useCurrentPlayer, useQuestions, useSubmitGameResult } from "@/hooks/use-game-data";
+import { answerValueForLocale, isCorrectAnswerForLocale, localizedOptionLabel, localizedTitle } from "@/lib/i18n/question";
 import type { Question } from "@/types";
 
 const TOTAL_GROUPS = 5;
@@ -46,11 +48,8 @@ function getSectorDisplayName(index: number): string {
   return labels[index] ?? `Sector ${index + 1}`;
 }
 
-function isCorrectAnswer(question: Question, answer: string | undefined): boolean {
-  if (!answer) return false;
-  return Array.isArray(question.correctAnswer)
-    ? question.correctAnswer.includes(answer)
-    : question.correctAnswer === answer;
+function isCorrectAnswer(question: Question, answer: string | undefined, locale: "zh" | "en"): boolean {
+  return isCorrectAnswerForLocale(question, answer, locale);
 }
 
 function QuizNav({ hideActions = false }: { hideActions?: boolean }) {
@@ -100,6 +99,7 @@ function QuizShell({ children, hideNavActions = false }: { children: ReactNode; 
 export default function QuizClient({ initialSectorIndex = null }: { initialSectorIndex?: number | null }) {
   const router = useRouter();
   const t = useTranslations();
+  const { locale } = useLocaleSwitch();
   const { playerId, refresh: refreshPlayer } = useCurrentPlayer();
   const { state, refresh: refreshState, loading: stateLoading } = useAppState();
   const questions = useQuestions("quiz");
@@ -229,7 +229,7 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
     setSubmitting(true);
     try {
       const sectorScore = Math.max(0, Math.min(100, activeSector.questions.reduce((sum, question) => (
-        sum + (isCorrectAnswer(question, answers[question.id]) ? QUIZ_SCORE_PER_QUESTION : 0)
+        sum + (isCorrectAnswer(question, answers[question.id], locale) ? QUIZ_SCORE_PER_QUESTION : 0)
       ), 0)));
       const outcome = await submitGameResult({
         playerId,
@@ -357,19 +357,22 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
         </div>
 
         <section className="quizQuestionCard">
-          <h3>{currentQuestion.title}</h3>
+          <h3>{localizedTitle(currentQuestion, locale)}</h3>
           <div className="quizOptions">
-            {currentQuestion.options?.map((option, index) => (
-              <button
-                className={selectedAnswer === option ? "selected" : ""}
-                disabled={submitting}
-                key={option}
-                type="button"
-                onClick={() => chooseAnswer(option)}
-              >
-                {String.fromCharCode(65 + index)}. {option}
-              </button>
-            ))}
+            {currentQuestion.options?.map((option, index) => {
+              const answerValue = answerValueForLocale(currentQuestion, index, locale);
+              return (
+                <button
+                  className={selectedAnswer === answerValue ? "selected" : ""}
+                  disabled={submitting}
+                  key={`${option}-${answerValue}`}
+                  type="button"
+                  onClick={() => chooseAnswer(answerValue)}
+                >
+                  {String.fromCharCode(65 + index)}. {localizedOptionLabel(currentQuestion, index, locale)}
+                </button>
+              );
+            })}
           </div>
         </section>
 

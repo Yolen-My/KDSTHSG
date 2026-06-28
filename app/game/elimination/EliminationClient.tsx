@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { useLocaleSwitch } from "@/components/LanguageProvider";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import GameBannerIcon from "@/components/GameBannerIcon";
 import Layout from "@/components/Layout";
@@ -13,6 +14,7 @@ import CorrectAnswerModal from "@/components/CorrectAnswerModal";
 import { calculateEliminationScore } from "@/lib/scoring";
 import { getGameResult } from "@/lib/storage";
 import { useAppState, useCurrentPlayer, useQuestions, useRanking, useSubmitGameResult } from "@/hooks/use-game-data";
+import { answerValueForLocale, isCorrectAnswerForLocale, localizedOptionLabel, localizedTitle } from "@/lib/i18n/question";
 import type { Question } from "@/types";
 
 const ELIMINATION_SECONDS = 10;
@@ -32,11 +34,8 @@ function normalizeAnswerValue(value: unknown): string {
   return raw;
 }
 
-function isCorrectAnswer(question: Question, answer: string | undefined): boolean {
-  if (!answer) return false;
-  return Array.isArray(question.correctAnswer)
-    ? question.correctAnswer.map(normalizeAnswerValue).includes(normalizeAnswerValue(answer))
-    : normalizeAnswerValue(question.correctAnswer) === normalizeAnswerValue(answer);
+function isCorrectAnswer(question: Question, answer: string | undefined, locale: "zh" | "en"): boolean {
+  return isCorrectAnswerForLocale(question, answer, locale, normalizeAnswerValue);
 }
 
 function getMissionName(index: number): string {
@@ -106,6 +105,7 @@ function EliminationShell({ children, hideNavActions = false }: { children: Reac
 export default function EliminationClient({ initialMissionIndex = null }: { initialMissionIndex?: number | null }) {
   const router = useRouter();
   const t = useTranslations();
+  const { locale } = useLocaleSwitch();
   const { playerId, refresh: refreshPlayer, player } = useCurrentPlayer();
   const { state, refresh: refreshState, loading: stateLoading } = useAppState();
   const { ranking } = useRanking(playerId);
@@ -243,7 +243,7 @@ export default function EliminationClient({ initialMissionIndex = null }: { init
 
     submittingRef.current = true;
     setSubmitting(true);
-    const correctCount = gameQuestions.filter((question) => isCorrectAnswer(question, nextAnswers[question.id])).length;
+    const correctCount = gameQuestions.filter((question) => isCorrectAnswer(question, nextAnswers[question.id], locale)).length;
     const finalScore = calculateEliminationScore(correctCount);
 
     try {
@@ -292,7 +292,7 @@ export default function EliminationClient({ initialMissionIndex = null }: { init
     const completedAll = gameQuestions.length >= ELIMINATION_MISSION_COUNT && gameQuestions.every((question) => hasAnswer(nextAnswers, question));
     
     if (activeMission.index < 7) {
-      const correct = isCorrectAnswer(currentQuestion, answer);
+      const correct = isCorrectAnswer(currentQuestion, answer, locale);
       setCorrectModalIsCorrect(correct);
       setCorrectModalIsTimeout(false);
       setCorrectModalOpen(true);
@@ -448,19 +448,22 @@ export default function EliminationClient({ initialMissionIndex = null }: { init
         )}
 
         <section className="quizQuestionCard">
-          <h3>{currentQuestion.title}</h3>
+          <h3>{localizedTitle(currentQuestion, locale)}</h3>
           <div className="quizOptions">
-            {currentQuestion.options?.map((option) => (
-              <button
-                className={selectedAnswer === option ? "selected" : ""}
-                disabled={Boolean(existing) || !activeMission.isOpen || timeUp || submitting}
-                key={option}
-                type="button"
-                onClick={() => chooseAnswer(option)}
-              >
-                {option}
-              </button>
-            ))}
+            {currentQuestion.options?.map((option, index) => {
+              const answerValue = answerValueForLocale(currentQuestion, index, locale);
+              return (
+                <button
+                  className={selectedAnswer === answerValue ? "selected" : ""}
+                  disabled={Boolean(existing) || !activeMission.isOpen || timeUp || submitting}
+                  key={`${option}-${answerValue}`}
+                  type="button"
+                  onClick={() => chooseAnswer(answerValue)}
+                >
+                  {localizedOptionLabel(currentQuestion, index, locale)}
+                </button>
+              );
+            })}
           </div>
         </section>
 
