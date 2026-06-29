@@ -150,7 +150,7 @@
     "chooseFirst": "Please select an answer first",
     "selectedOfTotal": "Selected {answered}/{total}",
     "chooseToContinue": "Select an answer to continue",
-    "submitGroup": "Submit Group",
+    "submitGroup": "Submit",
     "sectorComplete": "{sector} completed\nYour score this round",
     "backPrev": "Back"
   },
@@ -204,8 +204,8 @@
   "table": {
     "notCompleted": "Not completed",
     "completedTime": "Completed: {time}",
-    "peopleCount": "{count} people",
-    "peopleCountSpaced": "{count} people",
+    "peopleCount": "{count} Participants",
+    "peopleCountSpaced": "{count} Participants",
     "officeTop3Header": "{office} TOP3",
     "officeTop3HeaderSpaced": "{office} TOP3"
   }
