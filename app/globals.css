@@ -1863,6 +1863,10 @@ button:disabled {
   width: 212px;
 }
 
+.resultModalTitleImageBingo {
+  width: 140px;
+}
+
 .resultModal--elimination {
   overflow: visible;
 }
@@ -2702,9 +2706,14 @@ button:disabled {
 .bingoGrid div span {
   min-width: 0;
   max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.15;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .bingoGrid div.lit {

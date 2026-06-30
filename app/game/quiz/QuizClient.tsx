@@ -41,7 +41,7 @@ function getSectorDisplayName(index: number): string {
     "Sector 2\nSEED / X",
     "Sector 3 CONSUMER",
     "Sector 4 HEALTHCARE",
-    "Sector 5 SECONDARY MARKETS"
+    "Sector 5 HCEP/HSIF/HCHP"
   ];
   return labels[index] ?? `Sector ${index + 1}`;
 }

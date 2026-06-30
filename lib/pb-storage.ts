@@ -326,6 +326,17 @@ export async function ensureGameState(): Promise<void> {
   }
 }
 
+let collectionsEnsured = false;
+
+// ensureCollections 是一次性的 schema 自检/初始化，旧实现每次注册都执行
+// （getFullList(players) + getFullList(game_results) + ensureGameState 里对 games 的循环 update），
+// 这是注册接口 ~556ms 的主要构成。这里改为每个运行时只执行一次。
+export async function ensureCollectionsOnce(): Promise<void> {
+  if (collectionsEnsured) return;
+  await ensureCollections();
+  collectionsEnsured = true;
+}
+
 export async function ensureCollections(): Promise<void> {
   const available = await checkPocketBase();
   if (!available) return;
@@ -538,38 +549,54 @@ export async function registerPlayer(input: { name: string; phone: string; offic
 
   const available = await checkPocketBase();
   if (available) {
-    await ensureCollections();
-    const existing = await pb.collection("players").getFirstListItem(pb.filter("phone = {:phone}", { phone })).catch(() => null);
+    await ensureCollectionsOnce();
+
+    const persistLogin = (player: Player, dispatch: boolean) => {
+      if (!isBrowser()) return;
+      window.localStorage.setItem(PLAYER_ID_KEY, player.id);
+      window.localStorage.setItem(PLAYER_PHONE_KEY, phone);
+      setCachedPlayer(player);
+      if (dispatch) window.dispatchEvent(new Event("annual-game-state-change"));
+    };
+
+    const findByPhone = async () =>
+      pb.collection("players").getFirstListItem(pb.filter("phone = {:phone}", { phone })).catch(() => null);
+
+    const existing = await findByPhone();
     if (existing) {
       const player = mapPlayerRecord(existing);
       if (player.name !== name) {
         throw new Error("该手机号已注册");
       }
-      if (isBrowser()) {
-        window.localStorage.setItem(PLAYER_ID_KEY, player.id);
-        window.localStorage.setItem(PLAYER_PHONE_KEY, phone);
-        setCachedPlayer(player);
-      }
+      persistLogin(player, false);
       return { player, reused: true };
     }
 
-    const created = await pb.collection("players").create({
-      name,
-      phone,
-      office,
-      team,
-      totalScore: 0,
-      completedGames: [],
-      finalSubmitted: false
-    });
-    const player = mapPlayerRecord(created);
-    if (isBrowser()) {
-      window.localStorage.setItem(PLAYER_ID_KEY, player.id);
-      window.localStorage.setItem(PLAYER_PHONE_KEY, phone);
-      setCachedPlayer(player);
-      window.dispatchEvent(new Event("annual-game-state-change"));
+    try {
+      const created = await pb.collection("players").create({
+        name,
+        phone,
+        office,
+        team,
+        totalScore: 0,
+        completedGames: [],
+        finalSubmitted: false
+      });
+      const player = mapPlayerRecord(created);
+      persistLogin(player, true);
+      return { player, reused: false };
+    } catch (error) {
+      // phone 唯一索引在并发下可能拦截「check-then-create」竞态：另一个并发请求已抢先创建。
+      // 回查一次：同名则视为复用，否则确为手机号冲突。
+      const raced = await findByPhone();
+      if (raced) {
+        const player = mapPlayerRecord(raced);
+        if (player.name !== name) throw new Error("该手机号已注册");
+        persistLogin(player, false);
+        return { player, reused: true };
+      }
+      throw error;
     }
-    return { player, reused: false };
   }
 
   throw new Error("PocketBase 不可用，已禁用本地兜底数据，请稍后重试");
@@ -1115,15 +1142,26 @@ export async function getLobbySnapshot(playerId: string) {
   const available = await checkPocketBase();
   if (available) {
     try {
-      const [players, playerResults, games] = await Promise.all([
-        pb.collection("players").getFullList(),
+      // 旧实现为了算「我的排名」全量拉取 players（500 并发下是主要瓶颈）。
+      // 改为：只取当前玩家本人 + 用 count 查询求名次（totalScore 已建索引），不再加载全表。
+      const playerRecord = await pb.collection("players").getOne(playerId).catch(() => null);
+      const player = playerRecord ? mapPlayerRecord(playerRecord) : null;
+
+      const [aheadCount, playerResults, games] = await Promise.all([
+        player
+          ? pb.collection("players").getList(1, 1, {
+              filter: pb.filter("totalScore > {:score}", { score: player.totalScore }),
+              fields: "id"
+            })
+          : Promise.resolve({ totalItems: 0 }),
+        // player 字段已建索引，该过滤查询命中索引而非全表扫描。
         pb.collection("game_results").getFullList({
           filter: pb.filter("player = {:playerId}", { playerId }),
           sort: "completedAt"
         }),
         pb.collection("games").getFullList({ sort: "order" })
       ]);
-      const mappedPlayers = players.map(mapPlayerRecord);
+
       const results: GameResult[] = playerResults.map((r) => ({
         id: r.id,
         player: r.player,
@@ -1138,16 +1176,16 @@ export async function getLobbySnapshot(playerId: string) {
         sectorName: r.sectorName || undefined
       })).map(normalizeGameResult);
       const state: AppState = {
-        players: mappedPlayers,
+        players: player ? [player] : [],
         gameResults: results,
         games: games.map(mapGameRecord),
         questions: []
       };
-      const player = mappedPlayers.find((item) => item.id === playerId) || null;
       return {
         state,
         player,
-        rank: player ? getPlayerRank(mappedPlayers, player.id) : 0,
+        // 按总分计算名次：领先我的人数 + 1（同分并列取较优名次）。
+        rank: player ? aheadCount.totalItems + 1 : 0,
         results,
         quizProgress: buildQuizProgress(state, playerId)
       };
@@ -1167,17 +1205,56 @@ export async function getLobbySnapshot(playerId: string) {
   };
 }
 
+// 排行榜：players 走服务端缓存接口 /api/ranking-data（TTL=2s），games 直查。
+// 旧实现走 loadState() 会额外全量加载 game_results 和 questions（排行榜完全用不到），
+// 且每个客户端各自全量扫描 players，在高并发下是主要瓶颈。
 export async function getRankingSnapshot(playerId?: string | null) {
-  const state = await loadState();
-  return {
-    players: state.players,
-    games: state.games,
-    results: state.gameResults,
-    top10: getTop10Ranking(state.players),
-    officeAverage: getOfficeAverageRanking(state.players),
-    officeTop3: getOfficeTop3(state.players),
-    context: playerId ? getPlayerRankingContext(state.players, playerId) : null
-  };
+  const available = await checkPocketBase();
+  if (!available) {
+    const empty = getEmptyRuntimeState();
+    return {
+      players: empty.players,
+      games: empty.games,
+      results: [] as GameResult[],
+      top10: [],
+      officeAverage: [],
+      officeTop3: [],
+      context: null
+    };
+  }
+
+  try {
+    // players 走服务端缓存接口（TTL=2s），高并发下避免每个客户端各自全表扫描；
+    // games 是 4 行小表，直接查询即可（并发成本可忽略）。
+    const [rankData, gameRecords] = await Promise.all([
+      pb.send("/api/ranking-data", { method: "GET" }) as Promise<{ players: unknown[] }>,
+      pb.collection("games").getFullList({ sort: "order" })
+    ]);
+    const players = (rankData?.players || []).map((r) => mapPlayerRecord(r));
+    const games = gameRecords.map(mapGameRecord);
+    return {
+      players,
+      games: games.length > 0 ? games : GAMES,
+      // results 仅作为 result 页的兜底来源（snapshot.results 优先），排行榜本身不依赖它。
+      results: [] as GameResult[],
+      top10: getTop10Ranking(players),
+      officeAverage: getOfficeAverageRanking(players),
+      officeTop3: getOfficeTop3(players),
+      context: playerId ? getPlayerRankingContext(players, playerId) : null
+    };
+  } catch (error) {
+    console.error("❌ getRankingSnapshot 失败:", error);
+    const empty = getEmptyRuntimeState();
+    return {
+      players: empty.players,
+      games: empty.games,
+      results: [] as GameResult[],
+      top10: [],
+      officeAverage: [],
+      officeTop3: [],
+      context: null
+    };
+  }
 }
 
 export async function resetDemoData(): Promise<void> {

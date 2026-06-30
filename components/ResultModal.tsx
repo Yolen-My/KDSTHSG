@@ -8,7 +8,12 @@ const RESULT_TITLE_IMAGES: Record<
   GameKey,
   { src: string; width: number; height: number; className?: string }
 > = {
-  bingo: { src: "/image/source/bingo/bingo-title.png", width: 246, height: 20 },
+  bingo: {
+    src: "/image/source/bingo/bingo-title-stacked.png",
+    width: 280,
+    height: 80,
+    className: "resultModalTitleImage resultModalTitleImageBingo"
+  },
   story: {
     src: "/image/source/story/story-title.png",
     width: 244,

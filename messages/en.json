@@ -37,7 +37,7 @@
   },
   "game": {
     "name": {
-      "bingo": "Word Guess",
+      "bingo": "Words Guess",
       "quiz": "Speed Answer",
       "story": "True or False",
       "elimination": "Quiz Round"
@@ -50,6 +50,7 @@
     "notOpen": "Not open",
     "waitingBoss": "Waiting for Boss",
     "waitingOpen": "Waiting to open",
+    "gameStarted": "Game Started",
     "continueQuiz": "Continue"
   },
   "home": {
@@ -81,7 +82,7 @@
   },
   "lobby": {
     "progress": "Progress {completed}/{total}",
-    "maxScore": "Max {score} pts"
+    "maxScore": "{score} Points"
   },
   "ranking": {
     "rankNo": "No. {rank}",
@@ -131,8 +132,8 @@
     "sectorScore": "Score {score} / 20"
   },
   "bingo": {
-    "subtitle": "Match the words to complete Bingo",
-    "hint": "Pick 9 words to form the Bingo grid",
+    "subtitle": "Predict 9 keywords will be mentioned in keynote.",
+    "hint": "",
     "pickNine": "Pick 9 words to form the Bingo grid",
     "autoSubmitting": "Auto-submitting...",
     "phaseNotice": "The Boss has finished speaking. Submitting will auto-score.",
@@ -188,8 +189,8 @@
   "waitingModal": {
     "timeoutEyebrow": "Timed out",
     "submittedEyebrow": "Submitted",
-    "timeoutText": "Time's up. Please keep listening; results will be shown after the speech.",
-    "submittedText": "Thanks for submitting. Time to listen carefully; results will be revealed after the speech."
+    "timeoutText": "Time's up. Enjoy the upcoming Keynote Speech. Results will be revealed after the speech.",
+    "submittedText": "Entry locked. The Keynote Speech is about to begin. See how your predictions unfold."
   },
   "quizStartModal": {
     "eyebrow": "Get Ready",
@@ -206,7 +207,7 @@
     "completedTime": "Completed: {time}",
     "peopleCount": "{count} people",
     "peopleCountSpaced": "{count} people",
-    "officeTop3Header": "{office} TOP3",
-    "officeTop3HeaderSpaced": "{office} TOP3"
+    "officeTop3Header": "{office} TOP 3",
+    "officeTop3HeaderSpaced": "{office} TOP 3"
   }
 }
