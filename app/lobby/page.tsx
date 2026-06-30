@@ -49,7 +49,7 @@ export default function LobbyPage() {
   const getGroupBasedGameStatus = (game: typeof snapshot.state.games[number], completed: boolean): GameStatusKey => {
     if (completed) return "done";
     if (!game.isOpen) return getClosedStatus(game);
-    return (game.quizOpenGroups || []).length > 0 ? "continueQuiz" : "waitingOpen";
+    return (game.quizOpenGroups || []).length > 0 ? "continueQuiz" : "gameStarted";
   };
   const getLobbyGameStatus = (game: typeof snapshot.state.games[number], completed: boolean, bingoPending = false): GameStatusKey => {
     if (completed) return "done";
@@ -125,7 +125,7 @@ export default function LobbyPage() {
                     ? getClosedStatus(game)
                     : hasAvailableGroup
                       ? "continueQuiz"
-                      : "waitingOpen";
+                      : "gameStarted";
 
                 return (
                   <GameCard

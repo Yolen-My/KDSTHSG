@@ -50,6 +50,7 @@
     "notOpen": "未开放",
     "waitingBoss": "等待 Boss 发言",
     "waitingOpen": "等待开启",
+    "gameStarted": "游戏开启",
     "continueQuiz": "继续答题"
   },
   "home": {
@@ -131,8 +132,8 @@
     "sectorScore": "得分 {score} / 20"
   },
   "bingo": {
-    "subtitle": "猜对词语，完成 Bingo",
-    "hint": "请从词库中选择9个词组成 Bingo 宫格",
+    "subtitle": "预测9个将在演讲中出现的关键词",
+    "hint": "",
     "pickNine": "请选择 9 个词组成 Bingo 宫格",
     "autoSubmitting": "正在自动提交...",
     "phaseNotice": "Boss 发言已完成，提交后系统将自动判分。",
@@ -188,8 +189,8 @@
   "waitingModal": {
     "timeoutEyebrow": "已超时",
     "submittedEyebrow": "已提交",
-    "timeoutText": "很遗憾已超时，请继续认真听讲，演讲结束后，查看结果",
-    "submittedText": "感谢提交，认真听讲时刻到了，演讲结束后，会揭幕结果"
+    "timeoutText": "很遗憾，已超时。Keynote Speech即将开始。结果将在演讲结束后揭晓。",
+    "submittedText": "锁定离手。Keynote Speech即将开始。结束后，一起来看看你猜中了几个关键词。"
   },
   "quizStartModal": {
     "eyebrow": "游戏准备",
@@ -206,7 +207,7 @@
     "completedTime": "完成时间：{time}",
     "peopleCount": "{count}人",
     "peopleCountSpaced": "{count} 人",
-    "officeTop3Header": "{office} TOP3",
-    "officeTop3HeaderSpaced": "{office} TOP3"
+    "officeTop3Header": "{office} TOP 3",
+    "officeTop3HeaderSpaced": "{office} TOP 3"
   }
 }

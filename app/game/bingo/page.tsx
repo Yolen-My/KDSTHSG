@@ -23,6 +23,15 @@ const BINGO_SECONDS = 90;
 const LEGACY_BINGO_TIMER_KEY = "bingo_timer_start";
 const LEGACY_BINGO_TIMEOUT_KEY = "bingo_timeout";
 
+// 已选宫格固定高度，长词换行后按字数动态缩小字号以完整显示
+function getGridFontSize(word: string): number {
+  const len = word.length;
+  if (len <= 8) return 14;
+  if (len <= 11) return 12;
+  if (len <= 15) return 11;
+  return 10;
+}
+
 function getBingoTimerKey(playerId?: string | null): string {
   return playerId ? `bingo_timer_start_${playerId}` : LEGACY_BINGO_TIMER_KEY;
 }
@@ -467,7 +476,15 @@ export default function BingoPage() {
           <div className="bingoGrid">
             {Array.from({ length: 9 }).map((_, index) => (
               <div className={selectedWords[index] ? "lit" : ""} key={index}>
-                <span>{selectedDisplayWords[index] || ""}</span>
+                <span
+                  style={
+                    selectedWords[index]
+                      ? { fontSize: `${getGridFontSize(selectedWords[index])}px` }
+                      : undefined
+                  }
+                >
+                  {selectedWords[index] || ""}
+                </span>
               </div>
             ))}
           </div>

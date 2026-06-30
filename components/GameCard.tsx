@@ -13,6 +13,7 @@ export type GameStatusKey =
   | "notOpen"
   | "waitingBoss"
   | "waitingOpen"
+  | "gameStarted"
   | "continueQuiz";
 
 type GameCardProps = {
@@ -41,7 +42,7 @@ const GAME_ICONS: Record<GameKey, IconConfig> = {
 
 function getStatusBadgeClass(statusKey: GameStatusKey, canEnter: boolean): string {
   if (statusKey === "done" || statusKey === "closed") return "lobbyGameBadge lobbyGameBadge--done";
-  if (!canEnter || statusKey === "waitingOpen") return "lobbyGameBadge lobbyGameBadge--locked";
+  if (!canEnter || statusKey === "waitingOpen" || statusKey === "gameStarted") return "lobbyGameBadge lobbyGameBadge--locked";
   return "lobbyGameBadge";
 }
 
