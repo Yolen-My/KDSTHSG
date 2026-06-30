@@ -3164,7 +3164,18 @@ button:disabled {
   font-size: 17px;
   font-weight: 500;
   line-height: 1.4;
-  white-space: pre-line;
+}
+
+.quizSectorSubtitle {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  opacity: 0.9;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .quizSectorMeta {

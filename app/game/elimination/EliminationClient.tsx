@@ -429,8 +429,7 @@ export default function EliminationClient({ initialMissionIndex = null }: { init
     return (
       <EliminationShell hideNavActions>
         <div className="quizPlayHeader">
-          <h2>{activeMission.missionName}</h2>
-          <p>{t("common.questionOf", { current: 1, total: 1 })}</p>
+          <h2>ABOUT HONGSHAN</h2>
         </div>
 
         {!existing && activeMission.isOpen && (

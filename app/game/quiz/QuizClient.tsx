@@ -37,15 +37,22 @@ function getSectorName(index: number): string {
   return `Sector ${index + 1}`;
 }
 
-function getSectorDisplayName(index: number): string {
+function getSectorDisplayName(index: number): ReactNode {
   const labels = [
-    "Sector 1 TECH",
-    "Sector 2\nSEED / X",
-    "Sector 3 CONSUMER",
-    "Sector 4 HEALTHCARE",
-    "Sector 5 HCEP/HSIF/HCHP"
+    { main: "Sector 1", sub: "TECH" },
+    { main: "Sector 2", sub: "SEED / X" },
+    { main: "Sector 3", sub: "CONSUMER" },
+    { main: "Sector 4", sub: "HEALTHCARE" },
+    { main: "Sector 5", sub: "HCEP/HSIF/HCHP" }
   ];
-  return labels[index] ?? `Sector ${index + 1}`;
+  const label = labels[index];
+  if (!label) return `Sector ${index + 1}`;
+  return (
+    <>
+      {label.main}
+      <span className="quizSectorSubtitle">{label.sub}</span>
+    </>
+  );
 }
 
 function isCorrectAnswer(question: Question, answer: string | undefined, locale: "zh" | "en"): boolean {
