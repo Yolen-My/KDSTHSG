@@ -205,8 +205,8 @@
   "table": {
     "notCompleted": "Not completed",
     "completedTime": "Completed: {time}",
-    "peopleCount": "{count} people",
-    "peopleCountSpaced": "{count} people",
+    "peopleCount": "{count} Participants",
+    "peopleCountSpaced": "{count} Participants",
     "officeTop3Header": "{office} TOP 3",
     "officeTop3HeaderSpaced": "{office} TOP 3"
   }
