@@ -11,10 +11,11 @@ import Layout from "@/components/Layout";
 import PageBackground from "@/components/PageBackground";
 import ResultModal from "@/components/ResultModal";
 import WaitingModal from "@/components/WaitingModal";
+import { getPlayerRank } from "@/lib/ranking";
 import { calculateBingoSelection, getBingoTargetWords } from "@/lib/bingo-scoring";
 import { localizedWord } from "@/lib/i18n/question";
 import { getGameResult } from "@/lib/storage";
-import { useCurrentPlayer, useQuestions, useSubmitGameResult, useAppState } from "@/hooks/use-game-data";
+import { useCurrentPlayer, useQuestions, useSubmitGameResult, useAppState } from "@/hooks/use-game-data.optimized";
 import type { Question } from "@/types";
 import type { ReactNode } from "react";
 
@@ -138,11 +139,17 @@ export default function BingoPage() {
   // Bingo 阶段
   const bingoGame = useMemo(() => state.games.find((g) => g.key === "bingo"), [state.games]);
   const bingoPhase = bingoGame?.bingoPhase || "open";
-  // P0-1: 直接用 useCurrentPlayer 的 player，不再从 state.players 查找
-  const currentPlayer = player;
+  const currentPlayer = useMemo(
+    () => (playerId ? state.players.find((p) => p.id === playerId) || player : null),
+    [playerId, state.players, player]
+  );
 
   // 用户当前的 Bingo 状态
-  const myBingoResult = useMemo(() => existing, [existing]);
+  const myBingoResult = useMemo(() => {
+    if (!playerId) return existing;
+    const stateResult = state.gameResults.find((r) => r.player === playerId && r.gameKey === "bingo") || null;
+    return stateResult || existing;
+  }, [existing, playerId, state.gameResults]);
 
   // 用户是否已完成 Bingo（只看用户自己的 completedGames）
   const hasCompletedBingo = Boolean(currentPlayer?.completedGames.includes("bingo"));
@@ -276,9 +283,9 @@ export default function BingoPage() {
       open: true,
       score: latestResult.score,
       total: currentPlayer.totalScore,
-      rank: pendingResult?.rank || 0
+      rank: getPlayerRank(state.players, currentPlayer.id)
     });
-  }, [hasCompletedBingo, myBingoResult, pendingResult, currentPlayer, modal.open]);
+  }, [hasCompletedBingo, myBingoResult, pendingResult, currentPlayer, modal.open, state.players]);
 
   // 重新进入页面：若倒计时已结束且未完成/未等待判分，自动提交并弹出等待弹窗
   useEffect(() => {
@@ -467,19 +474,24 @@ export default function BingoPage() {
 
         <div className="bingoGridWrap">
           <div className="bingoGrid">
-            {Array.from({ length: 9 }).map((_, index) => (
-              <div className={selectedWords[index] ? "lit" : ""} key={index}>
-                <span
-                  style={
-                    selectedWords[index]
-                      ? { fontSize: `${getGridFontSize(selectedWords[index])}px` }
-                      : undefined
-                  }
-                >
-                  {selectedWords[index] || ""}
-                </span>
-              </div>
-            ))}
+            {Array.from({ length: 9 }).map((_, index) => {
+              const displayWord = selectedDisplayWords[index] || "";
+              const hasWord = Boolean(selectedWords[index]);
+
+              return (
+                <div className={hasWord ? "lit" : ""} key={index}>
+                  <span
+                    style={
+                      displayWord
+                        ? { fontSize: `${getGridFontSize(displayWord)}px` }
+                        : undefined
+                    }
+                  >
+                    {displayWord}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>

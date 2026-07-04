@@ -13,7 +13,7 @@ import ResultModal from "@/components/ResultModal";
 import CorrectAnswerModal from "@/components/CorrectAnswerModal";
 import { calculateEliminationScore } from "@/lib/scoring";
 import { getGameResult } from "@/lib/storage";
-import { useAppState, useCurrentPlayer, useQuestions, useRanking, useSubmitGameResult } from "@/hooks/use-game-data";
+import { useAppState, useCurrentPlayer, useQuestions, useRanking, useSubmitGameResult } from "@/hooks/use-game-data.optimized";
 import { answerValueForLocale, isCorrectAnswerForLocale, localizedOptionLabel, localizedTitle } from "@/lib/i18n/question";
 import type { Question } from "@/types";
 

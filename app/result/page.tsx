@@ -9,7 +9,7 @@ import OfficeAverageTable from "@/components/OfficeAverageTable";
 import OfficeTop3Panel from "@/components/OfficeTop3Panel";
 import RankingTable from "@/components/RankingTable";
 import { GAME_ORDER } from "@/lib/constants";
-import { useCurrentPlayer, useLobbySnapshot, useRanking } from "@/hooks/use-game-data";
+import { useCurrentPlayer, useLobbySnapshot, useRanking } from "@/hooks/use-game-data.optimized";
 
 export default function ResultPage() {
   const router = useRouter();

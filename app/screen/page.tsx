@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import OfficeAverageTable from "@/components/OfficeAverageTable";
 import OfficeTop3Panel from "@/components/OfficeTop3Panel";
 import RankingTable from "@/components/RankingTable";
-import { useRanking } from "@/hooks/use-game-data";
+import { useRanking } from "@/hooks/use-game-data.optimized";
 
 export default function ScreenPage() {
   const t = useTranslations();

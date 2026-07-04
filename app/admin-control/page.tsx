@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Layout from "@/components/Layout";
 import { GAME_ORDER, GAME_DISPLAY_NAMES } from "@/lib/constants";
 import { loadState, resetDemoData } from "@/lib/storage";
-import { useAdminActions, useAdminState } from "@/hooks/use-game-data";
+import { useAdminActions, useAppState } from "@/hooks/use-game-data.optimized";
 import type { GameKey } from "@/types";
 
 const QUIZ_SECTOR_COUNT = 5;
@@ -28,7 +28,7 @@ function getGroupName(index: number): string {
 }
 
 export default function AdminControlPage() {
-  const { state, refresh } = useAdminState(2000);
+  const { state, refresh } = useAppState(2000);
   const {
     toggleGameOpen,
     triggerBingoScore,

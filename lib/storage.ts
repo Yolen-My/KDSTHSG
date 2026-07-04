@@ -236,22 +236,6 @@ export async function loadState(): Promise<AppState> {
   return getEmptyRuntimeState();
 }
 
-export async function loadGamesOnly(): Promise<AppState> {
-  const available = await checkBackend();
-  if (available) {
-    return await pbStorage.loadGamesOnly();
-  }
-  return getEmptyRuntimeState();
-}
-
-export async function loadGameStateAggregated(): Promise<AppState> {
-  const available = await checkBackend();
-  if (available) {
-    return await pbStorage.loadGameStateAggregated();
-  }
-  return getEmptyRuntimeState();
-}
-
 export async function saveState(state: AppState): Promise<void> {
   const available = await checkBackend();
   if (available) {
@@ -349,7 +333,7 @@ export function validatePhone(phone: string): boolean {
 export async function registerPlayer(input: { name: string; phone: string; office: string; team: string }): Promise<{ player: Player; reused: boolean }> {
   const available = await checkBackend();
   if (available) {
-    await pbStorage.ensureCollections();
+    await pbStorage.ensureCollectionsOnce();
     return await pbStorage.registerPlayer(input);
   }
 
@@ -738,10 +722,6 @@ export async function resetDemoData(): Promise<void> {
 
 export function subscribeToState(callback: () => void): () => void {
   return pbStorage.subscribeToState(callback);
-}
-
-export function isRealtimeSubscribed(): boolean {
-  return pbStorage.isRealtimeSubscribed();
 }
 
 export { PLAYER_ID_KEY, PLAYER_PHONE_KEY };

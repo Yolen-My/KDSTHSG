@@ -28,3 +28,6 @@ pb_data/
 desktop.ini
 .env.production
 /pocketbase
+
+# IDE
+.idea/
