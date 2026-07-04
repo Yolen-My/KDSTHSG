@@ -12,12 +12,16 @@ let pocketBaseAvailable = false;
 let lastHealthCheckAt = 0;
 const HEALTH_CHECK_CACHE_MS = 30000;
 
-async function runInBatches<T>(tasks: Array<() => Promise<T>>, batchSize = 20): Promise<T[]> {
-  const results: T[] = [];
-  for (let index = 0; index < tasks.length; index += batchSize) {
-    results.push(...await Promise.all(tasks.slice(index, index + batchSize).map((task) => task())));
+async function sendPocketBaseBatches<T>(
+  items: T[],
+  addRequest: (batch: ReturnType<typeof pb.createBatch>, item: T) => void,
+  batchSize = 20
+): Promise<void> {
+  for (let index = 0; index < items.length; index += batchSize) {
+    const batch = pb.createBatch();
+    items.slice(index, index + batchSize).forEach((item) => addRequest(batch, item));
+    await batch.send();
   }
-  return results;
 }
 
 function nowIso(): string {
@@ -790,6 +794,27 @@ async function getRankForScore(totalScore: number): Promise<number> {
   return ahead.totalItems + 1;
 }
 
+async function findDuplicateResult(input: {
+  playerId: string;
+  gameKey: GameKey;
+  quizSessionIndex?: number;
+}): Promise<boolean> {
+  const parts = ["player = {:playerId}", "gameKey = {:gameKey}"];
+  const params: Record<string, string | number> = {
+    playerId: input.playerId,
+    gameKey: input.gameKey
+  };
+  if (input.gameKey === "quiz") {
+    parts.push("quizSessionIndex = {:quizSessionIndex}");
+    params.quizSessionIndex = input.quizSessionIndex ?? 0;
+  }
+  const existing = await pb.collection("game_results").getFirstListItem(
+    pb.filter(parts.join(" && "), params),
+    { fields: "id" }
+  ).catch(() => null);
+  return Boolean(existing);
+}
+
 export async function isGameOpen(gameKey: GameKey): Promise<boolean> {
   const available = await checkPocketBase();
   if (!available) return false;
@@ -932,21 +957,20 @@ export async function triggerBingoScore(): Promise<AppState> {
       });
 
       // 批量并发更新所有 pending Bingo 记录（原逐个 await 在高并发下极慢）
-      const pendingUpdates = pendingResults
-        .filter(r => mapPendingBingoScore(r))
-        .map(result => () => {
-          const settled = gameResults.find((item) => item.id === result.id);
-          return pb.collection("game_results").update(result.id, {
+      const settledById = new Map(gameResults.map((result) => [result.id, result]));
+      const pendingUpdates = pendingResults.filter((result) => mapPendingBingoScore(result));
+      await sendPocketBaseBatches(pendingUpdates, (batch, result) => {
+          const settled = settledById.get(result.id);
+          batch.collection("game_results").update(result.id, {
             pendingBingoScore: false,
             score: settled?.score ?? result.score,
             answers: settled?.answers ?? { ...result.answers, pendingBingoScore: false }
           });
         });
-      await runInBatches(pendingUpdates);
 
-      // 为没提交 Bingo 的玩家并发创建空 Bingo 记录
-      const createPromises = autoCreatedBingoResults.map((autoResult) => async () => {
-        const created = await pb.collection("game_results").create({
+      // 为没提交 Bingo 的玩家批量创建空 Bingo 记录
+      await sendPocketBaseBatches(autoCreatedBingoResults, (batch, autoResult) => {
+        batch.collection("game_results").create({
           player: autoResult.player,
           gameKey: autoResult.gameKey,
           answers: autoResult.answers,
@@ -955,15 +979,12 @@ export async function triggerBingoScore(): Promise<AppState> {
           completedAt: autoResult.completedAt,
           pendingBingoScore: false
         });
-        autoResult.id = created.id;
       });
-      await runInBatches(createPromises);
 
-      // 并发更新所有玩家分数
-      const playerUpdates = newState.players.map(player => () =>
-        pb.collection("players").update(player.id, buildPlayerUpdate(player))
-      );
-      await runInBatches(playerUpdates);
+      // 批量更新所有玩家分数
+      await sendPocketBaseBatches(newState.players, (batch, player) => {
+        batch.collection("players").update(player.id, buildPlayerUpdate(player));
+      });
 
       const list = await pb.collection("games").getFullList();
       const bingo = list.find(g => g.key === "bingo");
@@ -1247,22 +1268,32 @@ async function persistGameResult(
     sectorName: input.sectorName
   };
 
-  const created = await pb.collection("game_results").create({
-      player: result.player,
-      gameKey: result.gameKey,
-      answers: result.answers,
-      score: result.score,
-      maxScore: result.maxScore,
-      completedAt: result.completedAt,
-      pendingBingoScore: isPending,
-      quizSessionIndex: result.quizSessionIndex,
-      sectorKey: result.sectorKey,
-      sectorName: result.sectorName
-    });
-  result.id = created.id;
+  const resultData = {
+    player: result.player,
+    gameKey: result.gameKey,
+    answers: result.answers,
+    score: result.score,
+    maxScore: result.maxScore,
+    completedAt: result.completedAt,
+    pendingBingoScore: isPending,
+    quizSessionIndex: result.quizSessionIndex,
+    sectorKey: result.sectorKey,
+    sectorName: result.sectorName
+  };
 
   // pending 情况下不更新 player.completedGames
   if (isPending) {
+    try {
+      const batch = pb.createBatch();
+      batch.collection("game_results").create(resultData);
+      const responses = await batch.send();
+      result.id = responses[0]?.body?.id || result.id;
+    } catch (error) {
+      if (await findDuplicateResult(input)) {
+        throw new Error("已提交，等待 Boss 发言完成后判分");
+      }
+      throw error;
+    }
     const newState: AppState = {
       ...state,
       gameResults: [...state.gameResults, result]
@@ -1291,7 +1322,18 @@ async function persistGameResult(
     updated: nowIso()
   };
 
-  await pb.collection("players").update(player.id, buildPlayerUpdate(player));
+  try {
+    const batch = pb.createBatch();
+    batch.collection("game_results").create(resultData);
+    batch.collection("players").update(player.id, buildPlayerUpdate(player));
+    const responses = await batch.send();
+    result.id = responses[0]?.body?.id || result.id;
+  } catch (error) {
+    if (await findDuplicateResult(input)) {
+      throw new Error(input.gameKey === "quiz" ? "该组 Quiz 已完成，不能重复提交" : "该游戏已完成，不能重复提交");
+    }
+    throw error;
+  }
 
   const newState: AppState = {
     ...state,

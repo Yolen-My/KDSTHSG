@@ -123,7 +123,8 @@
       }
     ],
     "indexes": [
-      "CREATE UNIQUE INDEX `idx_players_phone` ON `players` (`phone`)"
+      "CREATE UNIQUE INDEX `idx_players_phone` ON `players` (`phone`)",
+      "CREATE INDEX `idx_players_totalScore` ON `players` (`totalScore`)"
     ],
     "listRule": "",
     "viewRule": "",
@@ -281,7 +282,11 @@
     ],
     "indexes": [
       "CREATE INDEX `idx_game_results_player_game` ON `game_results` (`player`, `gameKey`)",
-      "CREATE INDEX `idx_game_results_player_game_quiz_session` ON `game_results` (`player`, `gameKey`, `quizSessionIndex`)"
+      "CREATE INDEX `idx_game_results_player_game_quiz_session` ON `game_results` (`player`, `gameKey`, `quizSessionIndex`)",
+      "CREATE INDEX `idx_results_game_pending` ON `game_results` (`gameKey`, `pendingBingoScore`)",
+      "CREATE INDEX `idx_results_completedAt` ON `game_results` (`completedAt`)",
+      "CREATE UNIQUE INDEX `idx_results_unique_non_quiz` ON `game_results` (`player`, `gameKey`) WHERE `gameKey` <> 'quiz'",
+      "CREATE UNIQUE INDEX `idx_results_unique_quiz_session` ON `game_results` (`player`, `gameKey`, `quizSessionIndex`) WHERE `gameKey` = 'quiz'"
     ],
     "listRule": "",
     "viewRule": "",
