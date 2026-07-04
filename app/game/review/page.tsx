@@ -10,7 +10,7 @@ import PageBackground from "@/components/PageBackground";
 import { getGameResult, getQuestions } from "@/lib/storage";
 import { correctAnswerForLocale, isCorrectAnswerForLocale, localizedAnswerText, localizedOptionLabel, localizedTitle, localizedWord } from "@/lib/i18n/question";
 import { isBingoCorrectQuestion } from "@/lib/bingo-scoring";
-import { useCurrentPlayer, useAppState } from "@/hooks/use-game-data.optimized";
+import { useCurrentPlayer, useAppState, useQuestions } from "@/hooks/use-game-data.optimized";
 import type { GameKey, GameResult, Question } from "@/types";
 
 const GAME_ORDER: GameKey[] = ["bingo", "quiz", "story", "elimination"];
@@ -197,6 +197,14 @@ export default function ReviewPage() {
   const t = useTranslations();
   const { playerId, player } = useCurrentPlayer();
   const { state } = useAppState(undefined, playerId);
+  const bingoQuestions = useQuestions("bingo");
+  const quizQuestions = useQuestions("quiz");
+  const storyQuestions = useQuestions("story");
+  const eliminationQuestions = useQuestions("elimination");
+  const questions = useMemo(
+    () => [...bingoQuestions, ...quizQuestions, ...storyQuestions, ...eliminationQuestions],
+    [bingoQuestions, eliminationQuestions, quizQuestions, storyQuestions]
+  );
 
   useEffect(() => {
     if (playerId === null) router.push("/register");
@@ -229,13 +237,13 @@ export default function ReviewPage() {
     if (results.length > 0) {
       rMap.set(key, results);
     }
-      const qs = state.questions.filter((q) => q.gameKey === key && q.isActive);
+      const qs = questions.filter((q) => q.gameKey === key && q.isActive);
       if (qs.length > 0) {
         qMap.set(key, qs);
       }
     }
     return [rMap, qMap];
-  }, [gamesWithResults, state.gameResults, state.questions, playerId]);
+  }, [gamesWithResults, playerId, questions, state.gameResults]);
 
   if (!player) {
     return (

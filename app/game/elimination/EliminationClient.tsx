@@ -13,7 +13,7 @@ import ResultModal from "@/components/ResultModal";
 import CorrectAnswerModal from "@/components/CorrectAnswerModal";
 import { calculateEliminationScore } from "@/lib/scoring";
 import { getGameResult } from "@/lib/storage";
-import { useAppState, useCurrentPlayer, useQuestions, useRanking, useSubmitGameResult } from "@/hooks/use-game-data.optimized";
+import { useAppState, useCurrentPlayer, useQuestions, useSubmitGameResult } from "@/hooks/use-game-data.optimized";
 import { answerValueForLocale, isCorrectAnswerForLocale, localizedOptionLabel, localizedTitle } from "@/lib/i18n/question";
 import type { Question } from "@/types";
 
@@ -108,7 +108,6 @@ export default function EliminationClient({ initialMissionIndex = null }: { init
   const { locale } = useLocaleSwitch();
   const { playerId, refresh: refreshPlayer, player } = useCurrentPlayer();
   const { state, refresh: refreshState, loading: stateLoading } = useAppState(undefined, playerId);
-  const { ranking } = useRanking(playerId);
   const questions = useQuestions("elimination");
   const submitGameResult = useSubmitGameResult();
 
@@ -161,7 +160,7 @@ export default function EliminationClient({ initialMissionIndex = null }: { init
   const resultModalOpen = modal.open || Boolean(existing && !existingLoading);
   const resultRoundScore = modal.open ? modal.score : existing?.score ?? 0;
   const resultTotalScore = modal.open ? modal.total : player?.totalScore ?? existing?.score ?? 0;
-  const resultRank = modal.open ? modal.rank : ranking.context?.rank ?? 0;
+  const resultRank = modal.rank;
 
   // 记录本次会话内游戏是否曾被开启：开启后即便所有关卡关闭导致 isOpen 回落，
   // 也应停留在“开启后的页面”（关卡列表），而非回到游戏未开放状态。
@@ -269,7 +268,7 @@ export default function EliminationClient({ initialMissionIndex = null }: { init
             open: true,
             score: completedResult.score,
             total: player?.totalScore ?? completedResult.score,
-            rank: ranking.context?.rank ?? 0
+            rank: 0
           });
           return;
         }

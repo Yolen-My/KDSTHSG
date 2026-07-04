@@ -700,8 +700,94 @@ export async function getGameResult(playerId: string, gameKey: GameKey): Promise
   }
 }
 
+export async function loadPlayerState(playerId: string): Promise<AppState> {
+  const available = await checkPocketBase();
+  if (!available) return getEmptyRuntimeState();
+
+  try {
+    const [playerRecord, resultRecords, gameRecords] = await Promise.all([
+      pb.collection("players").getOne(playerId).catch(() => null),
+      pb.collection("game_results").getFullList({
+        filter: pb.filter("player = {:playerId}", { playerId }),
+        sort: "completedAt"
+      }),
+      pb.collection("games").getFullList({ sort: "order" })
+    ]);
+
+    return {
+      players: playerRecord ? [mapPlayerRecord(playerRecord)] : [],
+      gameResults: resultRecords.map((record) => normalizeGameResult({
+        id: record.id,
+        player: record.player,
+        gameKey: record.gameKey,
+        answers: record.answers,
+        score: record.score,
+        maxScore: record.maxScore,
+        completedAt: record.completedAt,
+        pendingBingoScore: mapPendingBingoScore(record),
+        quizSessionIndex: record.quizSessionIndex,
+        sectorKey: record.sectorKey || undefined,
+        sectorName: record.sectorName || undefined
+      })),
+      games: gameRecords.map(mapGameRecord),
+      questions: []
+    };
+  } catch (error) {
+    console.error("loadPlayerState failed.", error);
+    return getEmptyRuntimeState();
+  }
+}
+
 async function loadFreshState(): Promise<AppState> {
   return loadStateFromPB(undefined, false);
+}
+
+async function loadSubmissionState(playerId: string, gameKey: GameKey): Promise<AppState> {
+  const [playerRecord, gameRecord, resultRecords, questionRecords] = await Promise.all([
+    pb.collection("players").getOne(playerId).catch(() => null),
+    pb.collection("games").getFirstListItem(
+      pb.filter("key = {:gameKey}", { gameKey })
+    ).catch(() => null),
+    pb.collection("game_results").getFullList({
+      filter: pb.filter("player = {:playerId}", { playerId }),
+      sort: "completedAt"
+    }),
+    gameKey === "bingo"
+      ? pb.collection("questions").getFullList({
+          filter: "gameKey = 'bingo' && isActive = true",
+          sort: "order"
+        })
+      : Promise.resolve([])
+  ]);
+
+  const gameResults: GameResult[] = resultRecords.map((record) => normalizeGameResult({
+    id: record.id,
+    player: record.player,
+    gameKey: record.gameKey,
+    answers: record.answers,
+    score: record.score,
+    maxScore: record.maxScore,
+    completedAt: record.completedAt,
+    pendingBingoScore: mapPendingBingoScore(record),
+    quizSessionIndex: record.quizSessionIndex,
+    sectorKey: record.sectorKey || undefined,
+    sectorName: record.sectorName || undefined
+  }));
+
+  return {
+    players: playerRecord ? [mapPlayerRecord(playerRecord)] : [],
+    games: gameRecord ? [mapGameRecord(gameRecord)] : [],
+    gameResults,
+    questions: questionRecords.map(mapQuestionRecord)
+  };
+}
+
+async function getRankForScore(totalScore: number): Promise<number> {
+  const ahead = await pb.collection("players").getList(1, 1, {
+    filter: pb.filter("totalScore > {:totalScore}", { totalScore }),
+    fields: "id"
+  });
+  return ahead.totalItems + 1;
 }
 
 export async function isGameOpen(gameKey: GameKey): Promise<boolean> {
@@ -1040,7 +1126,10 @@ export async function submitGameResult(input: {
   sectorName?: string;
   eliminated?: boolean;
 }): Promise<{ result: GameResult; player: Player; rank: number }> {
-  const state = await loadFreshState();
+  const available = await checkPocketBase();
+  if (!available) throw new Error("PocketBase 不可用，已禁用本地兜底数据");
+
+  const state = await loadSubmissionState(input.playerId, input.gameKey);
   const game = state.games.find((g) => g.key === input.gameKey);
   const player = state.players.find((p) => p.id === input.playerId);
 
@@ -1158,9 +1247,6 @@ async function persistGameResult(
     sectorName: input.sectorName
   };
 
-  const available = await checkPocketBase();
-  if (!available) throw new Error("PocketBase 不可用，已禁用本地兜底数据");
-
   const created = await pb.collection("game_results").create({
       player: result.player,
       gameKey: result.gameKey,
@@ -1182,7 +1268,8 @@ async function persistGameResult(
       gameResults: [...state.gameResults, result]
     };
     await saveState(newState);
-    return { result, player: state.players[playerIndex], rank: getPlayerRank(state.players, input.playerId) };
+    const pendingPlayer = state.players[playerIndex];
+    return { result, player: pendingPlayer, rank: await getRankForScore(pendingPlayer.totalScore) };
   }
 
   // 已判分：更新 player
@@ -1213,7 +1300,7 @@ async function persistGameResult(
   };
   await saveState(newState);
 
-  return { result, player, rank: getPlayerRank(newState.players, player.id) };
+  return { result, player, rank: await getRankForScore(player.totalScore) };
 }
 
 export async function getQuestions(gameKey: GameKey) {

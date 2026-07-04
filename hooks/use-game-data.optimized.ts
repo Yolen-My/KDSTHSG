@@ -11,6 +11,7 @@ import {
   getQuestions,
   getRankingSnapshot,
   isGameOpen,
+  loadPlayerState,
   loadState,
   registerPlayer,
   submitGameResult,
@@ -88,32 +89,25 @@ function setCachedRequest<T>(key: string, data: T): void {
 }
 
 // 全局状态管理，减少重复请求
-let globalState: AppState | null = null;
-let globalStateLoading = false;
-async function getGlobalState(): Promise<AppState> {
-  if (globalState && !globalStateLoading) {
-    return globalState;
-  }
-  
-  if (globalStateLoading) {
-    // 等待正在进行的请求
-    await new Promise(resolve => {
-      const checkInterval = setInterval(() => {
-        if (!globalStateLoading) {
-          clearInterval(checkInterval);
-          resolve(null);
-        }
-      }, 50);
-    });
-    return globalState!;
-  }
-  
-  globalStateLoading = true;
+const globalStates = new Map<string, AppState>();
+const globalStateRequests = new Map<string, Promise<AppState>>();
+
+async function getGlobalState(playerId?: string | null): Promise<AppState> {
+  const key = playerId ? `player-${playerId}` : "admin";
+  const cached = globalStates.get(key);
+  if (cached) return cached;
+
+  const pending = globalStateRequests.get(key);
+  if (pending) return pending;
+
+  const request = playerId ? loadPlayerState(playerId) : loadState();
+  globalStateRequests.set(key, request);
   try {
-    globalState = await loadState();
-    return globalState;
+    const state = await request;
+    globalStates.set(key, state);
+    return state;
   } finally {
-    globalStateLoading = false;
+    globalStateRequests.delete(key);
   }
 }
 
@@ -125,7 +119,7 @@ export function useAppState(intervalMs?: number, playerId?: string | null) {
   const refresh = useCallback(async () => {
     if (!mountedRef.current) return;
     
-    const cacheKey = 'app-state';
+    const cacheKey = playerId ? `app-state-${playerId}` : "app-state-admin";
     const cached = getCachedRequest<AppState>(cacheKey);
     if (cached) {
       setState(cached);
@@ -133,13 +127,13 @@ export function useAppState(intervalMs?: number, playerId?: string | null) {
       return;
     }
 
-    const newState = await getGlobalState();
+    const newState = await getGlobalState(playerId);
     if (mountedRef.current) {
       setState(newState);
       setCachedRequest(cacheKey, newState);
       setLoading(false);
     }
-  }, []);
+  }, [playerId]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -147,13 +141,13 @@ export function useAppState(intervalMs?: number, playerId?: string | null) {
     const unsubscribe = subscribeToState(() => {
       // 订阅更新时清除缓存
       requestCache.clear();
-      globalState = null; // 强制下次刷新走服务端缓存
+      globalStates.delete(playerId ? `player-${playerId}` : "admin");
       refresh();
     }, playerId ? { playerId } : undefined);
 
     const stopPolling = startAdaptivePolling(() => {
       requestCache.clear(); // 定期清除缓存
-      globalState = null;
+      globalStates.delete(playerId ? `player-${playerId}` : "admin");
       refresh();
     }, intervalMs || STATE_REFRESH_INTERVAL_MS);
     
@@ -457,6 +451,7 @@ export function useRanking(playerId?: string | null, intervalMs?: number) {
   const [ranking, setRanking] = useState<Awaited<ReturnType<typeof getRankingSnapshot>>>(() => getEmptyRankingSnapshot());
   const [loading, setLoading] = useState(true);
   const mountedRef = useRef(true);
+  const realtimeRefreshTimerRef = useRef<number | null>(null);
 
   const refresh = useCallback(async () => {
     if (!mountedRef.current) return;
@@ -493,7 +488,11 @@ export function useRanking(playerId?: string | null, intervalMs?: number) {
     refresh();
     const unsubscribe = subscribeToState(() => {
       requestCache.clear();
-      refresh();
+      if (realtimeRefreshTimerRef.current !== null) return;
+      realtimeRefreshTimerRef.current = window.setTimeout(() => {
+        realtimeRefreshTimerRef.current = null;
+        refresh();
+      }, 1000);
     }, { collections: ["players", "games"] });
 
     const stopPolling = startAdaptivePolling(refresh, intervalMs || STATE_REFRESH_INTERVAL_MS);
@@ -502,6 +501,10 @@ export function useRanking(playerId?: string | null, intervalMs?: number) {
       mountedRef.current = false;
       unsubscribe();
       stopPolling();
+      if (realtimeRefreshTimerRef.current !== null) {
+        window.clearTimeout(realtimeRefreshTimerRef.current);
+        realtimeRefreshTimerRef.current = null;
+      }
     };
   }, [refresh, intervalMs]);
 

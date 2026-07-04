@@ -731,6 +731,12 @@ export function subscribeToState(
   return pbStorage.subscribeToState(callback, options);
 }
 
+export async function loadPlayerState(playerId: string): Promise<AppState> {
+  const available = await checkBackend();
+  if (available) return pbStorage.loadPlayerState(playerId);
+  return getEmptyRuntimeState();
+}
+
 export const isRealtimeSubscribed = pbStorage.isRealtimeSubscribed;
 export type { StateSubscriptionOptions } from "@/lib/pb-storage";
 
