@@ -724,8 +724,14 @@ export async function resetDemoData(): Promise<void> {
   loadStateLocal();
 }
 
-export function subscribeToState(callback: () => void): () => void {
-  return pbStorage.subscribeToState(callback);
+export function subscribeToState(
+  callback: () => void,
+  options?: pbStorage.StateSubscriptionOptions
+): () => void {
+  return pbStorage.subscribeToState(callback, options);
 }
+
+export const isRealtimeSubscribed = pbStorage.isRealtimeSubscribed;
+export type { StateSubscriptionOptions } from "@/lib/pb-storage";
 
 export { PLAYER_ID_KEY, PLAYER_PHONE_KEY };

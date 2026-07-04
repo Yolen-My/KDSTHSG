@@ -196,7 +196,7 @@ export default function ReviewPage() {
   const router = useRouter();
   const t = useTranslations();
   const { playerId, player } = useCurrentPlayer();
-  const { state } = useAppState();
+  const { state } = useAppState(undefined, playerId);
 
   useEffect(() => {
     if (playerId === null) router.push("/register");

@@ -107,7 +107,7 @@ export default function BingoPage() {
   const t = useTranslations();
   const { locale } = useLocaleSwitch();
   const { player, playerId, refresh } = useCurrentPlayer();
-  const { state } = useAppState();
+  const { state } = useAppState(undefined, playerId);
   const questions = useQuestions("bingo");
   const submitGameResult = useSubmitGameResult();
   const [selectedQuestionIds, setSelectedQuestionIds] = useState<string[]>([]);

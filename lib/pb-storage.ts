@@ -1425,47 +1425,102 @@ export async function resetDemoData(): Promise<void> {
   await loadState();
 }
 
-export function subscribeToState(callback: () => void): () => void {
-  let unsub: (() => void) | null = null;
-  let disposed = false;
+type StateCollection = "players" | "game_results" | "games";
 
-  const setUnsub = (nextUnsub: () => void) => {
-    if (disposed) {
-      nextUnsub();
-      return;
-    }
-    unsub = nextUnsub;
-  };
+export type StateSubscriptionOptions = {
+  collections?: StateCollection[];
+  playerId?: string | null;
+  gameKey?: GameKey;
+};
 
-  checkPocketBase().then(available => {
-    if (disposed) return;
+type StateSubscriber = {
+  callback: () => void;
+  options: StateSubscriptionOptions;
+};
 
-    if (!available) {
-      if (isBrowser()) {
-        const handler = () => callback();
-        window.addEventListener("annual-game-state-change", handler);
-        window.addEventListener("storage", handler);
-        setUnsub(() => {
-          window.removeEventListener("annual-game-state-change", handler);
-          window.removeEventListener("storage", handler);
-        });
-      }
-      return;
-    }
+const stateSubscribers = new Map<number, StateSubscriber>();
+let nextStateSubscriberId = 1;
+let realtimeUnsubscribers: Array<() => void> = [];
+let realtimeStartPromise: Promise<void> | null = null;
+let realtimeConnected = false;
 
-    Promise.all([
-      pb.collection("players").subscribe("*", callback),
-      pb.collection("game_results").subscribe("*", callback),
-      pb.collection("games").subscribe("*", callback)
-    ]).then(unsubs => {
-      setUnsub(() => unsubs.forEach(u => u()));
-    }).catch((error) => {
-      console.warn("PocketBase realtime subscribe failed; polling fallback remains active.", error);
-    });
+function matchesStateSubscription(
+  collection: StateCollection,
+  record: Record<string, unknown>,
+  options: StateSubscriptionOptions
+): boolean {
+  if (options.collections && !options.collections.includes(collection)) return false;
+  if (options.playerId) {
+    if (collection === "players" && record.id !== options.playerId) return false;
+    if (collection === "game_results" && record.player !== options.playerId) return false;
+  }
+  if (options.gameKey) {
+    if (collection === "games" && record.key !== options.gameKey) return false;
+    if (collection === "game_results" && record.gameKey !== options.gameKey) return false;
+  }
+  return true;
+}
+
+function dispatchStateChange(collection: StateCollection, event: { record?: Record<string, unknown> }) {
+  const record = event.record || {};
+  stateSubscribers.forEach(({ callback, options }) => {
+    if (matchesStateSubscription(collection, record, options)) callback();
   });
+}
+
+async function startRealtimeSubscriptions(): Promise<void> {
+  if (realtimeConnected || realtimeStartPromise) return realtimeStartPromise || Promise.resolve();
+  realtimeStartPromise = (async () => {
+    const available = await checkPocketBase();
+    if (!available || stateSubscribers.size === 0) return;
+    const unsubs = await Promise.all([
+      pb.collection("players").subscribe("*", (event) => dispatchStateChange("players", event)),
+      pb.collection("game_results").subscribe("*", (event) => dispatchStateChange("game_results", event)),
+      pb.collection("games").subscribe("*", (event) => dispatchStateChange("games", event))
+    ]);
+    if (stateSubscribers.size === 0) {
+      unsubs.forEach((unsubscribe) => unsubscribe());
+      return;
+    }
+    realtimeUnsubscribers = unsubs;
+    realtimeConnected = true;
+  })().catch((error) => {
+    realtimeConnected = false;
+    console.warn("PocketBase realtime subscribe failed; polling fallback remains active.", error);
+  }).finally(() => {
+    realtimeStartPromise = null;
+  });
+  return realtimeStartPromise;
+}
+
+export function isRealtimeSubscribed(): boolean {
+  return realtimeConnected;
+}
+
+export function subscribeToState(
+  callback: () => void,
+  options: StateSubscriptionOptions = {}
+): () => void {
+  const id = nextStateSubscriberId++;
+  stateSubscribers.set(id, { callback, options });
+  void startRealtimeSubscriptions();
+
+  const localHandler = () => callback();
+  if (isBrowser()) {
+    window.addEventListener("annual-game-state-change", localHandler);
+    window.addEventListener("storage", localHandler);
+  }
 
   return () => {
-    disposed = true;
-    unsub?.();
+    stateSubscribers.delete(id);
+    if (isBrowser()) {
+      window.removeEventListener("annual-game-state-change", localHandler);
+      window.removeEventListener("storage", localHandler);
+    }
+    if (stateSubscribers.size === 0 && realtimeUnsubscribers.length > 0) {
+      realtimeUnsubscribers.forEach((unsubscribe) => unsubscribe());
+      realtimeUnsubscribers = [];
+      realtimeConnected = false;
+    }
   };
 }

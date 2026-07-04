@@ -108,7 +108,7 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
   const t = useTranslations();
   const { locale } = useLocaleSwitch();
   const { playerId, refresh: refreshPlayer } = useCurrentPlayer();
-  const { state, refresh: refreshState, loading: stateLoading } = useAppState();
+  const { state, refresh: refreshState, loading: stateLoading } = useAppState(undefined, playerId);
   const questions = useQuestions("quiz");
   const submitGameResult = useSubmitGameResult();
 

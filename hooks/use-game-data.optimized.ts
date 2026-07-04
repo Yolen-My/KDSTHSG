@@ -20,7 +20,8 @@ import {
   advanceQuizGroup,
   openQuizGroup,
   closeQuizGroup,
-  subscribeToState
+  subscribeToState,
+  isRealtimeSubscribed
 } from "@/lib/storage";
 
 // 根据环境动态设置轮询间隔
@@ -37,10 +38,30 @@ const getPollingInterval = () => {
 const STATE_REFRESH_INTERVAL_MS = getPollingInterval();
 
 // 随机抖动（jitter）：在基础间隔上增加 ±20% 随机偏移，防止所有客户端同时发起请求（惊群效应）
-function getJitteredInterval(): number {
-  const base = STATE_REFRESH_INTERVAL_MS;
+function getJitteredInterval(base: number): number {
   const jitter = base * 0.2 * (Math.random() * 2 - 1); // ±20%
   return Math.round(base + jitter);
+}
+
+const REALTIME_FALLBACK_INTERVAL_MS = 30000;
+
+function startAdaptivePolling(callback: () => void, requestedInterval = STATE_REFRESH_INTERVAL_MS): () => void {
+  let timer: number | null = null;
+  let stopped = false;
+
+  const schedule = () => {
+    const base = isRealtimeSubscribed() ? REALTIME_FALLBACK_INTERVAL_MS : requestedInterval;
+    timer = window.setTimeout(() => {
+      if (document.visibilityState !== "hidden") callback();
+      if (!stopped) schedule();
+    }, getJitteredInterval(base));
+  };
+
+  schedule();
+  return () => {
+    stopped = true;
+    if (timer !== null) window.clearTimeout(timer);
+  };
 }
 
 // 请求缓存管理
@@ -69,8 +90,6 @@ function setCachedRequest<T>(key: string, data: T): void {
 // 全局状态管理，减少重复请求
 let globalState: AppState | null = null;
 let globalStateLoading = false;
-let globalStateSubscribers = new Set<() => void>();
-
 async function getGlobalState(): Promise<AppState> {
   if (globalState && !globalStateLoading) {
     return globalState;
@@ -98,7 +117,7 @@ async function getGlobalState(): Promise<AppState> {
   }
 }
 
-export function useAppState() {
+export function useAppState(intervalMs?: number, playerId?: string | null) {
   const [state, setState] = useState<AppState>(getInitialState());
   const [loading, setLoading] = useState(true);
   const mountedRef = useRef(true);
@@ -123,38 +142,27 @@ export function useAppState() {
   }, []);
 
   useEffect(() => {
+    mountedRef.current = true;
     refresh();
     const unsubscribe = subscribeToState(() => {
       // 订阅更新时清除缓存
       requestCache.clear();
       globalState = null; // 强制下次刷新走服务端缓存
       refresh();
-    });
+    }, playerId ? { playerId } : undefined);
 
-    // 使用 jitter 防止惊群效应
-    let timer = window.setInterval(() => {
+    const stopPolling = startAdaptivePolling(() => {
       requestCache.clear(); // 定期清除缓存
       globalState = null;
       refresh();
-    }, getJitteredInterval());
-
-    // 定时重置 jitter，避免间隔固化
-    const jitterResetTimer = window.setInterval(() => {
-      window.clearInterval(timer);
-      timer = window.setInterval(() => {
-        requestCache.clear();
-        globalState = null;
-        refresh();
-      }, getJitteredInterval());
-    }, 30000);
+    }, intervalMs || STATE_REFRESH_INTERVAL_MS);
     
     return () => {
       mountedRef.current = false;
       unsubscribe();
-      window.clearInterval(timer);
-      window.clearInterval(jitterResetTimer);
+      stopPolling();
     };
-  }, [refresh]);
+  }, [refresh, intervalMs, playerId]);
 
   return { state, refresh, loading };
 }
@@ -221,27 +229,22 @@ export function useCurrentPlayer() {
   }, []);
 
   useEffect(() => {
+    mountedRef.current = true;
     refresh();
     const unsubscribe = subscribeToState(() => {
       requestCache.clear();
       retryCountRef.current = 0;
       refresh();
-    });
+    }, { collections: ["players"], playerId });
 
-    // 使用 jitter 防止惊群效应
-    let timer = window.setInterval(refresh, getJitteredInterval());
-    const jitterResetTimer = window.setInterval(() => {
-      window.clearInterval(timer);
-      timer = window.setInterval(refresh, getJitteredInterval());
-    }, 30000);
+    const stopPolling = startAdaptivePolling(refresh);
 
     return () => {
       mountedRef.current = false;
       unsubscribe();
-      window.clearInterval(timer);
-      window.clearInterval(jitterResetTimer);
+      stopPolling();
     };
-  }, [refresh]);
+  }, [refresh, playerId]);
 
   return { player, playerId, refresh, loading };
 }
@@ -275,6 +278,7 @@ export function useQuestions(gameKey: GameKey) {
   }, [gameKey]);
 
   useEffect(() => {
+    mountedRef.current = true;
     refresh();
     return () => {
       mountedRef.current = false;
@@ -313,19 +317,14 @@ export function useGameStatus(gameKey: GameKey) {
     const unsubscribe = subscribeToState(() => {
       requestCache.clear();
       refresh();
-    });
+    }, { collections: ["games"], gameKey });
 
-    let timer = window.setInterval(refresh, getJitteredInterval());
-    const jitterResetTimer = window.setInterval(() => {
-      window.clearInterval(timer);
-      timer = window.setInterval(refresh, getJitteredInterval());
-    }, 30000);
+    const stopPolling = startAdaptivePolling(refresh);
 
     return () => {
       mountedRef.current = false;
       unsubscribe();
-      window.clearInterval(timer);
-      window.clearInterval(jitterResetTimer);
+      stopPolling();
     };
   }, [refresh]);
 
@@ -367,23 +366,19 @@ export function useExistingResult(playerId: string | null | undefined, gameKey: 
   }, [playerId, gameKey]);
 
   useEffect(() => {
+    mountedRef.current = true;
     refresh();
     const unsubscribe = subscribeToState(() => {
       requestCache.clear();
       refresh();
-    });
+    }, { collections: ["game_results"], playerId, gameKey });
 
-    let timer = window.setInterval(refresh, getJitteredInterval());
-    const jitterResetTimer = window.setInterval(() => {
-      window.clearInterval(timer);
-      timer = window.setInterval(refresh, getJitteredInterval());
-    }, 30000);
+    const stopPolling = startAdaptivePolling(refresh);
 
     return () => {
       mountedRef.current = false;
       unsubscribe();
-      window.clearInterval(timer);
-      window.clearInterval(jitterResetTimer);
+      stopPolling();
     };
   }, [refresh]);
 
@@ -427,23 +422,19 @@ export function useLobbySnapshot(playerId: string | null | undefined) {
   }, [playerId]);
 
   useEffect(() => {
+    mountedRef.current = true;
     refresh();
     const unsubscribe = subscribeToState(() => {
       requestCache.clear();
       refresh();
-    });
+    }, { playerId });
 
-    let timer = window.setInterval(refresh, getJitteredInterval());
-    const jitterResetTimer = window.setInterval(() => {
-      window.clearInterval(timer);
-      timer = window.setInterval(refresh, getJitteredInterval());
-    }, 30000);
+    const stopPolling = startAdaptivePolling(refresh);
 
     return () => {
       mountedRef.current = false;
       unsubscribe();
-      window.clearInterval(timer);
-      window.clearInterval(jitterResetTimer);
+      stopPolling();
     };
   }, [refresh]);
 
@@ -498,24 +489,19 @@ export function useRanking(playerId?: string | null, intervalMs?: number) {
   }, [playerId]);
 
   useEffect(() => {
+    mountedRef.current = true;
     refresh();
     const unsubscribe = subscribeToState(() => {
       requestCache.clear();
       refresh();
-    });
+    }, { collections: ["players", "games"] });
 
-    const baseInterval = intervalMs || STATE_REFRESH_INTERVAL_MS;
-    let timer = window.setInterval(refresh, baseInterval + Math.round(baseInterval * 0.2 * (Math.random() * 2 - 1)));
-    const jitterResetTimer = window.setInterval(() => {
-      window.clearInterval(timer);
-      timer = window.setInterval(refresh, baseInterval + Math.round(baseInterval * 0.2 * (Math.random() * 2 - 1)));
-    }, 30000);
+    const stopPolling = startAdaptivePolling(refresh, intervalMs || STATE_REFRESH_INTERVAL_MS);
 
     return () => {
       mountedRef.current = false;
       unsubscribe();
-      window.clearInterval(timer);
-      window.clearInterval(jitterResetTimer);
+      stopPolling();
     };
   }, [refresh, intervalMs]);
 
