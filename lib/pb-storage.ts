@@ -9,7 +9,7 @@ import type { AppState, Game, GameKey, GameResult, Player, Question, QuizProgres
 
 let pocketBaseAvailable = false;
 let lastHealthCheckAt = 0;
-const HEALTH_CHECK_CACHE_MS = 5000;
+const HEALTH_CHECK_CACHE_MS = 30000; // P2: 降频到 30 秒
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -437,6 +437,42 @@ export async function loadState(): Promise<AppState> {
   return getEmptyRuntimeState();
 }
 
+// 只加载 games 表（4 行），用于 player 端 useAppState，避免全量拉取 players/game_results/questions
+export async function loadGamesOnly(): Promise<AppState> {
+  const available = await checkPocketBase();
+  if (!available) return getEmptyRuntimeState();
+  try {
+    const games = await pb.collection("games").getFullList({ sort: "order" });
+    const mappedGames = games.map(mapGameRecord);
+    return {
+      players: [],
+      gameResults: [],
+      games: mappedGames.length > 0 ? mappedGames : GAMES,
+      questions: []
+    };
+  } catch {
+    return getEmptyRuntimeState();
+  }
+}
+
+// P1-1: 走服务端聚合接口 /api/game-state（TTL=2s），所有客户端共享同一份缓存
+export async function loadGameStateAggregated(): Promise<AppState> {
+  const available = await checkPocketBase();
+  if (!available) return getEmptyRuntimeState();
+  try {
+    const data = await pb.send("/api/game-state", { method: "GET" }) as { games: unknown[] };
+    const games = (data.games || []).map(mapGameRecord);
+    return {
+      players: [],
+      gameResults: [],
+      games: games.length > 0 ? games : GAMES,
+      questions: []
+    };
+  } catch {
+    return getEmptyRuntimeState();
+  }
+}
+
 export async function saveStateToPB(state: AppState): Promise<void> {
   const available = await checkPocketBase();
   if (!available) return;
@@ -612,13 +648,44 @@ export async function registerPlayer(input: { name: string; phone: string; offic
 }
 
 export async function getGameResult(playerId: string, gameKey: GameKey): Promise<GameResult | null> {
-  const state = await loadState();
-  return state.gameResults.find((result) => result.player === playerId && result.gameKey === gameKey) || null;
+  const available = await checkPocketBase();
+  if (!available) return null;
+  try {
+    // player+gameKey 已建复合索引 idx_results_player_game，命中索引而非全表扫描
+    const record = await pb.collection("game_results").getFirstListItem(
+      pb.filter("player = {:playerId} && gameKey = {:gameKey}", { playerId, gameKey })
+    );
+    return normalizeGameResult({
+      id: record.id,
+      player: record.player,
+      gameKey: record.gameKey,
+      answers: record.answers,
+      score: record.score,
+      maxScore: record.maxScore,
+      completedAt: record.completedAt,
+      pendingBingoScore: mapPendingBingoScore(record),
+      quizSessionIndex: record.quizSessionIndex,
+      sectorKey: record.sectorKey || undefined,
+      sectorName: record.sectorName || undefined
+    });
+  } catch {
+    return null;
+  }
 }
 
 export async function isGameOpen(gameKey: GameKey): Promise<boolean> {
-  const state = await loadState();
-  return Boolean(state.games.find((game) => game.key === gameKey)?.isOpen);
+  const available = await checkPocketBase();
+  if (!available) return false;
+  try {
+    // games 表只有 4 行，getFirstListItem 开销极低
+    const record = await pb.collection("games").getFirstListItem(
+      pb.filter("key = {:key}", { key: gameKey }),
+      { fields: "isOpen" }
+    );
+    return Boolean(record.isOpen);
+  } catch {
+    return false;
+  }
 }
 
 export async function toggleGameOpen(gameKey: GameKey): Promise<AppState> {
@@ -662,143 +729,23 @@ export async function toggleGameOpen(gameKey: GameKey): Promise<AppState> {
   return await loadState();
 }
 
+// P0-3: 判分迁移到服务端 POST /api/bingo-score，前端只发一个请求
 export async function triggerBingoScore(): Promise<AppState> {
-  console.log("🎮 completeBossAndEnableAutoScore: 开始执行");
-  
-  let state = await loadState();
-  console.log("📊 加载的当前状态：", {
-    playersCount: state.players.length,
-    gameResultsCount: state.gameResults.length,
-    bingoPendingCount: state.gameResults.filter(r => r.gameKey === "bingo" && r.pendingBingoScore).length
-  });
-  
-  // 1. 找到所有 pendingBingoScore=true 的 Bingo 记录并判分
-  const gameResults = state.gameResults.map((result) => {
-    if (result.gameKey !== "bingo" || !result.pendingBingoScore) return result;
-    const settled = calculateBingoSelection(state.questions, result.answers, result.score);
-    return {
-      ...result,
-      answers: {
-        ...result.answers,
-        selectedWords: settled.selectedWords,
-        targetWords: settled.targetWords,
-        correctCount: settled.correctCount,
-        pendingBingoScore: false
-      },
-      score: settled.score,
-      pendingBingoScore: false
-    };
-  });
-
-  // 1.5 为没有提交过 Bingo 记录的玩家自动创建一条空 Bingo 记录（review 页面可显示正确答案）
-  const playersWithoutBingo = state.players.filter(
-    (p) => !gameResults.some((r) => r.player === p.id && r.gameKey === "bingo")
-  );
-  const autoCreatedBingoResults: GameResult[] = [];
-  for (const player of playersWithoutBingo) {
-    const settled = calculateBingoSelection(state.questions, {}, 0);
-    autoCreatedBingoResults.push({
-      id: createId("result"),
-      player: player.id,
-      gameKey: "bingo",
-      answers: {
-        selectedWords: settled.selectedWords,
-        targetWords: settled.targetWords,
-        correctCount: settled.correctCount
-      },
-      score: 0,
-      maxScore: 100,
-      completedAt: nowIso(),
-      pendingBingoScore: false
-    });
-  }
-  gameResults.push(...autoCreatedBingoResults);
-
-  // 2. 重新计算所有玩家的 completedGames 和 totalScore
-  const players = state.players.map((player) => {
-    const playerResults = gameResults.filter((result) => result.player === player.id && !result.pendingBingoScore);
-    const completedGames = getCompletedGamesForPlayer(player, playerResults, "bingo");
-    const finalSubmitted = GAME_ORDER.every((key) => completedGames.includes(key));
-    const totalScore = playerResults.reduce((sum, result) => sum + result.score, 0);
-
-    return {
-      ...player,
-      totalScore,
-      completedGames,
-      finalSubmitted,
-      finalCompletedAt: finalSubmitted ? player.finalCompletedAt || nowIso() : player.finalCompletedAt,
-      updated: nowIso()
-    };
-  });
-
-  // 3. 更新 Bingo 状态：bingoPhase=closed, isOpen=false（判分后直接完全关闭）
-  const newGames = state.games.map((game) => (
-    game.key === "bingo"
-      ? { ...game, isOpen: false, bingoScored: true, bingoPhase: "closed" as const }
-      : game
-  ));
-  const newState = { ...state, players, gameResults, games: newGames };
-
+  console.log("🎮 triggerBingoScore: 调用服务端批量化判分");
   const available = await checkPocketBase();
-  if (available) {
-    console.log("🔌 PocketBase 可用，开始同步数据...");
-    
-    try {
-      const pendingResults = await pb.collection("game_results").getFullList({ 
-        filter: "gameKey = 'bingo'"
-      });
-      
-      for (const result of pendingResults) {
-        if (mapPendingBingoScore(result)) {
-          const settled = gameResults.find((item) => item.id === result.id);
-          await pb.collection("game_results").update(result.id, {
-            pendingBingoScore: false,
-            score: settled?.score ?? result.score,
-            answers: settled?.answers ?? { ...result.answers, pendingBingoScore: false }
-          });
-        }
-      }
+  if (!available) throw new Error("PocketBase 不可用，已禁用本地兜底数据");
 
-      // 为没提交 Bingo 的玩家自动创建空 Bingo 记录到 PocketBase
-      for (const autoResult of autoCreatedBingoResults) {
-        const created = await pb.collection("game_results").create({
-          player: autoResult.player,
-          gameKey: autoResult.gameKey,
-          answers: autoResult.answers,
-          score: autoResult.score,
-          maxScore: autoResult.maxScore,
-          completedAt: autoResult.completedAt,
-          pendingBingoScore: false
-        });
-        autoResult.id = created.id;
-      }
-
-      for (const player of newState.players) {
-        await pb.collection("players").update(player.id, buildPlayerUpdate(player));
-      }
-
-      const list = await pb.collection("games").getFullList();
-      const bingo = list.find(g => g.key === "bingo");
-      if (bingo) {
-        await pb.collection("games").update(bingo.id, {
-          isOpen: false,
-          bingoScored: true,
-          bingoPhase: "closed"
-        });
-      }
-
-      console.log("✅ PocketBase 数据同步完成");
-    } catch (error) {
-      console.error("❌ PocketBase 同步失败:", error);
-      throw error;
-    }
+  try {
+    // 服务端在一个事务内批量完成成绩结算与 totalScore 重算
+    await pb.send("/api/bingo-score", { method: "POST" });
+    console.log("✅ 服务端 Bingo 判分完成");
+  } catch (error) {
+    console.error("❌ 服务端 Bingo 判分失败:", error);
+    throw error;
   }
 
-  if (!available) throw new Error("PocketBase 不可用，已禁用本地兜底数据");
-  await saveState(newState);
-  const finalState = await loadStateFromPB();
-  console.log("🎯 completeBossAndEnableAutoScore: 执行完成");
-  return finalState;
+  // 返回最新状态（只加载 games 表，不全量加载）
+  return await loadGamesOnly();
 }
 
 // 别名，语义更清晰
@@ -938,43 +885,51 @@ export async function submitGameResult(input: {
   sectorName?: string;
   eliminated?: boolean;
 }): Promise<{ result: GameResult; player: Player; rank: number }> {
-  const state = await loadState();
-  const game = state.games.find((g) => g.key === input.gameKey);
-  const player = state.players.find((p) => p.id === input.playerId);
+  const available = await checkPocketBase();
+  if (!available) throw new Error("PocketBase 不可用，已禁用本地兜底数据");
+
+  // 按需查询：game、player、已有结果，不全量 loadState
+  const [gameRecord, playerRecord] = await Promise.all([
+    pb.collection("games").getFirstListItem(pb.filter("key = {:key}", { key: input.gameKey })),
+    pb.collection("players").getOne(input.playerId)
+  ]);
+  const game = mapGameRecord(gameRecord);
+  const player = mapPlayerRecord(playerRecord);
 
   if (!player) throw new Error("未找到当前用户，请重新注册");
 
-  // === Bingo 特殊逻辑：根据 bingoPhase 决定提交行为 ===
+  // 查询当前玩家在该游戏下的已有结果（player 字段已建索引）
+  let existingResults: any[] = [];
+  try {
+    existingResults = await pb.collection("game_results").getFullList({
+      filter: pb.filter("player = {:playerId} && gameKey = {:gameKey}", { playerId: input.playerId, gameKey: input.gameKey })
+    });
+  } catch {}
+
+  // === Bingo 特殊逻辑 ===
   if (input.gameKey === "bingo") {
     const bingoPhase = game?.bingoPhase || "open";
 
-    // 1. 已完成则禁止重复提交
     if (player.completedGames.includes("bingo")) {
       throw new Error("该游戏已完成，不能重复提交");
     }
-    // 已有非 pending 的 bingo 记录也算完成
-    const existingBingoResult = state.gameResults.find(
-      (r) => r.player === input.playerId && r.gameKey === "bingo"
-    );
-    if (existingBingoResult && !existingBingoResult.pendingBingoScore) {
+    const existingBingoResult = existingResults[0];
+    if (existingBingoResult && !mapPendingBingoScore(existingBingoResult)) {
       throw new Error("该游戏已完成，不能重复提交");
     }
-    // 已存在 pending 记录不允许重复提交
-    if (existingBingoResult && existingBingoResult.pendingBingoScore) {
+    if (existingBingoResult && mapPendingBingoScore(existingBingoResult)) {
       throw new Error("已提交，等待 Boss 发言完成后判分");
     }
 
-    // 2. closed 阶段禁止提交
     if (bingoPhase === "closed") {
       throw new Error("Bingo 已结束");
     }
 
-    // 3. open 阶段：标记 pending，等待 Boss 判分
-    // 4. auto_score 阶段：立即判分
     const isPending = bingoPhase === "open";
-    return await persistGameResult(state, input, isPending);
+    return await persistGameResult(input, isPending, player);
   }
 
+  // === Quiz 逻辑 ===
   if (input.gameKey === "quiz") {
     const quizSessionIndex = Number.isInteger(input.quizSessionIndex) ? input.quizSessionIndex as number : 0;
     if (quizSessionIndex < 0 || quizSessionIndex > 4) {
@@ -984,36 +939,33 @@ export async function submitGameResult(input: {
     if (!game?.isOpen || !openGroups.includes(quizSessionIndex)) {
       throw new Error("该游戏暂未开放");
     }
-    if (state.gameResults.some((result) => (
-      result.player === input.playerId &&
-      result.gameKey === "quiz" &&
+    if (existingResults.some((result) =>
       (Number.isInteger(result.quizSessionIndex) ? result.quizSessionIndex : 0) === quizSessionIndex
-    ))) {
+    )) {
       throw new Error("该组 Quiz 已完成，不能重复提交");
     }
     const defaults = getQuizSectorDefaults(quizSessionIndex);
-    return await persistGameResult(state, {
+    return await persistGameResult({
       ...input,
       quizSessionIndex,
       sectorKey: input.sectorKey || defaults.sectorKey,
       sectorName: input.sectorName || defaults.sectorName
-    }, false);
+    }, false, player);
   }
 
-  // === 其他游戏：必须 isOpen=true ===
+  // === 其他游戏 ===
   if (!game?.isOpen) {
     throw new Error("该游戏暂未开放");
   }
 
-  if (state.gameResults.some((result) => result.player === input.playerId && result.gameKey === input.gameKey)) {
+  if (existingResults.length > 0) {
     throw new Error("该游戏已完成，不能重复提交");
   }
 
-  return await persistGameResult(state, input, false);
+  return await persistGameResult(input, false, player);
 }
 
 async function persistGameResult(
-  state: AppState,
   input: {
     playerId: string;
     gameKey: GameKey;
@@ -1025,13 +977,23 @@ async function persistGameResult(
     sectorName?: string;
     eliminated?: boolean;
   },
-  isPending: boolean
+  isPending: boolean,
+  player: Player
 ): Promise<{ result: GameResult; player: Player; rank: number }> {
-  const playerIndex = state.players.findIndex((player) => player.id === input.playerId);
-  if (playerIndex < 0) throw new Error("未找到当前用户，请重新注册");
+  // Bingo 需要题库来计算判分
+  let questions: Question[] = [];
+  if (input.gameKey === "bingo") {
+    try {
+      const qRecords = await pb.collection("questions").getFullList({
+        filter: pb.filter("gameKey = 'bingo' && isActive = true", {}),
+        sort: "order"
+      });
+      questions = qRecords.map(mapQuestionRecord).map(normalizeQuestion);
+    } catch {}
+  }
 
   const bingoScore = input.gameKey === "bingo"
-    ? calculateBingoSelection(state.questions, input.answers, input.score)
+    ? calculateBingoSelection(questions, input.answers, input.score)
     : null;
   const maxScore = input.gameKey === "elimination" ? 200 : 100;
 
@@ -1075,43 +1037,57 @@ async function persistGameResult(
 
   // pending 情况下不更新 player.completedGames
   if (isPending) {
-    const newState: AppState = {
-      ...state,
-      gameResults: [...state.gameResults, result]
-    };
-    await saveState(newState);
-    return { result, player: state.players[playerIndex], rank: getPlayerRank(state.players, input.playerId) };
+    // 用 count 查询求名次，不全量加载 players
+    const aheadCount = await pb.collection("players").getList(1, 1, {
+      filter: pb.filter("totalScore > {:score}", { score: player.totalScore }),
+      fields: "id"
+    }).catch(() => ({ totalItems: 0 }));
+    return { result, player, rank: aheadCount.totalItems + 1 };
   }
 
-  // 已判分：更新 player
-  const gameResults = [...state.gameResults, result];
-  const totalScore = gameResults
-    .filter((item) => item.player === input.playerId && !item.pendingBingoScore)
+  // 已判分：查询当前玩家所有非 pending 结果来重算 totalScore 和 completedGames
+  const allPlayerResults = await pb.collection("game_results").getFullList({
+    filter: pb.filter("player = {:playerId}", { playerId: input.playerId }),
+    sort: "completedAt"
+  });
+  const playerGameResults: GameResult[] = allPlayerResults.map((r) => ({
+    id: r.id,
+    player: r.player,
+    gameKey: r.gameKey,
+    answers: r.answers,
+    score: r.score,
+    maxScore: r.maxScore,
+    completedAt: r.completedAt,
+    pendingBingoScore: mapPendingBingoScore(r),
+    quizSessionIndex: r.quizSessionIndex,
+    sectorKey: r.sectorKey || undefined,
+    sectorName: r.sectorName || undefined
+  })).map(normalizeGameResult);
+
+  const totalScore = playerGameResults
+    .filter((item) => !item.pendingBingoScore)
     .reduce((sum, item) => sum + item.score, 0);
-  const playerResults = gameResults.filter((item) => item.player === input.playerId && !item.pendingBingoScore);
-  const completedGames = getCompletedGamesForPlayer(state.players[playerIndex], playerResults, input.gameKey);
-  // 站立淘汰被淘汰：视为整场比赛结束，标记最终完成
+  const completedGames = getCompletedGamesForPlayer(player, playerGameResults, input.gameKey);
   const isEliminatedFinal = input.gameKey === "elimination" && Boolean(input.eliminated);
   const finalSubmitted = isEliminatedFinal || GAME_ORDER.every((key) => completedGames.includes(key));
-  const player: Player = {
-    ...state.players[playerIndex],
+  const updatedPlayer: Player = {
+    ...player,
     totalScore,
     completedGames,
     finalSubmitted,
-    finalCompletedAt: finalSubmitted ? (state.players[playerIndex].finalCompletedAt || nowIso()) : state.players[playerIndex].finalCompletedAt,
+    finalCompletedAt: finalSubmitted ? (player.finalCompletedAt || nowIso()) : player.finalCompletedAt,
     updated: nowIso()
   };
 
-  await pb.collection("players").update(player.id, buildPlayerUpdate(player));
+  await pb.collection("players").update(updatedPlayer.id, buildPlayerUpdate(updatedPlayer));
 
-  const newState: AppState = {
-    ...state,
-    players: state.players.map((p, i) => i === playerIndex ? player : p),
-    gameResults
-  };
-  await saveState(newState);
+  // 用 count 查询求名次
+  const aheadCount = await pb.collection("players").getList(1, 1, {
+    filter: pb.filter("totalScore > {:score}", { score: updatedPlayer.totalScore }),
+    fields: "id"
+  }).catch(() => ({ totalItems: 0 }));
 
-  return { result, player, rank: getPlayerRank(newState.players, player.id) };
+  return { result, player: updatedPlayer, rank: aheadCount.totalItems + 1 };
 }
 
 export async function getQuestions(gameKey: GameKey) {
@@ -1133,18 +1109,43 @@ export async function getQuestions(gameKey: GameKey) {
 }
 
 export async function getQuizSessionSnapshot(playerId: string): Promise<QuizSessionSnapshot> {
-  const state = await loadState();
-  const quizGame = state.games.find((game) => game.key === "quiz");
-  const results = state.gameResults
-    .filter((result) => result.player === playerId && result.gameKey === "quiz")
-    .map(normalizeGameResult);
-  return {
-    openGroups: normalizeQuizOpenGroups(quizGame?.quizOpenGroups || []),
-    completedGroups: normalizeQuizOpenGroups(results
-      .map((result) => result.quizSessionIndex)
-      .filter((index): index is number => Number.isInteger(index))),
-    results
-  };
+  const available = await checkPocketBase();
+  if (!available) {
+    return { openGroups: [], completedGroups: [], results: [] };
+  }
+  try {
+    // 只查 quiz 游戏配置 + 当前玩家的 quiz 结果，不全量加载
+    const [quizGameRecord, quizResults] = await Promise.all([
+      pb.collection("games").getFirstListItem(pb.filter("key = 'quiz'")),
+      pb.collection("game_results").getFullList({
+        filter: pb.filter("player = {:playerId} && gameKey = 'quiz'", { playerId }),
+        sort: "completedAt"
+      })
+    ]);
+    const quizGame = mapGameRecord(quizGameRecord);
+    const results: GameResult[] = quizResults.map((r) => normalizeGameResult({
+      id: r.id,
+      player: r.player,
+      gameKey: r.gameKey,
+      answers: r.answers,
+      score: r.score,
+      maxScore: r.maxScore,
+      completedAt: r.completedAt,
+      pendingBingoScore: mapPendingBingoScore(r),
+      quizSessionIndex: r.quizSessionIndex,
+      sectorKey: r.sectorKey || undefined,
+      sectorName: r.sectorName || undefined
+    }));
+    return {
+      openGroups: normalizeQuizOpenGroups(quizGame.quizOpenGroups || []),
+      completedGroups: normalizeQuizOpenGroups(results
+        .map((result) => result.quizSessionIndex)
+        .filter((index): index is number => Number.isInteger(index))),
+      results
+    };
+  } catch {
+    return { openGroups: [], completedGroups: [], results: [] };
+  }
 }
 
 export async function getLobbySnapshot(playerId: string) {
@@ -1305,18 +1306,43 @@ export async function resetDemoData(): Promise<void> {
   await loadState();
 }
 
+// P0-2: 全局订阅单例 — 整个应用只建一份订阅
+// 只订阅 games 表（4 行，低频变更），不订阅 players/* 和 game_results/*
+// 订阅回调加 400ms 防抖合并，避免批量写入时的雪崩
+const SUBSCRIBE_DEBOUNCE_MS = 400;
+const globalListeners = new Set<() => void>();
+let globalSubscribed = false;
+let globalUnsub: (() => void) | null = null;
+let globalDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+function notifyGlobalListeners() {
+  if (globalDebounceTimer) clearTimeout(globalDebounceTimer);
+  globalDebounceTimer = setTimeout(() => {
+    globalDebounceTimer = null;
+    globalListeners.forEach((fn) => {
+      try { fn(); } catch {}
+    });
+  }, SUBSCRIBE_DEBOUNCE_MS);
+}
+
+async function ensureGlobalSubscription() {
+  if (globalSubscribed || globalUnsub) return;
+  try {
+    // 只订阅 games 表 — players/* 和 game_results/* 写入频繁会导致雪崩
+    const unsub = await pb.collection("games").subscribe("*", () => notifyGlobalListeners());
+    globalSubscribed = true;
+    globalUnsub = unsub;
+  } catch {
+    // 订阅失败，轮询会作为兜底
+    console.warn("PocketBase realtime subscribe failed; polling fallback remains active.");
+  }
+}
+
 export function subscribeToState(callback: () => void): () => void {
-  let unsub: (() => void) | null = null;
   let disposed = false;
+  let localUnsub: (() => void) | null = null;
 
-  const setUnsub = (nextUnsub: () => void) => {
-    if (disposed) {
-      nextUnsub();
-      return;
-    }
-    unsub = nextUnsub;
-  };
-
+  // 如果 PocketBase 不可用，降级为 window 事件
   checkPocketBase().then(available => {
     if (disposed) return;
 
@@ -1325,27 +1351,30 @@ export function subscribeToState(callback: () => void): () => void {
         const handler = () => callback();
         window.addEventListener("annual-game-state-change", handler);
         window.addEventListener("storage", handler);
-        setUnsub(() => {
+        localUnsub = () => {
           window.removeEventListener("annual-game-state-change", handler);
           window.removeEventListener("storage", handler);
-        });
+        };
       }
       return;
     }
 
-    Promise.all([
-      pb.collection("players").subscribe("*", callback),
-      pb.collection("game_results").subscribe("*", callback),
-      pb.collection("games").subscribe("*", callback)
-    ]).then(unsubs => {
-      setUnsub(() => unsubs.forEach(u => u()));
-    }).catch((error) => {
-      console.warn("PocketBase realtime subscribe failed; polling fallback remains active.", error);
-    });
+    // 注册到全局单例
+    globalListeners.add(callback);
+    ensureGlobalSubscription();
+    localUnsub = () => {
+      globalListeners.delete(callback);
+    };
   });
 
   return () => {
     disposed = true;
-    unsub?.();
+    localUnsub?.();
+    globalListeners.delete(callback);
   };
+}
+
+// 暴露给 hooks 查询订阅是否已建立（用于决定轮询间隔）
+export function isRealtimeSubscribed(): boolean {
+  return globalSubscribed;
 }

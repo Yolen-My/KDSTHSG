@@ -4,12 +4,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useLocaleSwitch } from "@/components/LanguageProvider";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Layout from "@/components/Layout";
 import PageBackground from "@/components/PageBackground";
 import { getGameResult, getQuestions } from "@/lib/storage";
 import { correctAnswerForLocale, isCorrectAnswerForLocale, localizedAnswerText, localizedOptionLabel, localizedTitle, localizedWord } from "@/lib/i18n/question";
-import { useCurrentPlayer, useAppState } from "@/hooks/use-game-data";
+import { useCurrentPlayer } from "@/hooks/use-game-data";
 import type { GameKey, GameResult, Question } from "@/types";
 
 const GAME_ORDER: GameKey[] = ["bingo", "quiz", "story", "elimination"];
@@ -192,46 +192,64 @@ export default function ReviewPage() {
   const router = useRouter();
   const t = useTranslations();
   const { playerId, player } = useCurrentPlayer();
-  const { state } = useAppState(4000);
+
+  // 精确查询：加载当前玩家的所有游戏结果 + 各游戏题库，不全量 loadState
+  const [playerResults, setPlayerResults] = useState<GameResult[]>([]);
+  const [questionsMap, setQuestionsMap] = useState<Map<GameKey, Question[]>>(new Map());
 
   useEffect(() => {
     if (playerId === null) router.push("/register");
   }, [playerId, router]);
 
+  useEffect(() => {
+    if (!playerId) return;
+    let active = true;
+    (async () => {
+      // 并行加载每个游戏的结果和题库
+      const gameKeys = GAME_ORDER;
+      const [resultsPerGame, questionsPerGame] = await Promise.all([
+        Promise.all(gameKeys.map((key) => getGameResult(playerId, key).catch(() => null))),
+        Promise.all(gameKeys.map((key) => getQuestions(key).catch(() => [])))
+      ]);
+      if (!active) return;
+      const results: GameResult[] = [];
+      for (const r of resultsPerGame) {
+        if (r) results.push(r);
+      }
+      setPlayerResults(results);
+      const qMap = new Map<GameKey, Question[]>();
+      gameKeys.forEach((key, i) => {
+        if (questionsPerGame[i].length > 0) qMap.set(key, questionsPerGame[i]);
+      });
+      setQuestionsMap(qMap);
+    })();
+    return () => { active = false; };
+  }, [playerId]);
+
   const gamesWithResults = useMemo(() => {
     if (!player) return [] as GameKey[];
     const keys = new Set<GameKey>();
-    // 先加入已完成的游戏
     for (const key of player.completedGames) {
       keys.add(key);
     }
-    // 再加入有答题结果但尚未标记为完成的游戏（如 quiz 部分完成）
-    for (const r of state.gameResults) {
-      if (r.player === playerId) {
-        keys.add(r.gameKey);
-      }
+    for (const r of playerResults) {
+      keys.add(r.gameKey);
     }
     return GAME_ORDER.filter((key) => keys.has(key));
-  }, [player, state.gameResults, playerId]);
+  }, [player, playerResults]);
 
-  const [resultsMap, questionsMap] = useMemo(() => {
+  const resultsMap = useMemo(() => {
     const rMap = new Map<GameKey, GameResult[]>();
-    const qMap = new Map<GameKey, Question[]>();
-
     for (const key of gamesWithResults) {
-      const results = state.gameResults.filter(
-      (r) => r.player === playerId && r.gameKey === key && !r.pendingBingoScore
-    );
-    if (results.length > 0) {
-      rMap.set(key, results);
-    }
-      const qs = state.questions.filter((q) => q.gameKey === key && q.isActive);
-      if (qs.length > 0) {
-        qMap.set(key, qs);
+      const results = playerResults.filter(
+        (r) => r.gameKey === key && !r.pendingBingoScore
+      );
+      if (results.length > 0) {
+        rMap.set(key, results);
       }
     }
-    return [rMap, qMap];
-  }, [gamesWithResults, state.gameResults, state.questions, playerId]);
+    return rMap;
+  }, [gamesWithResults, playerResults]);
 
   if (!player) {
     return (
