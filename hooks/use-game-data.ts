@@ -23,26 +23,67 @@ import {
   subscribeToState
 } from "@/lib/storage";
 
-const STATE_REFRESH_INTERVAL_MS = 3000;
+const STATE_REFRESH_INTERVAL_MS = Number(process.env.NEXT_PUBLIC_POLLING_INTERVAL) || 3000;
+const STATE_CACHE_TTL_MS = 1500;
+let appStateCache: { state: AppState; timestamp: number } | null = null;
+let appStateRequest: Promise<AppState> | null = null;
+
+async function loadCachedAppState(): Promise<AppState> {
+  if (appStateCache && Date.now() - appStateCache.timestamp < STATE_CACHE_TTL_MS) {
+    return appStateCache.state;
+  }
+  if (appStateRequest) return appStateRequest;
+
+  appStateRequest = loadState();
+  try {
+    const state = await appStateRequest;
+    appStateCache = { state, timestamp: Date.now() };
+    return state;
+  } finally {
+    appStateRequest = null;
+  }
+}
+
+function startJitteredPolling(callback: () => void, intervalMs: number): () => void {
+  let timer: number | null = null;
+  let stopped = false;
+
+  const schedule = () => {
+    const jitter = intervalMs * 0.2 * (Math.random() * 2 - 1);
+    timer = window.setTimeout(() => {
+      if (document.visibilityState !== "hidden") callback();
+      if (!stopped) schedule();
+    }, Math.max(500, Math.round(intervalMs + jitter)));
+  };
+
+  schedule();
+  return () => {
+    stopped = true;
+    if (timer !== null) window.clearTimeout(timer);
+  };
+}
 
 export function useAppState(intervalMs?: number) {
   const [state, setState] = useState<AppState>(getInitialState());
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    const newState = await loadState();
+    const newState = await loadCachedAppState();
     setState(newState);
     setLoading(false);
   }, []);
 
   useEffect(() => {
     refresh();
-    const unsubscribe = subscribeToState(refresh);
+    const unsubscribe = subscribeToState(() => {
+      appStateCache = null;
+      refresh();
+    });
 
-    const timer = window.setInterval(refresh, intervalMs || STATE_REFRESH_INTERVAL_MS);
+    const stopPolling = startJitteredPolling(refresh, intervalMs || STATE_REFRESH_INTERVAL_MS);
     return () => {
       unsubscribe();
-      window.clearInterval(timer);
+      stopPolling();
     };
   }, [refresh, intervalMs]);
 
@@ -76,10 +117,10 @@ export function useCurrentPlayer() {
     refresh();
     const unsubscribe = subscribeToState(refresh);
 
-    const timer = window.setInterval(refresh, STATE_REFRESH_INTERVAL_MS);
+    const stopPolling = startJitteredPolling(refresh, STATE_REFRESH_INTERVAL_MS);
     return () => {
       unsubscribe();
-      window.clearInterval(timer);
+      stopPolling();
     };
   }, [refresh]);
 
@@ -166,10 +207,10 @@ export function useGameStatus(gameKey: GameKey) {
     refresh();
     const unsubscribe = subscribeToState(refresh);
 
-    const timer = window.setInterval(refresh, STATE_REFRESH_INTERVAL_MS);
+    const stopPolling = startJitteredPolling(refresh, STATE_REFRESH_INTERVAL_MS);
     return () => {
       unsubscribe();
-      window.clearInterval(timer);
+      stopPolling();
     };
   }, [refresh]);
 
@@ -196,10 +237,10 @@ export function useExistingResult(playerId: string | null | undefined, gameKey: 
     refresh();
     const unsubscribe = subscribeToState(refresh);
 
-    const timer = window.setInterval(refresh, STATE_REFRESH_INTERVAL_MS);
+    const stopPolling = startJitteredPolling(refresh, STATE_REFRESH_INTERVAL_MS);
     return () => {
       unsubscribe();
-      window.clearInterval(timer);
+      stopPolling();
     };
   }, [refresh]);
 
@@ -228,10 +269,10 @@ export function useLobbySnapshot(playerId: string | null | undefined) {
   useEffect(() => {
     refresh();
     const unsubscribe = subscribeToState(refresh);
-    const timer = window.setInterval(refresh, STATE_REFRESH_INTERVAL_MS);
+    const stopPolling = startJitteredPolling(refresh, STATE_REFRESH_INTERVAL_MS);
     return () => {
       unsubscribe();
-      window.clearInterval(timer);
+      stopPolling();
     };
   }, [refresh]);
 
@@ -270,10 +311,10 @@ export function useRanking(playerId?: string | null, intervalMs?: number) {
     refresh();
     const unsubscribe = subscribeToState(refresh);
 
-    const timer = window.setInterval(refresh, intervalMs || STATE_REFRESH_INTERVAL_MS);
+    const stopPolling = startJitteredPolling(refresh, intervalMs || STATE_REFRESH_INTERVAL_MS);
     return () => {
       unsubscribe();
-      window.clearInterval(timer);
+      stopPolling();
     };
   }, [refresh, intervalMs]);
 

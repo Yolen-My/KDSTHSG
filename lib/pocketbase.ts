@@ -21,6 +21,10 @@ pb.autoCancellation(false);
 // 每个请求自动携带当前语言（默认 zh，可为 en）。
 // 服务端 pb_hooks 读取该头，按语言返回对应的题目字段。
 pb.beforeSend = function (url, options) {
-  options.headers = { ...(options.headers || {}), [LANG_HEADER]: getStoredLocale() };
+  const headers = { ...(options.headers || {}) } as Record<string, string>;
+  if (!headers[LANG_HEADER]) {
+    headers[LANG_HEADER] = getStoredLocale();
+  }
+  options.headers = headers;
   return { url, options };
 };

@@ -4,12 +4,21 @@ import { pb } from "@/lib/pocketbase";
 import { calculateBingoSelection } from "@/lib/bingo-scoring";
 import { GAME_ORDER, GAMES, PLAYER_CACHE_KEY, PLAYER_ID_KEY, PLAYER_PHONE_KEY } from "@/lib/constants";
 import { settlePendingBingoResults } from "@/lib/game-state";
+import { LANG_HEADER, getStoredLocale } from "@/lib/i18n";
 import { getOfficeAverageRanking, getOfficeTop3, getPlayerRank, getPlayerRankingContext, getTop10Ranking } from "@/lib/ranking";
 import type { AppState, Game, GameKey, GameResult, Player, Question, QuizProgress, QuizSessionSnapshot } from "@/types";
 
 let pocketBaseAvailable = false;
 let lastHealthCheckAt = 0;
 const HEALTH_CHECK_CACHE_MS = 30000;
+
+async function runInBatches<T>(tasks: Array<() => Promise<T>>, batchSize = 20): Promise<T[]> {
+  const results: T[] = [];
+  for (let index = 0; index < tasks.length; index += batchSize) {
+    results.push(...await Promise.all(tasks.slice(index, index + batchSize).map((task) => task())));
+  }
+  return results;
+}
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -226,9 +235,12 @@ function mapQuestionRecord(record: any): Question {
   });
 }
 
-async function loadQuestionsFromPB(): Promise<Question[]> {
+async function loadQuestionsFromPB(locale?: string): Promise<Question[]> {
   try {
-    const records = await pb.collection("questions").getFullList({ sort: "order" });
+    const records = await pb.collection("questions").getFullList({
+      sort: "order",
+      headers: locale ? { [LANG_HEADER]: locale } : undefined
+    });
     if (records.length === 0) {
       console.warn("⚠️ PocketBase 返回空题库，运行时不使用本地题库兜底");
       return [];
@@ -379,7 +391,7 @@ export async function ensureCollections(): Promise<void> {
   await ensureGameState();
 }
 
-export async function loadStateFromPB(): Promise<AppState> {
+export async function loadStateFromPB(locale?: string): Promise<AppState> {
   const available = await checkPocketBase();
   if (!available) {
     return getEmptyRuntimeState();
@@ -391,7 +403,10 @@ export async function loadStateFromPB(): Promise<AppState> {
     // 仅在客户端侧使用（浏览器），服务端 SSR 直查 PocketBase 即可。
     if (isBrowser()) {
       try {
-        const res = await fetch("/api/game-state");
+        const activeLocale = locale || getStoredLocale();
+        const res = await fetch(`/api/game-state?locale=${encodeURIComponent(activeLocale)}`, {
+          cache: "no-store"
+        });
         if (res.ok) {
           const data = await res.json();
           const players = (data.players || []).map(mapPlayerRecord);
@@ -424,11 +439,12 @@ export async function loadStateFromPB(): Promise<AppState> {
     }
 
     // 回退：直查 PocketBase（服务端 SSR 或缓存接口不可用时）
+    const headers = locale ? { [LANG_HEADER]: locale } : undefined;
     const [players, gameResults, games, questions] = await Promise.all([
-      pb.collection("players").getFullList(),
-      pb.collection("game_results").getFullList({ sort: "completedAt" }),
-      pb.collection("games").getFullList({ sort: "order" }),
-      loadQuestionsFromPB()
+      pb.collection("players").getFullList({ headers }),
+      pb.collection("game_results").getFullList({ sort: "completedAt", headers }),
+      pb.collection("games").getFullList({ sort: "order", headers }),
+      loadQuestionsFromPB(locale)
     ]);
 
     const mappedPlayers: Player[] = players.map(mapPlayerRecord);
@@ -799,7 +815,7 @@ export async function triggerBingoScore(): Promise<AppState> {
       // 批量并发更新所有 pending Bingo 记录（原逐个 await 在高并发下极慢）
       const pendingUpdates = pendingResults
         .filter(r => mapPendingBingoScore(r))
-        .map(result => {
+        .map(result => () => {
           const settled = gameResults.find((item) => item.id === result.id);
           return pb.collection("game_results").update(result.id, {
             pendingBingoScore: false,
@@ -807,10 +823,10 @@ export async function triggerBingoScore(): Promise<AppState> {
             answers: settled?.answers ?? { ...result.answers, pendingBingoScore: false }
           });
         });
-      await Promise.all(pendingUpdates);
+      await runInBatches(pendingUpdates);
 
       // 为没提交 Bingo 的玩家并发创建空 Bingo 记录
-      const createPromises = autoCreatedBingoResults.map(async (autoResult) => {
+      const createPromises = autoCreatedBingoResults.map((autoResult) => async () => {
         const created = await pb.collection("game_results").create({
           player: autoResult.player,
           gameKey: autoResult.gameKey,
@@ -822,13 +838,13 @@ export async function triggerBingoScore(): Promise<AppState> {
         });
         autoResult.id = created.id;
       });
-      await Promise.all(createPromises);
+      await runInBatches(createPromises);
 
       // 并发更新所有玩家分数
-      const playerUpdates = newState.players.map(player =>
+      const playerUpdates = newState.players.map(player => () =>
         pb.collection("players").update(player.id, buildPlayerUpdate(player))
       );
-      await Promise.all(playerUpdates);
+      await runInBatches(playerUpdates);
 
       const list = await pb.collection("games").getFullList();
       const bingo = list.find(g => g.key === "bingo");
