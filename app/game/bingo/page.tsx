@@ -363,7 +363,7 @@ export default function BingoPage() {
     return (
       <BingoShell>
         <section className="bingoMainCard bingoMainCard--status">
-          <p className="bingoStatusMessage">{questions.loading ? t("common.questionsLoading") : t("common.questionsReloading", { error: questions.error || t("common.noQuestions") })}</p>
+          <p className="bingoStatusMessage">{t("common.questionsLoading")}</p>
         </section>
       </BingoShell>
     );

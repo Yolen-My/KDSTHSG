@@ -18,9 +18,6 @@ const nextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
 
-  // SWC 压缩（替代 Terser），更快的构建和更小的输出
-  swcMinify: true,
-
   // CSS 优化
   experimental: {
     optimizeCss: true,

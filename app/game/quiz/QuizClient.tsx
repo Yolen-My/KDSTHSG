@@ -325,13 +325,13 @@ export default function QuizClient({ initialSectorIndex = null }: { initialSecto
     return (
       <QuizShell>
         <section className="quizStatusCard">
-          <p className="quizStatusMessage">{questions.loading ? t("common.questionsLoading") : t("common.questionsReloading", { error: questions.error || t("common.noQuestions") })}</p>
+          <p className="quizStatusMessage">{t("common.questionsLoading")}</p>
         </section>
       </QuizShell>
     );
   }
 
-  if (!modal.open && initialSectorIndex !== null && !stateLoading && !questions.loading && (!activeSector || !currentQuestion || activeSector.result || !activeSector.isOpen)) {
+  if (!modal.open && initialSectorIndex !== null && !stateLoading && (!activeSector || !currentQuestion || activeSector.result || !activeSector.isOpen)) {
     return (
       <QuizShell>
         <section className="quizStatusCard">

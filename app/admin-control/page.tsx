@@ -28,7 +28,7 @@ function getGroupName(index: number): string {
 }
 
 export default function AdminControlPage() {
-  const { state, refresh } = useAppState(2000);
+  const { state, refresh } = useAppState();
   const {
     toggleGameOpen,
     triggerBingoScore,

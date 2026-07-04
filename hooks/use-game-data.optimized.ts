@@ -164,6 +164,8 @@ export function useCurrentPlayer() {
   const [playerId, setPlayerId] = useState<string | null | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const mountedRef = useRef(true);
+  const retryCountRef = useRef(0);
+  const MAX_RETRIES = 5;
 
   const refresh = useCallback(async () => {
     if (!mountedRef.current) return;
@@ -174,6 +176,7 @@ export function useCurrentPlayer() {
       if (!id) {
         setPlayer(null);
         setLoading(false);
+        retryCountRef.current = 0;
         return;
       }
       
@@ -182,20 +185,37 @@ export function useCurrentPlayer() {
       if (cached) {
         setPlayer(cached);
         setLoading(false);
+        retryCountRef.current = 0;
         return;
       }
       
       const p = await getCurrentPlayer();
       if (mountedRef.current) {
-        setPlayer(p);
-        setCachedRequest(cacheKey, p);
-        setLoading(false);
+        if (p) {
+          setPlayer(p);
+          setCachedRequest(cacheKey, p);
+          setLoading(false);
+          retryCountRef.current = 0;
+        } else if (retryCountRef.current < MAX_RETRIES) {
+          // player 为 null 但 playerId 存在，说明查询失败，保留 playerId 等待重试
+          retryCountRef.current++;
+          console.warn(`⏳ getCurrentPlayer 返回 null (playerId=${id})，第 ${retryCountRef.current}/${MAX_RETRIES} 次重试...`);
+          // 不 setLoading(false)，让页面继续显示 loading 状态等待重试
+        } else {
+          // 超过最大重试次数，放弃
+          console.error(`❌ getCurrentPlayer 重试 ${MAX_RETRIES} 次后仍然失败，playerId=${id}`);
+          setLoading(false);
+        }
       }
     } catch {
       if (mountedRef.current) {
-        setPlayer(null);
-        setPlayerId(null);
-        setLoading(false);
+        // catch 中不要清除 playerId，保留等待重试
+        retryCountRef.current++;
+        if (retryCountRef.current >= MAX_RETRIES) {
+          setPlayer(null);
+          setPlayerId(null);
+          setLoading(false);
+        }
       }
     }
   }, []);
@@ -204,6 +224,7 @@ export function useCurrentPlayer() {
     refresh();
     const unsubscribe = subscribeToState(() => {
       requestCache.clear();
+      retryCountRef.current = 0;
       refresh();
     });
 

@@ -504,8 +504,12 @@ export async function getCurrentPlayer(): Promise<Player | null> {
     const player = mapPlayerRecord(record);
     setCachedPlayer(player);
     return player;
-  } catch {
-    clearCurrentPlayer();
+  } catch (error) {
+    // 查询失败时不要清除本地缓存，可能是临时网络问题
+    // 只有明确的 404（记录不存在）才清除
+    if (error && typeof error === "object" && "status" in error && (error as any).status === 404) {
+      clearCurrentPlayer();
+    }
     return null;
   }
 }
@@ -559,8 +563,14 @@ export async function restoreCurrentPlayerFromLocal(): Promise<Player | null> {
           saveCurrentPlayer(player);
           return player;
         }
-      } catch {
-        // 继续按 phone 查找
+      } catch (error) {
+        // 只有 404 才认为记录真的不存在，其他错误保留本地缓存继续尝试
+        if (error && typeof error === "object" && "status" in error && (error as any).status === 404) {
+          // 记录被删除，清除本地缓存，尝试按 phone 查找
+        } else {
+          // 网络错误等临时问题，不继续往下走（避免误清除）
+          return null;
+        }
       }
     }
     if (phone) {
@@ -570,7 +580,7 @@ export async function restoreCurrentPlayerFromLocal(): Promise<Player | null> {
         return byPhone;
       }
     }
-    // PocketBase 可用但找不到该用户，清除本地缓存
+    // PocketBase 可用但确实找不到该用户（playerId 404 且 phone 也找不到），清除本地缓存
     clearCurrentPlayer();
     return null;
   }

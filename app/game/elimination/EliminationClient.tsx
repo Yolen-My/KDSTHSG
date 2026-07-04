@@ -385,7 +385,7 @@ export default function EliminationClient({ initialMissionIndex = null }: { init
     return (
       <EliminationShell>
         <section className="quizStatusCard">
-          <p className="quizStatusMessage">{questions.loading ? t("common.questionsLoading") : t("common.questionsReloading", { error: questions.error || t("common.noQuestions") })}</p>
+          <p className="quizStatusMessage">{t("common.questionsLoading")}</p>
         </section>
       </EliminationShell>
     );

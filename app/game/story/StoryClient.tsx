@@ -376,7 +376,7 @@ export default function StoryClient({ initialGroupIndex = null }: { initialGroup
     return (
       <StoryShell>
         <section className="quizStatusCard">
-          <p className="quizStatusMessage">{questions.loading ? t("common.questionsLoading") : t("common.questionsReloading", { error: questions.error || t("common.noQuestions") })}</p>
+          <p className="quizStatusMessage">{t("common.questionsLoading")}</p>
         </section>
       </StoryShell>
     );
