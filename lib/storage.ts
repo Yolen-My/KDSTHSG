@@ -693,6 +693,10 @@ export async function getLobbySnapshot(playerId: string) {
 }
 
 export async function getRankingSnapshot(playerId?: string | null) {
+  const available = await checkBackend();
+  if (available) {
+    return await pbStorage.getRankingSnapshot(playerId);
+  }
   const state = await loadState();
   return {
     players: state.players,
