@@ -29,15 +29,11 @@ import {
 // ============================================================================
 // P0-2 / P1-2: 轮询策略
 // ============================================================================
-// 订阅建立后停掉轮询或拉长到 30 秒以上，轮询只作为兜底
-// P1-2: 加随机抖动(jitter)，避免 300 个客户端在同一毫秒整齐发包
-// P1-2: 页面不可见时暂停轮询
-
 const FALLBACK_POLLING_MS = 30000;
-const FAST_POLLING_MS = 5000;
+const PLAYER_POLLING_MS = 5000;
+const GAME_POLLING_MS = 10000;
 
 function jitteredInterval(base: number): number {
-  // base + random(0, base/2)
   return base + Math.floor(Math.random() * (base / 2));
 }
 
@@ -56,7 +52,6 @@ function usePollingWithVisibility(
     }
     const interval = jitteredInterval(getInterval());
     timerRef.current = setInterval(() => {
-      // P1-2: 页面不可见时暂停轮询
       if (typeof document !== "undefined" && document.visibilityState === "hidden") {
         return;
       }
@@ -66,12 +61,8 @@ function usePollingWithVisibility(
 
   useEffect(() => {
     setup();
-    // 订阅状态变化时重建定时器（切换轮询间隔）
-    const checkSub = setInterval(() => {
-      setup();
-    }, 5000); // 每 5 秒检查一次订阅状态
+    const checkSub = setInterval(setup, 10000);
 
-    // P1-2: 页面恢复可见时立即刷新一次
     const onVisible = () => {
       if (document.visibilityState === "visible") {
         refreshRef.current();
@@ -93,7 +84,6 @@ function usePollingWithVisibility(
 
 // ============================================================================
 // P0-1: useAppState — 只加载 games 表（4 行），不再全量 loadState()
-// P1-1: 走服务端聚合接口 /api/game-state（TTL=2s）
 // ============================================================================
 
 export function useAppState(intervalMs?: number) {
@@ -111,6 +101,7 @@ export function useAppState(intervalMs?: number) {
   }, []);
 
   useEffect(() => {
+    mountedRef.current = true; // React Strict Mode 重建时重置
     refresh();
     const unsubscribe = subscribeToState(refresh);
     return () => {
@@ -119,9 +110,8 @@ export function useAppState(intervalMs?: number) {
     };
   }, [refresh]);
 
-  // P0-2: 订阅成功后停掉轮询，只作为兜底
   usePollingWithVisibility(refresh, () =>
-    isRealtimeSubscribed() ? FALLBACK_POLLING_MS : (intervalMs || FAST_POLLING_MS)
+    isRealtimeSubscribed() ? FALLBACK_POLLING_MS : (intervalMs || GAME_POLLING_MS)
   );
 
   return { state, refresh, loading };
@@ -143,6 +133,7 @@ export function useAdminState(intervalMs?: number) {
   }, []);
 
   useEffect(() => {
+    mountedRef.current = true;
     refresh();
     const unsubscribe = subscribeToState(refresh);
     return () => {
@@ -151,15 +142,13 @@ export function useAdminState(intervalMs?: number) {
     };
   }, [refresh]);
 
-  usePollingWithVisibility(refresh, () =>
-    intervalMs || 5000
-  );
+  usePollingWithVisibility(refresh, () => intervalMs || 5000);
 
   return { state, refresh, loading };
 }
 
 // ============================================================================
-// useCurrentPlayer — 只查自己的 player 记录
+// useCurrentPlayer
 // ============================================================================
 
 export function useCurrentPlayer() {
@@ -193,6 +182,7 @@ export function useCurrentPlayer() {
   }, []);
 
   useEffect(() => {
+    mountedRef.current = true;
     refresh();
     const unsubscribe = subscribeToState(refresh);
     return () => {
@@ -201,9 +191,7 @@ export function useCurrentPlayer() {
     };
   }, [refresh]);
 
-  usePollingWithVisibility(refresh, () =>
-    isRealtimeSubscribed() ? FALLBACK_POLLING_MS : FAST_POLLING_MS
-  );
+  usePollingWithVisibility(refresh, () => PLAYER_POLLING_MS);
 
   return { player, playerId, refresh, loading };
 }
@@ -213,8 +201,7 @@ export function useRegisterPlayer() {
 }
 
 // ============================================================================
-// useQuestions — P2: 题库基本静态，加载一次后用内存缓存，语言切换时才重拉
-// P1-2: 重试改为指数退避(600ms → 2s → 5s)
+// useQuestions — P2: 题库内存缓存 + 指数退避
 // ============================================================================
 
 const questionsCache = new Map<string, { data: Question[]; locale: string }>();
@@ -240,7 +227,6 @@ export function useQuestions(gameKey: GameKey): QuestionsState {
     if (!mountedRef.current) return;
     const locale = getCurrentLocale();
 
-    // P2: 内存缓存 — 题库基本静态，同语言直接复用
     const cached = questionsCache.get(gameKey);
     if (cached && cached.locale === locale && cached.data.length > 0) {
       setQuestions(cached.data);
@@ -250,7 +236,7 @@ export function useQuestions(gameKey: GameKey): QuestionsState {
     }
 
     setLoading(true);
-    const backoffMs = [600, 2000, 5000]; // P1-2: 指数退避
+    const backoffMs = [600, 2000, 5000];
     let lastError: unknown = null;
 
     for (let attempt = 0; attempt < 3; attempt += 1) {
@@ -284,10 +270,11 @@ export function useQuestions(gameKey: GameKey): QuestionsState {
   }, [gameKey]);
 
   useEffect(() => {
+    mountedRef.current = true;
     refresh();
+    return () => { mountedRef.current = false; };
   }, [refresh]);
 
-  // 语言切换后清除缓存并重新拉取
   useEffect(() => {
     if (typeof window === "undefined") return;
     const handler = () => {
@@ -302,7 +289,7 @@ export function useQuestions(gameKey: GameKey): QuestionsState {
 }
 
 // ============================================================================
-// useGameStatus — 只查一条 game 记录的 isOpen
+// useGameStatus
 // ============================================================================
 
 export function useGameStatus(gameKey: GameKey) {
@@ -320,6 +307,7 @@ export function useGameStatus(gameKey: GameKey) {
   }, [gameKey]);
 
   useEffect(() => {
+    mountedRef.current = true;
     refresh();
     const unsubscribe = subscribeToState(refresh);
     return () => {
@@ -329,7 +317,7 @@ export function useGameStatus(gameKey: GameKey) {
   }, [refresh]);
 
   usePollingWithVisibility(refresh, () =>
-    isRealtimeSubscribed() ? FALLBACK_POLLING_MS : FAST_POLLING_MS
+    isRealtimeSubscribed() ? FALLBACK_POLLING_MS : GAME_POLLING_MS
   );
 
   return open;
@@ -340,7 +328,7 @@ export function useSubmitGameResult() {
 }
 
 // ============================================================================
-// useExistingResult — 只查一条 game_results 记录（死代码保留兼容）
+// useExistingResult
 // ============================================================================
 
 export function useExistingResult(playerId: string | null | undefined, gameKey: GameKey) {
@@ -358,6 +346,7 @@ export function useExistingResult(playerId: string | null | undefined, gameKey: 
   }, [playerId, gameKey]);
 
   useEffect(() => {
+    mountedRef.current = true;
     refresh();
     const unsubscribe = subscribeToState(refresh);
     return () => {
@@ -366,15 +355,13 @@ export function useExistingResult(playerId: string | null | undefined, gameKey: 
     };
   }, [refresh]);
 
-  usePollingWithVisibility(refresh, () =>
-    isRealtimeSubscribed() ? FALLBACK_POLLING_MS : FAST_POLLING_MS
-  );
+  usePollingWithVisibility(refresh, () => PLAYER_POLLING_MS);
 
   return { exists, loading };
 }
 
 // ============================================================================
-// useLobbySnapshot — 已优化：只查当前玩家 + count 查询求名次
+// useLobbySnapshot
 // ============================================================================
 
 export function useLobbySnapshot(playerId: string | null | undefined) {
@@ -406,6 +393,7 @@ export function useLobbySnapshot(playerId: string | null | undefined) {
   }, [playerId]);
 
   useEffect(() => {
+    mountedRef.current = true;
     refresh();
     const unsubscribe = subscribeToState(refresh);
     return () => {
@@ -414,15 +402,13 @@ export function useLobbySnapshot(playerId: string | null | undefined) {
     };
   }, [refresh]);
 
-  usePollingWithVisibility(refresh, () =>
-    isRealtimeSubscribed() ? FALLBACK_POLLING_MS : FAST_POLLING_MS
-  );
+  usePollingWithVisibility(refresh, () => PLAYER_POLLING_MS);
 
   return { snapshot, refresh, loading };
 }
 
 // ============================================================================
-// useRanking — 走服务端缓存接口
+// useRanking
 // ============================================================================
 
 function getEmptyRankingSnapshot(): Awaited<ReturnType<typeof getRankingSnapshot>> {
@@ -460,6 +446,7 @@ export function useRanking(playerId?: string | null, intervalMs?: number) {
   }, [playerId]);
 
   useEffect(() => {
+    mountedRef.current = true;
     refresh();
     const unsubscribe = subscribeToState(refresh);
     return () => {
@@ -468,15 +455,13 @@ export function useRanking(playerId?: string | null, intervalMs?: number) {
     };
   }, [refresh]);
 
-  usePollingWithVisibility(refresh, () =>
-    isRealtimeSubscribed() ? FALLBACK_POLLING_MS : (intervalMs || FAST_POLLING_MS)
-  );
+  usePollingWithVisibility(refresh, () => intervalMs || PLAYER_POLLING_MS);
 
   return { ranking, refresh, loading };
 }
 
 // ============================================================================
-// useQuizSession — 精确查询当前玩家的 quiz 进度
+// useQuizSession
 // ============================================================================
 
 export function useQuizSession(playerId: string | null | undefined) {
@@ -506,6 +491,7 @@ export function useQuizSession(playerId: string | null | undefined) {
   }, [playerId]);
 
   useEffect(() => {
+    mountedRef.current = true;
     refresh();
     const unsubscribe = subscribeToState(refresh);
     return () => {
@@ -514,9 +500,7 @@ export function useQuizSession(playerId: string | null | undefined) {
     };
   }, [refresh]);
 
-  usePollingWithVisibility(refresh, () =>
-    isRealtimeSubscribed() ? FALLBACK_POLLING_MS : FAST_POLLING_MS
-  );
+  usePollingWithVisibility(refresh, () => PLAYER_POLLING_MS);
 
   return { snapshot, loading, refresh };
 }

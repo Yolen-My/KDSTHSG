@@ -9,7 +9,8 @@ import type { AppState, Game, GameKey, GameResult, Player, Question, QuizProgres
 
 let pocketBaseAvailable = false;
 let lastHealthCheckAt = 0;
-const HEALTH_CHECK_CACHE_MS = 30000; // P2: 降频到 30 秒
+const HEALTH_CHECK_CACHE_MS_SUCCESS = 30000; // P2: 成功后 30 秒缓存
+const HEALTH_CHECK_CACHE_MS_FAIL = 3000;     // 失败后 3 秒重试
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -263,7 +264,8 @@ function buildPlayerUpdate(player: Player): Record<string, unknown> {
 
 export async function checkPocketBase(): Promise<boolean> {
   const now = Date.now();
-  if (now - lastHealthCheckAt < HEALTH_CHECK_CACHE_MS) {
+  const cacheMs = pocketBaseAvailable ? HEALTH_CHECK_CACHE_MS_SUCCESS : HEALTH_CHECK_CACHE_MS_FAIL;
+  if (now - lastHealthCheckAt < cacheMs) {
     return pocketBaseAvailable;
   }
   lastHealthCheckAt = now;
